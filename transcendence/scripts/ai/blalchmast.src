@@ -1,0 +1,82 @@
+use npc;
+use os;
+use uo;
+
+include "util/bank";
+include "include/attributes";
+include "include/randname";
+include "include/eventid";
+include "include/vetement";
+include "include/client";
+include "include/whitealchemy";
+
+var bank;
+var me := Self();
+var EVID_SPEECH := 0x0001;
+if( me.name["<random>"] )
+		SetName( me, RandomName( me ) );
+	   set_priority(50);
+       Habille( me, "blackalch" );
+       set_priority(1);
+endif
+
+program blalchmaster ();
+
+	EnableEvents( EVID_SPEECH, 4 );
+
+	while (1)
+    		var ev;
+    		ev := os::wait_for_event( 120 );
+    		if (ev)
+         		if ( ev.text["join"] )
+				say("Let me check your Alchemical Ability..");
+			        sleep(4);
+			        var alchlevel := GetEffectiveSkill(ev.source, SKILLID_ALCHEMY);
+			          	if (alchlevel <100)
+			                    say("you're not enough able to join my school");
+			                endif
+			                if (alchlevel >= 100)
+			                    say("Ok, you're a good Alchemist");
+		                       
+		                        say("Let me check if you're already into another school");
+			                    sleep(3);
+			                    var checkschool := GetObjProperty(ev.source, "school");
+			                      if (checkschool == "whitealch")
+			                        say("You mast leave White Alchemy School to come into mine!");
+			                      endif
+		                              if (checkschool == "blackalch")
+			                       say("Are you out of memory? You're already into my school!");
+			                      endif   
+			                      if (!checkschool)
+			                       
+			                        say("Well, i take 50000 gp to join my school");
+			                        sleep(2);
+			                        var has_money := checkreagentamount(ev.source, 0x0eed, 50000);
+		                                 if (has_money == 1)
+		                                  say("Ok, you're in my school now");
+		                                  reagentconsume(ev.source, 0x0eed, 50000);  
+			                          SetObjProperty(ev.source, "school", "blackalch");
+			                          SetObjProperty(ev.source, "balchlvl", 1);
+			                          CreateItemInBackpack(ev.source, 0xdc2f);
+			                         endif
+			                         if (has_money == 0)
+			                            say("you're too poor to join my school, come back with 50000gp if you want");
+			                         endif
+		                               endif     
+		                        endif
+		          endif
+		          if (ev.text["leave"])
+		               var alchschool := GetObjProperty(ev.source, "school");
+		                 if ((!alchschool) || (alchschool != "blackalch"));
+		                 say("You're not in my school");
+		                 endif
+		                 if (alchschool == "blackalch")
+		                 EraseObjProperty(ev.source, "school");
+		                  say("Now you're are'nt in my school anymore, bye!");
+		                 endif
+	
+		        endif
+		endif
+	endwhile
+
+endprogram

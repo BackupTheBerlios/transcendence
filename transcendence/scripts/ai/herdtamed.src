@@ -1,0 +1,32 @@
+use uo;
+use os;
+use npc;
+
+program herdingtamed ()
+
+var me := Self();
+
+var posx := GetObjProperty(me, "locx");
+var posy := GetObjProperty(me, "locy");
+var dest := CreateItemAtLocation( posx, posy, me.z, 0x0e81, 1, me.realm );
+dest.graphic := 0x1;
+var done := 0;
+while(done == 0)
+//turntowardlocation (posx, posy);
+//local i;
+// for (i:=0;i<=9; i:=i+1)
+if (!WalkToward( dest ));
+ done := 1;
+endif
+if (Distance(me, dest) <  1)
+ done := 1;
+endif
+SetObjProperty(me, "walking", 1);
+
+// endfor
+endwhile
+SetObjProperty(me, "walking", 0);
+DestroyItem(dest);
+me.script := GetObjProperty(me, "prevscript");
+RestartScript(me);
+endprogram

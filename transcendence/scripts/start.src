@@ -1,0 +1,47 @@
+///////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////
+//  START.SRC - script that is run during startup of server.
+//
+//  Author: ???? ????/??/??
+//
+//  Recent Modifications
+//      1999/06/28 Ignatius added creation of system teleporters.
+//
+////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////
+
+use uo;
+use os;
+
+include "include/gumputil";
+include "util/bank";
+include "include/utility";
+
+include "include/teleporters";
+
+// More Skill System (package)
+include "include/moreskillssystem";
+
+//removed:
+//include "include/moongates";
+
+program Start ()
+	OpenWorldBank();
+
+	find_or_create_storage( "Merchant Storage" );
+
+	// Enables dungeonteleporters.
+	CreateTeleporters();
+
+	// More Skills System (package)
+	//InitMoreSkillsSystem();
+
+
+
+	// todo: force shutdown if unable, or make sure this can't fail.
+	// DAYNIGHT - moved to a package
+	// SAVER - moved to a package
+	// SPAWNER - moved to a package
+	// Enables moongates.
+	// Removed
+endprogram

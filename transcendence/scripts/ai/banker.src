@@ -1,0 +1,64 @@
+use npc;
+use os;
+use uo;
+use polsys;
+
+include "util/bank";
+include "include/randname";
+include "include/eventid";
+include "include/vetement";
+include "include/AOSTooltip";
+
+var bank;
+var me := Self();
+
+if( me.name["<random>"] )
+		SetName( me, RandomName( me ) );
+	   set_priority(50);
+       Habille( me, "banker" );
+       set_priority(1);
+endif
+
+program banker();
+
+	EnableEvents( EVID_SPEECH, 3 );
+	EnableEvents(EVID_ENTEREDAREA);
+
+	while (1)
+    		var ev;
+    		ev := os::wait_for_event( 120 );
+    		if (ev.type == EVID_ENTEREDAREA)
+    	        if (!ev.source.npctemplate)
+                SendAOSToolTipByName(ev.source, Self());
+                endif
+    	        endif
+    		if (ev)
+         		if (( ev.text["bank"] ) && (!GetObjProperty(ev.source, "DarkAura")))
+				OpenBank(ev.source);
+			
+		        elseif(( ev.type == "banca") && (!GetObjProperty(ev.source, "DarkAura")))
+			OpenBank(ev.source);
+		        endif
+		        if(GetObjProperty(ev.source, "DarkAura"))
+                             say("I won't serve a sacrilgue creature like you!!");
+                        endif
+		endif
+	endwhile
+
+endprogram
+
+function OpenBank(you)
+
+	TurnToward(you);
+	var bankbox := FindBankBox( you );
+	if (GetObjProperty(you,"toadmode"))
+		say("*ribbit*");
+	else
+		if (bankbox)
+			SendOpenSpecialContainer( you, bankbox );
+		else
+			say("You don't seem to have a bank box, "+ you.name);
+		endif
+	endif
+
+endfunction

@@ -1,0 +1,971 @@
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// tamed.src      AI for tamed creatures
+//      
+// origional scripter: Dream Weaver 12/98
+// extensive updates : Racalac 1/99/- -5/99
+// DW updated 6/3/99 to allow fetch and drop commands
+// Rac updated 9/3/99 for "all" commands, true following, more command choices in different states
+// Rac updated 10/9/99 attempting to fix runaway problem
+//
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+use npc;
+use os;
+use uo;
+
+include "include/eventid";
+include "include/attributes";
+include "include/NPCBackpacks";
+include "include/npccast";
+include "include/randname";
+
+set_priority(5);
+
+const HALT_THRESHOLD := 15;
+const MOVING_EFFECT_FIREBALL  := 0x36d4;
+//const EVID_ALL_ATTACK_CMD := 0x12;
+//const EVID_ALL_FOLLOW_CMD := 0x11;
+
+var me := Self();
+var masterserial := GetObjProperty( me, "master" );
+var master := SystemFindObjectBySerial( masterserial );
+var mypack := FindMyPack(me.serial);
+
+var caster;
+var spells;
+var count_casts;
+var num_casts;
+var cast_pct;
+var saywords := 0;
+var firebreather;
+var summons := 1;
+
+var guarding :=0;
+var nextwatch := ReadGameClock();
+var freetime;
+
+me.setmaster( master );
+
+if( me.name["<random>"] )
+   SetName( me, RandomName( me ) );
+endif
+
+SetAnchor( me.x, me.y, 5, 0 );
+
+	if (GetObjProperty(me, "frozen"))
+		me.frozen := 1;
+	endif
+
+program TamedAI()
+
+	if ( GetObjProperty( me, "regspawn" ) )
+		var spawnname := GetObjProperty( me, "regspawn" );
+		var numspawns := CInt(GetGlobalProperty(spawnname))-1;
+		SetGlobalProperty(spawnname,numspawns);
+		EraseObjProperty( me, "regspawn" );
+	endif
+
+    var npccfg := ReadConfigFile("npcdesc");
+    if (npccfg[me.npctemplate].script == "spellkillpcs")
+        caster := 1;
+        spells := GetConfigStringArray( npccfg[me.npctemplate], "spell" );
+        cast_pct := npccfg[me.npctemplate].cast_pct;
+        num_casts  := npccfg[me.npctemplate].num_casts;
+        count_casts  := npccfg[me.npctemplate].count_casts;
+        if (!cast_pct)
+             cast_pct := 10;
+        endif
+    elseif (npccfg[me.npctemplate].script == "firebreather")
+	firebreather := 1;
+    endif
+    SetObjProperty( me, "script",npccfg[me.npctemplate].script);
+
+    EnableEvents( EVID_SPEECH, 12 );
+    EnableEvents( EVID_ENGAGED + EVID_DAMAGED );
+    EnableEvents( EVID_DOUBLECLICKED );
+    EnableEvents( EVID_ITEM_GIVEN );
+
+    SetWarMode( 0 );
+    SetObjProperty(me, "serial", me.serial);
+
+    if (!GetObjProperty(me, "Undead"))
+	if (!GetObjProperty(me, "summoned"))
+		freetime := ReadGameClock()+ 3600;
+		freetime := freetime + GetEffectiveSkill(master, SKILLID_TAMING) * 1500;
+	endif
+    else
+	freetime := ReadGameClock()+ 3600;
+    endif
+
+
+    var ev;
+    var evtext;
+    var mename := lower(me.name);
+
+    nextwatch := ReadGameClock();
+    var waittime := 120;
+
+    if (!freetime)
+    	freetime := ReadGameClock()+ 3600;
+    endif
+
+    var setmymaster := 0;
+    if (!master)
+	setmymaster := 1;
+    endif
+
+    while (1)
+        ev := os::wait_for_event( waittime );
+        case (ev.type)
+            EVID_SPEECH:
+              if( ev.source.serial == masterserial )
+		if (setmymaster)
+			RestartScript( me );
+		endif
+		speak();
+		evtext := lower(ev.text);
+		mename := lower(me.name);
+                if (evtext[mename + " kill"])
+		    elseif (evtext[mename + " attack"])
+                    var what := Target( master, TGTOPT_HARMFUL + TGTOPT_CHECK_LOS );
+			if (what)
+                    		Fight( what );
+			endif
+                elseif( evtext[mename + " stop"] || evtext["all stop"])
+		    guarding := 0;
+                elseif (evtext["all kill"] || evtext["all attack"])
+                    var the_target := Target( master, TGTOPT_HARMFUL + TGTOPT_CHECK_LOS );
+                    if( the_target )
+                        var mobs := ListMobilesNearLocation( master.x, master.y, master.z, 9, master.realm );
+                        var eve array;
+                          eve.+type := EVID_ALL_ATTACK_CMD;
+                          eve.+source := me;
+                          eve.+target := the_target;
+                          SendEvent( me, eve );
+                        foreach mob in mobs
+                            if( GetObjProperty( mob, "master" ) == me.master.serial )
+                                SendEvent( mob, eve );
+                            endif
+                        endforeach
+                    endif
+                elseif ((evtext[mename + " come"]) || (evtext["all come"]))
+                    var done := 0;
+		    var chaseloop := 0;
+                    while( done == 0 )
+			chaseloop := chaseloop +1;
+                        done := CloseDistance( ev.source );
+			if (chaseloop > 50)
+				done :=1;
+			endif
+                    endwhile
+                elseif ((evtext[mename + " follow"]) || (evtext["all follow"]))
+                    if( evtext[mename + " follow me"] || evtext["all follow me"])
+                        Follow( ev.source );
+                    else
+                        var the_leader := Target( master, TGTOPT_CHECK_LOS );
+                        if( the_leader )
+                            var mobs := ListMobilesNearLocation( master.x, master.y, master.z, 9, master.realm  );
+                            var eve array;
+                              eve.+type := EVID_ALL_FOLLOW_CMD;
+                              eve.+source := me;
+                              eve.+target := the_leader;
+                              SendEvent( me, eve );
+                            foreach mob in mobs
+                                if( GetObjProperty( mob, "master" ) == me.master.serial )
+                                    SendEvent( mob, eve );
+                                endif
+                            endforeach
+                        endif
+                    endif
+                elseif (evtext[mename + " transfer"] || (evtext["all transfer"]))
+                    Transfer();
+                elseif (evtext[mename + " release"] || (evtext["all release"]))
+                    Release();
+                elseif (evtext[mename + " guard"]  || (evtext["all guard"]))
+                    if( evtext[mename + " guard me"] || evtext["all guard me"])
+                        guarding := ev.source;
+		    else
+                    	var what := Target( master, TGTOPT_HARMFUL + TGTOPT_CHECK_LOS );
+			if (what)
+                    		guarding := what;
+			endif
+		    endif
+                elseif (evtext[mename + " fetch"]  || (evtext[mename + " get"]))
+                    fetch();
+                elseif (evtext[mename + " drop"])
+                    drop();
+                elseif (evtext[mename + " speak"]  || (evtext["all speak"]))
+                    speak();
+		endif
+            endif
+
+            EVID_ENGAGED:
+            EVID_DAMAGED:
+                if (ev.source)
+                    Fight( ev.source );
+                endif
+          EVID_ALL_ATTACK_CMD:
+             Fight(ev.target);
+          EVID_ALL_FOLLOW_CMD:
+             Follow(ev.target);
+	  EVID_DOUBLECLICKED:
+		if (ev.source.serial == masterserial)
+			OpenMyPack();
+		endif
+	  EVID_ITEM_GIVEN:
+		if (ev.source.serial == masterserial)
+			EatIt(ev);
+		endif
+        endcase
+
+	if (guarding != 0)
+		waittime := 5;
+		if ( nextwatch <= ReadGameClock() )
+			nextwatch := ReadGameClock() + 5;
+			PrintTextAbove(me,"*guarding " + guarding.name + "*");
+			foreach mob in ListHostiles( guarding, 9, 0 );
+				Fight(mob);
+				break;
+			endforeach
+			if ( (Distance(me,guarding) > 20) || (!guarding) || (guarding.dead) )
+				guarding := 0;
+			endif
+		endif
+	else
+		waittime := 120;
+		if (freetime < ReadGameClock() )
+			if (GetObjProperty(me,"companion"))
+				freetime := ReadGameClock()+3600;
+			endif
+			if (!GetObjProperty( me, "summoned") )
+				Release();
+			else
+				freetime := ReadGameClock()+3600;
+			endif
+		endif
+	endif
+
+	if (RandomInt(500)==1)
+		Poop();
+	endif
+
+    endwhile
+endprogram
+
+function Fight( opponent )
+
+	if (opponent.serial == me.serial)
+		return;
+	endif
+   
+    EnableEvents( EVID_SPEECH, 12 );
+
+    TurnToward( opponent );
+    SetOpponent( opponent );
+
+    var waittime;
+    var evtext;
+    var mename;
+
+	var nextbreath := ReadGameClock();
+
+  outer:
+    while (opponent && !opponent.dead)
+        waittime := CloseDistance( opponent ) * 1;
+        var ev := wait_for_event( waittime );
+	repeat
+        case (ev.type)
+            EVID_SPEECH:
+               if( ev.source.serial == masterserial )
+		speak();
+		   evtext := lower(ev.text);
+		   mename := lower(me.name);
+                   if( evtext[mename + " stop"] || evtext["all stop"])
+                       SetWarMode( 0 );
+		       guarding := 0;
+                       return;
+                   elseif ((evtext[mename + " kill"]) || (evtext[mename + " attack"]))
+                       	var what := Target( master, TGTOPT_HARMFUL + TGTOPT_CHECK_LOS );
+		       	if (what)
+                       		SetWarMode( 0 );
+                       		Fight( what );
+                       		return;
+		   	endif;
+                   elseif (evtext["all kill"] || evtext["all attack"])
+                       var the_target := Target( master, TGTOPT_HARMFUL + TGTOPT_CHECK_LOS );
+                       if( the_target )
+			  SetWarMode( 0 );
+                          var mobs := ListMobilesNearLocation( master.x, master.y, master.z, 9, master.realm  );
+                          var eve array;
+                            eve.+type := EVID_ALL_ATTACK_CMD;
+                            eve.+source := me;
+                            eve.+target := the_target;
+                          SendEvent( me, eve );
+                          foreach mob in mobs
+                             if( GetObjProperty( mob, "master" ) == me.master.serial )
+                                SendEvent( mob, eve );
+                             endif
+                          endforeach
+			  return;
+                       endif
+                   elseif ((evtext[mename + " come"]) || (evtext["all come"]))
+                       	SetWarMode( 0 );
+                       	var done := 0;
+		    	var chaseloop := 0;
+                    	while( done == 0 )
+				chaseloop := chaseloop +1;
+                        	done := CloseDistance( ev.source );
+				if (chaseloop > 50)
+					done :=1;
+				endif
+                    	endwhile
+                       	return;
+                   elseif ((evtext[mename + " follow"]) || (evtext["all follow"]))
+                       SetWarMode( 0 );
+                       if( evtext[mename + " follow me"] || evtext["all follow me"])
+                           Follow( ev.source );
+                           return;
+                       else
+                           var the_leader := Target( master, TGTOPT_CHECK_LOS );
+                           if( the_leader )
+                               var mobs := ListMobilesNearLocation( master.x, master.y, master.z, 9 , master.realm );
+                               var eve array;
+                                 eve.+type := EVID_ALL_FOLLOW_CMD;
+                                 eve.+source := me;
+                                 eve.+target := the_leader;
+                               SendEvent( me, eve );
+                               foreach mob in mobs
+                                   if( GetObjProperty( mob, "master" ) == me.master.serial )
+                                       SendEvent( mob, eve );
+                                   endif
+                               endforeach
+                           endif
+                       endif
+                   elseif (evtext[mename + " transfer"] || (evtext["all transfer"]))
+                       Transfer();
+                       return;
+                   elseif (evtext[mename + " release"] || (evtext["all release"]))
+                       Release();
+                   elseif (evtext[mename + " fetch"]  || (evtext[mename + " get"]))
+                       fetch();
+                   elseif (evtext[mename + " drop"])
+                       drop();
+                   elseif (evtext[mename + " speak"]  || (evtext["all speak"]))
+                       speak();
+		   endif
+               endif
+            EVID_ENGAGED:
+            EVID_DAMAGED:
+		if (ev.source)
+		  if (ev.source != opponent)
+			if( (!CheckLineOfSight( me, opponent )) || (RandomInt(8)==1) )
+				opponent := ev.source;
+				SetOpponent( opponent );
+			endif
+		  endif
+		  TurnToward( opponent );
+		endif
+
+            EVID_PEACEMADE:
+                opponent := 0;
+                break;
+          EVID_ALL_ATTACK_CMD:
+             Fight(ev.target);
+             return;
+          EVID_ALL_FOLLOW_CMD:
+             SetWarMode( 0 );
+             Follow(ev.target);
+             return;
+        endcase
+
+	if (firebreather)
+		if ( nextbreath <= ReadGameClock() )
+		    if (RandomInt(4) == 1)
+			var dmg := RandomInt((CInt( CInt(GetMaxHp(me)/2.5) * GetHp(me))/GetMaxHp(me)))+5;
+	   		PlayMovingEffect(me, opponent,MOVING_EFFECT_FIREBALL, 10,1,1);
+	   		ApplyDamage(opponent, dmg);
+		    endif
+		    nextbreath := ReadGameClock()+RandomInt(10)+10;
+        	endif
+	endif
+
+        if (caster)
+           if (count_casts)
+              if (num_casts > 0)
+                 if (RandomInt(100) <= cast_pct)
+                     sleep(1);
+                     cast_offensive_spell(me,opponent);
+                     num_casts := num_casts - 1;
+                 endif
+              endif
+           else
+              if (RandomInt(100) <= cast_pct)
+                 sleep(1);
+                 cast_offensive_spell(me,opponent);
+                 num_casts := num_casts - 1;  
+              endif  
+           endif
+        endif
+        waittime := CloseDistance( opponent ) * 1;
+	until (!ev := wait_for_event( waittime ));
+    endwhile
+
+    SetWarMode( 0 );
+
+endfunction
+
+function Follow( master )
+
+    var oldmod := 0;
+    SetDexterityMod(me, 500);
+
+    EnableEvents( EVID_SPEECH, 12 );
+
+	var evtext;
+	var mename;
+	var d := 0;
+	var chaseloop;
+	var close_d := 1;
+
+	nextwatch := ReadGameClock();
+
+   while(master)
+      var ev := wait_for_event(0);
+      if (ev)
+      case (ev.type)
+            EVID_ENGAGED:
+            EVID_DAMAGED:
+	     	SetDexterityMod(me, oldmod);
+                if (ev.source)
+                    Fight( ev.source );
+		    return;
+                endif
+         EVID_SPEECH:
+            if( ev.source.serial == masterserial )
+		evtext := lower(ev.text);
+		mename := lower(me.name);
+		speak();
+                if( evtext[mename + " stop"] || evtext["all stop"])
+		    guarding := 0;
+		    SetDexterityMod(me, oldmod);
+                    return;
+                elseif ((evtext[mename + " kill"]) || (evtext[mename + " attack"]))
+                    var what := Target( master, TGTOPT_HARMFUL + TGTOPT_CHECK_LOS );
+		    SetDexterityMod(me, oldmod);
+                    Fight( what );
+                    return;
+                elseif (evtext["all kill"] || evtext["all attack"])
+                    var the_target := Target( master, TGTOPT_HARMFUL + TGTOPT_CHECK_LOS );
+                    if( the_target )
+                       var mobs := ListMobilesNearLocation( master.x, master.y, master.z, 9, master.realm  );
+                       var eve array;
+                         eve.+type := EVID_ALL_ATTACK_CMD;
+                         eve.+source := me;
+                         eve.+target := the_target;
+                       SendEvent( me, eve );
+                       foreach mob in mobs
+                          if( GetObjProperty( mob, "master" ) == me.master.serial )
+                             SendEvent( mob, eve );
+                          endif
+                       endforeach
+                    endif
+                elseif ((evtext[mename + " follow"]) || (evtext["all follow"]))
+                    if( evtext[mename + " follow me"] || evtext["all follow me"])
+			SetDexterityMod(me, oldmod);
+                        Follow( ev.source );
+			return;
+                    else
+                        var the_leader := Target( master, TGTOPT_CHECK_LOS );
+                        if( the_leader )
+                            var mobs := ListMobilesNearLocation( master.x, master.y, master.z, 9, master.realm  );
+                            var eve array;
+                              eve.+type := EVID_ALL_FOLLOW_CMD;
+                              eve.+source := me;
+                              eve.+target := the_leader;
+                            SendEvent( me, eve );
+                            foreach mob in mobs
+                                if( GetObjProperty( mob, "master" ) == me.master.serial )
+                                    SendEvent( mob, eve );
+                                endif
+                            endforeach
+                        endif
+                    endif
+                elseif (evtext[mename + " transfer"] || (evtext["all transfer"]))
+                    Transfer();
+                    break;
+                elseif (evtext[mename + " release"] || (evtext["all release"]))
+                    Release();
+                elseif (evtext[mename + " fetch"]  || (evtext[mename + " get"]))
+                    fetch();
+                elseif (evtext[mename + " drop"])
+                    drop();
+                elseif (evtext[mename + " speak"]  || (evtext["all speak"]))
+                    speak();
+		elseif (evtext[mename + " guard"]  || (evtext["all guard"]))
+                    if( evtext[mename + " guard me"] || evtext["all guard me"])
+                        guarding := ev.source;
+		    else
+		    	var what := Target( master, TGTOPT_HARMFUL + TGTOPT_CHECK_LOS );
+		    	if (what)
+				guarding := what;
+		    	endif
+		    endif
+		endif
+            endif
+          EVID_ALL_ATTACK_CMD:
+	     SetDexterityMod(me, oldmod);
+             Fight(ev.target);
+             return;
+          EVID_ALL_FOLLOW_CMD:
+	     SetDexterityMod(me, oldmod);
+             Follow(ev.target);
+             return;
+	  EVID_ITEM_GIVEN:
+		if (ev.source.serial == masterserial)
+			EatIt(ev);
+		endif
+	  EVID_DOUBLECLICKED:
+		if (ev.source.serial == masterserial)
+			OpenMyPack();
+		endif
+        endcase
+      endif
+
+	d := Distance( me, master );
+	if( d > close_d )
+		RunToward(master);
+		if ( d > 25 )
+			MoveCharacterToLocation( me, master.x, master.y, master.z );
+		elseif ( d > 15 )
+			SetDexterityMod(me, oldmod);
+			return;	
+		endif
+		chaseloop := chaseloop +1;
+		if (chaseloop > 100)
+			close_d := 2;
+		endif
+	else
+		if (d < close_d)
+			close_d := 1;
+			chaseloop := 0;
+		endif
+		sleep(1);
+	endif
+
+	if ( (guarding != 0) && ( nextwatch <= ReadGameClock() ) )
+		nextwatch := ReadGameClock() + 5;
+		PrintTextAbove(me,"*guarding " + guarding.name + "*");
+		foreach mob in ListHostiles( guarding, 9, 0 );
+			SetDexterityMod(me, oldmod);
+			Fight(mob);
+			return;
+		endforeach
+		if ( (Distance(me,guarding) > 20) || (!guarding) || (guarding.dead) )
+			guarding := 0;
+		endif
+	endif
+
+	if (RandomInt(500)==1)
+		Poop();
+	endif
+
+   endwhile
+
+endfunction
+
+function CloseDistance( opponent )
+
+    case Distance( me, opponent )
+        1:              // the most likely, so first 
+        0:
+            return 1;
+       
+        2:
+            if(!RunToward( opponent ))
+               return 2;
+            else
+               return 0;
+            endif
+
+        default:
+            if(!RunToward( opponent ))
+               return 1;
+            else
+               return 0;
+            endif
+    endcase
+
+endfunction
+
+
+function Transfer()
+
+	if (GetObjProperty(me,"companion"))
+		return;
+	endif
+
+	SendSysMessage( master, "Transfer " + me.name + " to whom?" );
+ 	var whom := Target( master, TGTOPT_NOCHECK_LOS );
+	if(!whom)
+		SendSysMessage( master, "Canceled" );
+		return;
+	endif
+
+	if ( (firebreather) || (caster) )
+
+	var npccfgfile := ReadConfigFile( "npcdesc" );
+    	var tameskill := npccfgfile[me.npctemplate].tameskill;
+	var tgttaming := GetEffectiveSkill(whom, SKILLID_TAMING)+20;
+	if ( tgttaming < tameskill )
+		SendSysMessage( master, "That has no chance of controlling this beast!" );
+		return;
+	endif
+
+	endif
+
+
+	SetObjProperty( me, "master", whom.serial );
+
+	PrintTextAbove(me, me.name + " accepts " + whom.name+ " as its new master");
+
+	RestartScript( me );
+
+endfunction
+
+
+function Release()
+
+	if (GetObjProperty(me,"companion"))
+		return;
+	endif
+
+	var summoned := GetObjProperty( me, "summoned" );
+	var totem := CInt(GetObjProperty( me, "totem" ));
+	if (totem)
+		var it := CreateItemAtLocation(me.x,me.y,me.z,totem,1, me.realm);
+		if (it)
+			it.name := me.name;
+			it.color := CInt(GetObjProperty( me, "totemcolor" ));
+			SetObjProperty(it,"critter",me.npctemplate);
+			SetObjProperty(it,"critcolor",me.color);
+			it.usescript := ":dundee:totem";
+			it.decay := 0;
+			it.movable := 1;
+			PlaySoundEffect( me, SFX_SPELL_DISPEL );
+			PlayStationaryEffect( me.x, me.y, me.z, FX_SMOKE, 0xa, 0xa, 0, me.realm );
+			MoveCharacterToLocation(me,0,0,0,MOVECHAR_FORCELOCATION);
+			Damage( me, GetMaxHp(me) + 3 );
+		else
+			say("*Argh*");
+			return;
+		endif
+	elseif (summoned)
+		PlayStationaryEffect( me.x, me.y, me.z, FX_SMOKE, 0xa, 0xa, 0, me.realm );
+		MoveCharacterToLocation(me,0,0,0,MOVECHAR_FORCELOCATION);
+		Damage( me, GetHp(me) + 3 );
+	else
+		PrintTextAbove( me, + "If thou dost need my services, call upon me");
+		me.setmaster( 0 );
+		me.script := GetObjProperty( me, "script" );
+		EraseObjProperty(me, "master");
+		EraseObjProperty(me, "script");
+		SetAnchor(me.x,me.y,10,1 );
+		RestartScript(me);
+	endif
+  
+endfunction
+
+function fetch()
+
+    if ( len(EnumerateItemsInContainer(mypack)) )
+	drop();
+    endif
+
+    var tobj := Target(master);   //object I'm supposed to get
+    if (tobj.container)       
+       return;
+    endif
+
+    var times := 0;
+    while ( (Distance(me, tobj) > 1) && times < 5 && CheckLineOfSight(me,tobj) )
+       if( !RunToward(tobj))
+          sleep(1);
+          times := times + 1;
+       else
+          times := 0;
+       endif
+    endwhile
+
+    MoveItemToContainer(tobj, mypack);
+
+endfunction
+
+
+function drop()
+
+	var myitems;
+
+	foreach myitems in EnumerateItemsInContainer(mypack)
+		if (myitems.container.serial == mypack.serial)
+        		MoveItemToLocation(myitems, me.x, me.y, me.z,0);
+			sleepms(100);
+		endif
+	endforeach
+
+endfunction
+
+function speak()
+
+	PetCount();
+
+	if (RandomInt(4)==1)
+		var npccfgfile := ReadConfigFile( "npcdesc" );
+		var sound_number := npccfgfile[me.npctemplate].attackhitsound;
+		PlaySoundEffect( me, sound_number );
+	endif
+
+endfunction
+
+function PetCount()
+
+	var npccfg := ReadConfigFile("npcdesc");
+
+	var pets := 0;
+	var mobs := ListMobilesNearLocation(me.x,me.y,me.z,8, me.realm);
+	foreach mob in mobs
+		if ( (mob.script == "tamed") && (GetObjProperty(mob,"master")==masterserial) )
+			if ( (npccfg[mob.npctemplate].script == "spellkillpcs") ||
+			   (npccfg[mob.npctemplate].script == "firebreather") )
+				if (GetMaxHp(mob) > 110)
+					pets := pets + 5;
+				else
+					pets := pets + 2;
+				endif
+			else
+				pets := pets+1;
+			endif
+		endif
+	endforeach
+
+	if ( (pets > 9) && ((RandomInt(20)+3) < pets) )
+		Release();
+	endif
+
+endfunction
+
+function OpenMyPack();
+
+	if (!master)
+		master := SystemFindObjectBySerial( masterserial );
+		me.setmaster( master );
+	endif
+
+	if (Distance(me,master) > 1)
+			SendSysMessage(master,"You are too far to mount that");
+		return;
+	endif
+
+	var mount := GetEquipmentByLayer( master, 25 );
+//if (mount)
+
+	var critter := "";
+	case (mount.graphic)
+	0x3ea2: critter := "horse";
+	0x3e9f: critter := "horse2";
+	0x3ea0: critter := "horse3";
+	0x3ea1: critter := "horse4";
+	0x3ea6:	critter := "llama";
+	0x3ea3:	critter := "desertostard";
+	0x3ea4:	critter := "frenziedostard";
+	0x3ea5:	critter := "forestostard";
+	endcase
+
+	var animal := CreateNpcFromTemplate(critter, master.x, master.y, master.z, 0, master.realm);
+	animal.facing := master.facing;
+	animal.color := mount.color;
+	animal.name := GetObjProperty(mount, "petname");
+	SetObjProperty(animal, "master", master.serial);
+	SetObjProperty(animal, "prevtamed", 1);
+	animal.script := "tamed";
+	RestartScript(animal);
+
+	DestroyItem( mount );
+
+	case (me.graphic)
+	0x123:
+	0x124:
+		if (!me.backpack)
+			var newbackpack := CreateItemAtLocation(me.x, me.y, me.z, 0xe75,1, me.realm);
+			EquipItem(me, newbackpack);
+		endif
+
+		foreach item in EnumerateItemsInContainer(mypack)
+			if (item.container.serial == mypack.serial)
+				MoveItemToContainer(item, me.backpack);
+			endif
+		endforeach
+
+		SendOpenSpecialContainer( master, me.backpack );
+		return;
+	endcase
+
+//else
+
+	var mounttype := 0;
+
+	case (me.graphic)
+	0xcc: //dark brown/horse
+			mounttype := 0x3ea2;
+	0xc8: //lightbrown/horse2
+			mounttype := 0x3e9f;
+	0xe2: //light grey/horse3
+			mounttype := 0x3ea0;
+	0xe4: //greybrown/horse4
+			mounttype := 0x3ea1;
+	0xdc: //Llama
+			mounttype := 0x3ea6;
+	0xd2: //desert
+			mounttype := 0x3ea3;
+	0xda: //frenzied
+			mounttype := 0x3ea4;
+	0xdb: //forest
+			mounttype := 0x3ea5;
+	endcase
+
+	if (mounttype)
+		MoveCharacterToLocation(master,me.x,me.y,me.z,MOVECHAR_FORCELOCATION);
+		master.facing := me.facing;
+		var mount := CreateItemAtLocation(me.x, me.y, me.z, 0xf021,1, me.realm);
+
+		if (me.color == 33784)
+			me.color := 0;
+		endif
+
+                  mount.graphic := mounttype;
+                  mount.color := me.color;
+                  EquipItem(master,mount);
+                  mount.color := me.color;
+
+		SetObjProperty(mount,"petname",me.name);
+		MoveCharacterToLocation(me,0,0,0,MOVECHAR_FORCELOCATION);
+		SetObjProperty(me,"guardkill",1);
+		ApplyRawDamage(me,GetMaxHp(me));
+	endif
+//endif
+
+endfunction
+
+function Poop();
+
+	if ( ReadGameClock() > CInt(GetObjProperty(me,"#nextpoop")) )
+
+	var poopoo := 0;
+	case (me.graphic)
+		0xcc:
+		0xe4:
+		0xc8:
+		0xe2:
+		0x123:	poopoo := CreateItemAtLocation(me.x,me.y,me.z,0x0f3c,1, me.realm);
+
+		default: return;
+
+	endcase
+
+	if (poopoo)
+		poopoo.decayAt := ReadGameClock() + 300;
+		poopoo.movable := 0;
+	endif
+
+	endif
+
+	SetObjProperty(me,"#nextpoop",ReadGameClock() + 38400);
+
+endfunction
+
+function EatIt(ev)
+
+	var edible := 0;
+	case(ev.item.graphic)
+		0x09d0:
+		0x09d1:
+		0x09d2:
+		0x0c5c:
+		0x0c5d:
+		0x0c64:
+		0x0c65:
+		0x0c66:
+		0x0c67:
+		0x0c6a:
+		0x0c6b:
+		0x0c6c:
+		0x0c6d:
+		0x0c6e:
+		0x0c70:
+		0x0c71:
+		0x0c72:
+		0x0c73:
+		0x0c74:
+		0x0c75:
+		0x0c77:
+		0x0c78:
+		0x0c79:
+		0x0c7a:
+		0x0c7b:
+		0x0c7c:
+		0x0c7f:
+		0x0c80:
+		0x0c81:
+		0x0c82:
+		0x0d39:
+		0x0d3a:
+		0x0f36:
+		0x100c:
+		0x100d:
+		0x171d:
+		0x171e:
+		0x171f:
+		0x1720:
+		0x1721:
+		0x1722:
+		0x1723:
+		0x1724:
+		0x1725:
+		0x1726:
+		0x1727:
+		0x1728:
+		0x1729:
+		0x172a:
+		0x172b:
+		0x172c:
+		0x172d:
+		0x1a92:
+		0x1a93:
+		0x1a94:
+		0x1a95:
+		0x1a96:
+		0x1ebd:
+		0x1ebe:
+		0x1ebf:
+		  edible := 1;
+	default: edible := 0;
+	endcase
+
+	if (edible)
+		PlaySoundEffect(me,CInt(0x3b) + RandomInt(3));
+		DestroyItem(ev.item);
+		PrintTextAbovePrivate(me,"*Yum!*",ev.source);
+		freetime := ReadGameClock() + 3600;
+		return;
+	endif
+
+	if ( (me.graphic == 0x123 ) || (me.graphic == 0x124) )
+		if (!me.backpack)
+			var newbackpack := CreateItemAtLocation(me.x, me.y, me.z, 0xe75,1, me.realm);
+			EquipItem(me, newbackpack);
+		endif
+		MoveItemToContainer(ev.item,me.backpack);
+		PlaySoundEffect(me,0x49);
+	endif
+
+endfunction

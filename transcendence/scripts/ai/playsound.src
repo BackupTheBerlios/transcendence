@@ -1,0 +1,38 @@
+use uo;
+use os;
+use npc;
+
+program playsound ();
+//local rune := parms[1];
+//local character := parms[2];
+
+//SetName( character, "" );
+
+var me := Self();
+me.hidden := 1;
+var stop := 0;
+while (1)
+      // if (getobjproperty (me, "stop") = 1)
+        //me.hp := me.hp - (me.hp + 10);
+       //endif 
+      
+       var pause := CInt(GetObjProperty(me, "pause"));
+       var soundtype := CInt(GetObjProperty(me, "soundtype"));
+       if (stop == 0)
+       PlaySoundEffect( me, soundtype);
+       endif
+       sleepms(pause);
+       foreach it in ListItemsNearLocation( me.x, me.y, me.z, 6, me.realm )
+       if (it.objtype == 0xfd01)
+       
+        if (GetObjProperty(it, "stop") == 1)
+       // print ("soundrune stop");
+        stop := 1;
+        elseif (GetObjProperty(it, "stop") == 0)
+	stop := 0;
+        endif
+       endif
+       endforeach
+endwhile
+endprogram
+      

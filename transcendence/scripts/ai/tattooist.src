@@ -1,0 +1,159 @@
+use npc;
+use os;
+use uo;
+
+include "util/bank";
+include "include/randname";
+include "include/eventid";
+include "include/vetement";
+
+var bank;
+var me := Self();
+var layout := {"PAGE 0",
+                 "GUMPPIC 200 200 6785",
+                 "TEXT 360 250 95 0",
+                 "BUTTON 360 300 2118 2117 1 0 101",
+                 "TEXT 380 300 960 1",
+                 "BUTTON 360 330 2118 2117 1 0 102",
+                 "TEXT 380 330 960 2",
+                 "BUTTON 360 360 2118 2117 1 0 103",
+                 "TEXT 380 360 960 3"
+                 };
+                
+var data := {"What tattoo do you want?",
+               "Snake         Price : 500",
+               "Arm tribal     Price : 300",
+               "Erase Tattoo   Price : 2000"
+               };
+              
+if( me.name["<random>"] )
+		SetName( me, RandomName( me ) );
+	   set_priority(50);
+       Habille( me, "tattoist" );
+       set_priority(1);
+endif
+
+program tattoist();
+
+	EnableEvents( EVID_SPEECH, 3 );
+
+	while (1)
+    		var ev;
+    		ev := os::wait_for_event( 120 );
+    		if (ev)
+         		if ( ev.text["tattoo"] )
+				var who := ev.source;
+			
+				var select := SendDialogGump(who, layout, data);
+				case (select[0])
+				 101 :
+				  
+				   if (GetEquipmentByLayer(who, 8))
+				    say("Sorry,you allready have a tatto, delete it..");
+				    continue;
+				   endif
+				   var zaino := EnumerateItemsInContainer( who.backpack );
+				   var check := 0;
+				   foreach it in zaino
+				    if ((it.graphic == 0x0eed) && (it.amount >= 500))
+			              check := 1;
+			              SubtractAmount(it, 500);
+			            endif
+			           endforeach
+			           if (check == 0)
+			            say("Sorry, you have not enough money");
+			           
+			           else
+			            say("I start to draw the tattoo...");
+			            sleep(3);
+			            say("Do you feel pain? don't you?");
+			            sleep(3);
+			            say("I'm finishing...");
+			            sleep(3);
+			            say("Here's your tatto!");
+			           
+			            var tattoo := CreateItemInBackpack(who, 0x3dc2, 1);
+			            EquipItem(who, tattoo);
+			           endif
+			         102:
+			            if (GetEquipmentByLayer(who, 8))
+				      say("Sorry,you allready have a tatto, delete it..");
+				      continue;
+				     endif
+			                                                                                                                                                                                                                                                                            
+			            var zaino := EnumerateItemsInContainer( who.backpack );                                                                                                                                                                                                       
+			            var check := 0;                                                                                                                                                                                                                                               
+			            foreach it in zaino                                                                                                                                                                                                                                             
+			             if ((it.graphic == 0x0eed) && (it.amount >= 300))                                                                                                                                                                                                              
+			               check := 1;                                                                                                                                                                                                                                                  
+			               SubtractAmount(it, 300);
+			             endif                                                                                                                                                                                                                                                          
+			            endforeach                                                                                                                                                                                                                                                      
+			            if (check == 0)                                                                                                                                                                                                                                                  
+			             say("Sorry, you have not enough money");                                                                                                                                                                                                                        
+			                                                                                                                                                                                                                                                                      
+			            else                                                                                                                                                                                                                                                              
+			             say("I start to draw the tattoo...");                                                                                                                                                                                                                           
+			             sleep(3);                                                                                                                                                                                                                                                       
+			             say("Do you feel pain? don't you?");                                                                                                                                                                                                                            
+			             sleep(3);                                                                                                                                                                                                                                                       
+			             say("I'm finishing...");                                                                                                                                                                                                                                        
+			             sleep(3);                                                                                                                                                                                                                                                       
+			             say("Here's your tatto!");                                                                                                                                                                                                                                      
+			                                                                                                                                                                                                                                                                              
+			             var tattoo := CreateItemInBackpack(who, 0x3dc3, 1);                                                                                                                                                                                                           
+			             EquipItem(who, tattoo);                                                                                                                                                                                                                                         
+			            endif                                                                                                                                                                                                                                                             
+			         103:
+			               var tattoo := GetEquipmentByLayer(who,8);                                                      
+			               if ((tattoo.graphic != 0x3dc2) && (tattoo.graphic != 0x3dc3))
+			                say("You have no tattoos!");
+			               
+			               endif
+			               var zaino := EnumerateItemsInContainer( who.backpack);
+			               var check := 0;                                     
+			               foreach it in zaino                                   
+			                if ((it.graphic == 0x0eed) && (it.amount >= 2000))    
+			                  check := 1;                                        
+			                  SubtractAmount(it, 3000);
+			                endif                                                
+			               endforeach                                            
+			               if (check == 0)                                        
+			                say("Sorry, you have not enough money");            
+			                return;                                              
+			               else                                                  
+			                say("I start to erase the tattoo...");               
+			                sleep(3);                                           
+			                say("Do you feel pain? don't you?");                
+			                sleep(3);                                           
+			                say("I'm finishing...");                            
+			                sleep(3);                                           
+			                say("I deleted it");                          
+			                                                                     
+			               
+			                DestroyItem(tattoo);                             
+			               endif                                                 
+			             
+			                 
+			             
+			        endcase    
+			endif        
+		endif                
+	endwhile                     
+                                     
+endprogram                           
+                                     
+                                     
+                                     
+                                     
+                                     
+                                     
+                                     
+                                     
+                                     
+                                     
+                                     
+                                     
+                                     
+                                     
+                                     

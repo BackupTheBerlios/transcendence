@@ -1,0 +1,10 @@
+use uo;
+use os;
+use npc;
+
+program null ()
+var me := Self();
+
+me.hidden := 1;
+me.frozen := 1;
+endprogram

@@ -1,0 +1,156 @@
+use uo;
+use os;
+
+use util;
+
+include "include/animations";
+include "include/particles";
+include "include/pgfacing";
+
+const ANM_STRIP_UP := 118;
+const ANIM_STRIP_MASK := 120;
+const ANM_STRIP_LOW := 112;
+const ANM_DANCE := 111;
+const ANM_MOVE := 113;
+const ANM_BOW := 108;
+const ANM_SEXY_DANCE := 290;
+
+program strip(parms)
+
+var who := parms[1];
+var spectator := parms[2];
+var complete := parms[3];
+
+PrintTextAbove( who, "i will strip for you", 3, 90 );
+SetObjProperty(who, "isstripping", 1);
+
+var order, itm, clothes, q, i;
+var STRIP_MASK := 1;
+var STRIP_BOOTS := 1;
+var STRIP_GLOVES := 1;
+//var COMPLETE_STRIP := 1;
+var endstrip := 5;
+clothes := {};
+var order1 := {3,7,6,5,23};
+var order2 := {3,7,6,23,5};
+
+if(complete == 1)
+ endstrip := 5;
+else
+ endstrip := 4;
+endif
+
+if(RandomInt(100) > 70)
+ order := order1;
+else
+ order := order2;	
+endif
+
+if(RandomInt(100) > 60)
+ STRIP_MASK := 0;	
+endif
+
+if(RandomInt(100) > 80)
+ STRIP_BOOTS := 0;	
+endif
+
+if(RandomInt(100) > 50)
+ STRIP_GLOVES := 0;	
+endif
+
+for(i := 1; i <= endstrip; i := i + 1)
+//SendSysMessage(spectator, "FASE " + cstr(i), 3, 38);
+if(RandomInt(100) > 50)
+ pgface(who, spectator);
+else
+ xyface(who, who.x, who.y - 1);
+endif
+
+if(RandomInt(100) > 50)
+  PlayCharAnim( who, ANM_SEXY_DANCE );
+  sleep(5);
+endif
+
+if(RandomInt(100) > 50)
+ 
+ PlayCharAnim( who, ANM_DANCE );
+ sleep(3);
+ //PlayCharAnim( who, 104 );
+ sleep(1);
+else
+  PlayCharAnim( who, ANM_MOVE );
+ sleep(3);
+endif
+
+if(RandomInt(100) > 50)
+for (q := 1; q <= RandomInt(8); q := q + 1)
+ who.facing := q;
+ sleepms(120);
+endfor
+pgface(who, spectator);
+sleep(4);
+endif
+
+if(i == 1)
+ if(STRIP_BOOTS == 1)
+  PlayCharAnim( who, ANM_STRIP_LOW );
+  sleepms(500);
+ else
+  continue; 
+ endif
+elseif(i == 2)
+  if(STRIP_GLOVES == 1)
+  PlayCharAnim( who, ANM_STRIP_UP );
+  sleepms(490);
+ else
+  continue; 
+ endif
+elseif(i == 3)
+ if(STRIP_MASK == 1)
+  PlayCharAnim( who, ANIM_STRIP_MASK );
+  sleepms(635);
+ else
+  continue; 
+ endif
+elseif(i == 4)
+  if(order[i] == 5)
+  PlayCharAnim( who, ANM_STRIP_UP );
+  sleepms(670);
+ elseif(order[i] == 23)
+  PlayCharAnim( who, ANM_STRIP_LOW ); 
+  sleepms(500);
+ endif
+elseif(i := 5)
+    if(order[i] == 5)
+  PlayCharAnim( who, ANM_STRIP_UP );
+  sleepms(670);
+ elseif(order[i] == 23)
+  PlayCharAnim( who, ANM_STRIP_LOW ); 
+  sleepms(500);
+ endif
+endif	
+
+itm := GetEquipmentByLayer( who, order[i] );
+MoveItemToLocation( itm, who.x, who.y + 1, who.z, MOVEITEM_FORCELOCATION );
+clothes.append(itm);
+//SendSysMessage( spectator, "LAYER" + cstr(order[i]), 3, 38 );
+//SendSysMessage( spectator, "OBJ" + cstr(itm.objtype), 3, 38 );
+//SendSysMessage( spectator, "NAME" + itm.desc, 3, 38 );
+sleep (4);
+endfor
+for (i := 1; i <= 7; i := i + 1)
+ who.facing := i;
+ sleepms(120);
+endfor
+pgface(who, spectator);
+sleep(3);
+PlayCharAnim( who, 134 );
+  sleep(7);
+PlayCharAnim( who, ANM_BOW );
+sleep(10);
+foreach cloth in clothes
+equipitem(who, cloth);
+endforeach 
+EraseObjProperty(who, "isstripping");
+
+endprogram

@@ -1,0 +1,59 @@
+use npc;
+use os;
+use uo;
+use cfgfile;
+use polsys;
+
+include "include/eventid";
+include "include/randname";
+include "include/npcutil";
+include "include/objtype";
+include "include/dist";
+include "include/anchors";
+include "ai/main/killpcsloop";
+include "ai/combat/fight";
+include "ai/main/defaultnoncombatevent";
+include "ai/combat/defaultcombatevent";
+include "ai/setup/killpcssetup";
+include "ai/main/loot";
+include "ai/main/sleepmode";
+include "include/speech";
+include "include/AOSTooltip";
+
+const HALT_THRESHOLD := 8; // how close before he attacks?
+
+program HeadlessknightKillPlayers()
+        var mestesso := Self();
+        mestesso.graphic := 0x01a4;
+        sleep(5);
+        //EquipFromTemplate( self(), "headlessknight" );
+    	var breast := CreateItemAtLocation( mestesso.x,mestesso.y, mestesso.z, 0x1415, 1, mestesso.realm); breast.color := 1157; //breast
+    	var arms := CreateItemAtLocation( mestesso.x,mestesso.y, mestesso.z, 0x1410, 1, mestesso.realm); arms.color := 1157;//arms 
+    	var legs := CreateItemAtLocation( mestesso.x,mestesso.y, mestesso.z, 0x1411, 1, mestesso.realm); legs.color := 1157;//legs
+    	var gloves := CreateItemAtLocation( mestesso.x,mestesso.y, mestesso.z, 0x1414, 1, mestesso.realm); gloves.color := 1157;//gloves
+    	var gorget := CreateItemAtLocation( mestesso.x,mestesso.y, mestesso.z, 0x1413, 1, mestesso.realm); gorget.color := 1157;//gorget
+    	EquipItem(mestesso, breast);
+    	EquipItem(mestesso, arms);
+    	EquipItem(mestesso, legs);
+    	EquipItem(mestesso, gloves);
+    	EquipItem(mestesso, gorget);
+    
+    
+    	SetWarMode( 0 );
+    	main_AI_loop();
+
+endprogram
+
+function CloseDistance( opponent )
+
+
+    case Distance( me, opponent )
+        1:              // the most likely, so first 
+        0:
+            return 1;
+        default:
+            RunToward( opponent );
+            return 0;
+    endcase
+
+endfunction

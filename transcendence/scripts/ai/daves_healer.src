@@ -1,0 +1,227 @@
+/////////////////////////////////////////////////////////////////////////////
+//
+//  daves_healer.src: Fight hostiles, heal/cure/res players
+//
+//  Healers will wander and defend themselves from attack, tho somewhat
+//  more passively. They will only heal/cure/res if the mobile is not an
+//  npc, they have LOS, they need the heal/cure/res, and neither the healer
+//  nor the healee have any hostiles on them.
+//
+//  Author: Racalac
+//
+//  Created: who knows; Modified: 7/5/99
+//                      Modified: 8/12/99: Commented out healing hp. Was being
+//                                         used as a cheap battle tactic.
+//
+/////////////////////////////////////////////////////////////////////////////
+
+
+use npc;
+use os;
+use uo;
+use util;
+use polsys;
+use cfgfile;
+
+include "include/client";
+include "include/npccast";
+include "include/attributes";
+include "include/npcbackpacks";
+include "include/randname";
+include "include/eventID";
+//include "include/sysevent";
+include "include/dist";
+include "include/anchors";
+include "include/speech";
+include "include/vetement";
+include "include/particles";
+include "include/effects2D";
+include ":spells:checkeffects";
+include "include/res";
+include "include/resPenalty";
+include ":Localization:localization";
+
+const SOUND_EFFECT_RES := 0x215;
+const ACTION_EFFECT_CAST2 := 0x11;
+const REACT_THRESHOLD := 2;
+const EVID_SPEECH := 0x0001;
+
+
+var spellscfg := ReadConfigFile(":spells:spells"); 
+var speech := 99;
+var me:= Self();
+var summons := 1;
+var saywords := 1;
+if( me.name["<random>"] )
+	SetName( me, RandomName( me ) );
+	set_priority(50);
+     Habille( me, GetObjProperty(me,"equipt") );
+    set_priority(1);
+endif
+
+program HealerAI()
+drop_anchor();
+SetAnchor( me.x, me.y, 5, 20 );
+    var next_wander := ReadGameClock() + 10;
+
+    EnableEvents( EVID_ENGAGED + EVID_DISENGAGED + EVID_DAMAGED );
+    EnableEvents( EVID_ENTEREDAREA, REACT_THRESHOLD );
+    DisableEvents( EVID_SPEECH );
+    EnableEvents( EVID_ITEM_GIVEN );
+
+	if (GetObjProperty(me, "frozen"))
+		me.frozen := 1;
+	endif
+
+    SetWarMode( 0 );
+
+    var ev;
+    while (1)
+        ev := os::wait_for_event( 10 );
+
+        repeat
+            // print( "event type: " + ev.type );
+            case (ev.type)
+            EVID_SPEECH:
+		next_wander := ReadGameClock()+60;
+                check_speech(ev.text, ev.source);
+
+                EVID_ENGAGED:
+                EVID_DAMAGED:
+                    if (ev.source)
+                        Fight( ev.source );
+                    endif
+
+                EVID_ENTEREDAREA:
+                    if ((!ev.source.isA(POLCLASS_NPC)) && (!GetObjProperty(ev.source, "DarkAura")))
+                        HealerStuff(ev.source);
+                    endif
+                    if(GetObjProperty(ev.source, "DarkAura"))
+                             PrintCustomTextAboveByLanguage( me, "I won't heal a sacrilgue creature like you!!", "Non curerò un essere blasfemo come te!!", 38, 3);
+                             //say("I won't heal a sacrilgue creature like you!!");
+                    endif
+                EVID_ITEM_GIVEN:
+		    next_wander := ReadGameClock()+60;
+		    TakeItem(ev.source,ev.item);
+            endcase
+
+        until (! (ev := os::wait_for_event(4)) );
+        if (ReadGameClock() >= next_wander)
+                wander();
+                next_wander := ReadGameClock() + 10;
+        endif
+    endwhile
+endprogram
+
+
+function Fight( opponent )
+
+    var oldprio := set_priority(50);
+    DisableEvents( /*EVID_ENTEREDAREA + */ EVID_LEFTAREA );
+    SetOpponent( opponent );
+
+    var waittime;
+outer:
+    while (opponent && not (opponent.dead || opponent.hidden || opponent.concealed) && (dist(me,opponent) < 15))
+        waittime := CloseDistance( opponent ) * 15;
+
+        var ev := wait_for_event( waittime );
+
+        //print( "event type: " + ev.type );
+        repeat
+            case (ev.type)
+                EVID_DISENGAGED:
+                EVID_ENGAGED:
+                EVID_DAMAGED:
+			if ( GetHp(me) < (GetMaxHp(me)/2) )		
+                    		CastSpell( me, me, "gheal");
+			endif
+                EVID_OPPONENT_MOVED:
+                    break; // just waking up is enough
+                EVID_ENTEREDAREA:
+                    if ( !ev.source.isA(POLCLASS_NPC) )
+                        HealerStuff(ev.source);
+                    endif
+            endcase
+        until (! (ev := wait_for_event(0)) );
+    endwhile
+
+    EnableEvents( EVID_ENTEREDAREA + EVID_LEFTAREA, REACT_THRESHOLD );
+    SetWarMode( 0 );
+    set_priority( oldprio );
+endfunction
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+//  CloseDistance - close the distance between self and an opponent.
+//  Returns: 1 if distance is 0 or 1 (no move necessary)
+//           0 if distance is >= 2 (may still need to move)
+//
+//  This is a .EM-file candidate.
+//
+/////////////////////////////////////////////////////////////////////////////
+function CloseDistance( opponent )
+
+
+    case Distance( me, opponent )
+        1:              // the most likely, so first 
+        0:
+            return 1;
+       
+        2:
+            WalkToward( opponent );
+            return 0;
+
+        default:
+            RunToward( opponent );
+            return 0;
+    endcase
+
+endfunction
+
+
+function HealerStuff(mobile)
+
+    if( len(ListHostiles(me)) > 0 )
+      say("I cannot help thee until I escape this danger!");
+    else
+	//Say (mobile.name);
+	var poison_level := CInt(GetObjProperty(mobile, "poison_level"));
+	if( mobile.dead && CheckLineOfSight(me,mobile))
+	   //Bring up Res choice gump
+
+	   TurnToward(mobile);
+	   PrintCustomTextAboveByLanguage( me, "Live again by the virtues!", "In nome delle Sacre Virtù, torna in Vita!", 90, 3);
+	   //say( "Live again by the Virtues!" );
+	   
+	   //CastSpell( me, mobile, "resurrect" );
+	   PlaySoundEffect(me, SFX_SPELL_RESSURECTION);
+           PlaySoundEffect(mobile, SFX_SPELL_RESSURECTION);
+           Resurrect(mobile);
+           ResPenalties(mobile);
+	elseif( poison_level > 0 && CheckLineOfSight(me,mobile) && (!len(ListHostiles(mobile))))
+
+		TurnToward(mobile);
+		PrintCustomTextAboveByLanguage( me, "Sacrifice Purifies the Body and Soul!", "Per la virtù della Compassione, purifico il Corpo e l'Anima!", 90, 3);
+		//say("Sacrifice Purifies the Body and Soul!");
+		CastSpell( me, mobile, "archcure" );
+
+	elseif( (GetHp(mobile) < GetMaxHp(mobile)) && CheckLineOfSight(me,mobile) && (!len(ListHostiles(mobile))) )
+
+		TurnToward(mobile);
+		PrintCustomTextAboveByLanguage( me, "Compassion heals all!", "Per la virtù della Compassione, guarisci!", 90, 3);
+		//say("Compassion heals all!");
+		var healed := RandomDiceRoll("1d3");
+                healed := CInt(GetEffectiveSkill(me, SKILLID_MAGERY)/2) + healed;
+		//CastSpell( me, mobile, "gHeal" );
+		HealDamage(mobile, healed);
+                CheckForSpell3DEffects(spellscfg, me, mobile, 29);
+                Play2DObjectCenteredEffectHuefx( mobile, FX_SPARK_EFFECT, 7, 0x10);
+                //PlayObjectCenteredEffect( mobile, FX_SPARK_EFFECT, 7, 0x10 );
+                PlaySoundEffect( mobile, SFX_SPELL_GREATER_HEAL );
+
+
+	endif
+    endif
+endfunction

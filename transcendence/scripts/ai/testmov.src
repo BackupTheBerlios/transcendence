@@ -1,0 +1,14 @@
+use uo;
+use os;
+use npc;
+
+program testmoving ()
+
+var me := Self();
+
+//while (1);
+var theit := CreateItemAtLocation( me.x - 5, me.y - 5, me.z, 0xdc22, 1, me.realm); 
+say("hello");
+RunToward(theit);
+//endwhile
+endprogram

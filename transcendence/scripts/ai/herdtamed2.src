@@ -1,0 +1,50 @@
+use uo;
+use os;
+use npc;
+var me := Self();
+var posx := GetObjProperty(me, "locx");
+var posy := GetObjProperty(me, "locy");
+var mescr := GetObjProperty(me, "prevherd");
+program herdingtamed ()
+
+
+
+
+var done := 0;
+		    var chaseloop := 0;
+                    while( done == 0 )
+			chaseloop := chaseloop +1;
+                        done := CloseDistance( posx, posy );
+			if (chaseloop > 50)
+				done :=1;
+			endif
+                    endwhile
+
+me.script := mescr;
+RestartScript(me);
+endprogram
+
+
+function CloseDistance( posy, posx )
+    var theit :=CreateItemAtLocation(posx, posy, 0, 0xdc22, 1, me.realm);
+    case Distance( me, theit )
+        1:              // the most likely, so first 
+        0:
+            return 1;
+       
+        2:
+            if(!RunTowardLocation( posx, posy ))
+               return 2;
+            else
+               return 0;
+            endif
+
+        default:
+            if(!RunTowardLocation( posx, posy ))
+               return 1;
+            else
+               return 0;
+            endif
+    endcase
+
+endfunction

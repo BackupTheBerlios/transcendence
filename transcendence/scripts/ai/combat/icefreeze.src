@@ -1,0 +1,15 @@
+use uo;
+use os;
+
+program icefreeze (parms)
+var who := parms[2];
+var eqpcolors := parms[1];
+
+sleep(25);
+var i;
+for (i:=0;i<=25;i:=i+1)
+var eqp := GetEquipmentByLayer( who, i );
+eqp.color := eqpcolors[i];
+endfor
+who.frozen := 0;
+endprogram
