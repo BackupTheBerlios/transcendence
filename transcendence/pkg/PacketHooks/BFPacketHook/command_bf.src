@@ -1,0 +1,294 @@
+use uo;
+use os;
+use polsys;
+use cfgfile;
+
+include "include/packets";
+include "popupmenu";
+include "include/AOSTooltip";
+include ":Localization:localization";
+include ":DaemonProcesses:processes";
+
+program command_bf()
+	Print( "Hooking Command 0xBF..." );
+	return 1;
+endprogram
+
+//the main HandleBF will catch any subcommand that are not hooked, but
+//since you should hook those seperately, it is a good idea to either
+//not define this, or simply return 0 to let POL handle it.
+exported function HandleBF( character, byref packet )
+	print(packet);
+	syslog(packet);
+	return 0;
+endfunction
+
+exported function HandleB1( character, byref packet )
+	//print(packet);
+	//syslog(packet);
+	return 0;
+endfunction
+
+const OFFSET_PARTY_CMD := 5;
+
+exported function HandlePartySystem( character, byref packet )
+	var party_cmd := packet.GetInt8(OFFSET_PARTY_CMD);
+	case(party_cmd)
+		//.....implementation
+	endcase
+	return 1;
+endfunction
+
+///////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////// ACTION 3D /////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////
+
+const OFFSET_ACT_3D := 5;
+exported function Action3D( character, byref packet)
+SetObjProperty( character, "SessionClientType", "3D" );
+//print("ACTION 3D!!" + "  " + packet);
+
+var actionid := packet.getInt32(OFFSET_ACT_3D);
+//print ("ACT ID Is: " + cstr(actionid));
+
+PlayCharAnim(character, actionid);
+endfunction
+
+///////////////////////////////////////////////////////////////////////////////////////
+////////////////// CAST FROM SPELLBOOK (AOS SPELLBOOK) /////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////
+
+
+exported function SpellCasted( character, byref packet)
+//print("SPELL CASTED" + "  " + packet);
+
+var spellscfg := ReadConfigFile(":spells:spells");
+
+if(!spellscfg)
+SendSysMessage (character, "Spells.cfg non trovato!");
+print( "Spells.cfg non trovato");
+return 0;
+endif
+
+
+var spellIdOffset := packet.getSize() - 2;
+var spellID := packet.getInt16(spellIdOffset);
+
+var spellScript := spellscfg[spellID].script;
+
+if(!spellScript)
+SendSysMessage (character, "SpellScript non definito: " + cstr(spellID));
+print( "SpellScript non definito");
+return 0;
+endif
+
+start_script( ":spells:" + spellScript, character );
+
+endfunction
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////// REQUESTPOP /////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////
+
+
+exported function RequestPopup( character, byref packet)
+print("REQUESTPOPUP" + "  " + packet);
+var seriale := packet.getInt32(5);
+var obj := SystemFindObjectBySerial( seriale, sysfind_flags := 0 );
+var itemdesc := ReadConfigFile("itemdesc");
+var objCfg;
+ //if(GetGlobalProperty("AOSTooltips") == "onclick") 
+
+//endif
+if(obj.isA(POLCLASS_MOBILE))
+ if (character.serial != seriale)
+  //print("DIVERSO" + cstr(character.serial) + " " + cstr(seriale));
+  
+   SendPopUpMenuByScriptName(character, SystemFindObjectBySerial( seriale, sysfind_flags := 0 ), obj.script);
+ else
+   SendPopUpMenuOnSelf(character);
+ endif
+ 
+ if(GetGlobalProperty("AOSTooltips") == "onclick") 
+  if((GetObjProperty(character, "lang") == "ITA") && (obj.npctemplate))
+   SendAOSToolTipString(character, obj, GetLocalizedNPCName(obj, "ItaName"));
+ //SendAOSToolTipByName(character, obj);
+  else
+   SendAOSToolTipByName(character, obj);
+  endif 	
+ endif
+ 
+else
+ 
+ if(obj.isA(POLCLASS_CORPSE))
+  SendCorpsePopup(character, obj);
+ elseif(obj.isA(POLCLASS_SPELLBOOK) )
+   SendContainerPopup(character, obj);
+   SendPropAOSTooltip(character, obj, obj.desc, {{"Spells", cstr(obj.countInsertedSpells() )}});
+ elseif((obj.isA(POLCLASS_CONTAINER)) || (obj.isA(POLCLASS_DOOR)))
+  SendContainerPopup(character, obj);
+  if(GetGlobalProperty("AOSTooltips") == "onclick") 
+   //SendItemAOSTooltipByItemType(character, obj);
+   SendPropAOSTooltip(character, obj, obj.desc, {{"Oggetti", cstr(len(EnumerateItemsInContainer(obj)) )},{"Peso", cstr(obj.weight) }});
+  endif
+ else
+  SendGeneralItemPopup(character, obj);	
+  if(GetGlobalProperty("AOSTooltips") == "onclick") 
+   if(obj.isA(POLCLASS_ARMOR))
+   objCfg := itemdesc[obj.objtype];
+   SendPropAOSTooltip(character, obj, obj.desc, {{"AR", obj.ar},{"Fire Resistance", cstr(objCfg.FireResistance) }});
+   elseif (obj.isA(POLCLASS_WEAPON))   
+   else
+   SendItemAOSTooltip (character, obj, obj.desc);
+   endif
+  endif
+ endif
+endif
+
+
+endfunction
+
+///////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////// POPUP SELECTION /////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////
+
+
+exported function PopupSelection( character, byref packet)
+print("POPUPSELECTION" + "  " + packet);
+var seriale := packet.getInt32(5);
+var tag := packet.getInt16(9);
+var charact := SystemFindObjectBySerial( seriale, sysfind_flags := 0 );
+print (cstr(seriale) + " " + cstr(tag));
+var ev := struct;
+
+if (character.serial != seriale)
+ 
+  if(tag == POPUPTAG_OPENPAPERDOLL)
+   OpenPaperdoll( character, charact );
+  elseif (tag == POPUPTAG_BACKPACK)
+   SendOpenSpecialContainer( character, charact.backpack );
+  elseif (tag == POPUPTAG_BANKBOX)
+   ev.+type := "banca";
+   ev.+source := character;
+   SendEvent( charact, ev );
+  elseif (tag == POPUPTAG_BUY)
+   ev.+type := "compra";
+   ev.+source := character;
+   SendEvent( charact, ev );
+   elseif (tag == POPUPTAG_SELL)
+   ev.+type := "vendi";
+   ev.+source := character;
+   SendEvent( charact, ev );
+   elseif (tag == POPUPTAG_STABLE)
+   ev.+type := "stable";
+   ev.+source := character;
+   SendEvent( charact, ev );
+   elseif (tag == POPUPTAG_RELEASE)
+   ev.+type := "rilascia";
+   ev.+source := character;
+   SendEvent( charact, ev );
+   elseif (tag == POPUPTAG_TRANSFER)
+   ev.+type := "transfer";
+   ev.+source := character;
+   SendEvent( charact, ev );
+   elseif (tag == POPUPTAG_KILL)
+   ev.+type := "kill";
+   ev.+source := character;
+   SendEvent( charact, ev );
+   elseif (tag == POPUPTAG_FOLLOW)
+   ev.+type := "segui";
+   ev.+source := character;
+   SendEvent( charact, ev );
+   elseif (tag == POPUPTAG_STOP)
+   ev.+type := "stop";
+   ev.+source := character;
+   SendEvent( charact, ev );
+   elseif (tag == POPUPTAG_LOOKAT)
+   ev.+type := "guarda";
+   ev.+source := character;
+   SendEvent( charact, ev );
+   elseif (tag == POPUPTAG_TALK)
+   ev.+type := "parla";
+   ev.+source := character;
+   SendEvent( charact, ev );
+   elseif (tag == POPUPTAG_LOOT)
+   // niente per ora
+   elseif(tag == POPUPTAG_TAME)
+   var parms := {character, charact};
+   start_script(":taming:popuptaming", parms);
+  endif
+else
+  if(tag == POPUPTAG_OPENPAPERDOLL)
+   OpenPaperdoll( character, charact );
+  elseif (tag == POPUPTAG_BACKPACK)
+   SendOpenSpecialContainer( character, charact.backpack );
+  endif	
+endif
+
+
+
+endfunction
+
+///////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////// REQUEST AOSTOOLTIP  //////////////////
+///////////////////////////////////////////////////////////////////////////////////////
+
+
+
+exported function RequestAOSTooltip(who, byref packet)
+//SendSysMessage(who, "AOSTooltip request...");
+//print(packet);
+var serial := packet.getInt32(5);
+var daemonpid := GetDaemonPID("AOSTooltipsDaemon");
+//start_script(":AOSTooltips:SendAOSTooltips", {who, serial});
+var daemon := getprocess(daemonpid);
+var ev := struct;
+
+ev.+type;
+ev.+client;
+ev.+serial;
+
+ev.type := "AOSTooltipRequest";
+ev.client := who;
+ev.serial := serial;
+
+daemon.sendEvent(ev);
+
+endfunction
+
+///////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////// SCREEN SIZE  //////////////////
+///////////////////////////////////////////////////////////////////////////////////////
+
+exported function HandleReceiveScreenSize( character, byref packet )
+
+  character := character;
+  var x := packet.GetInt16(7);
+  var y := packet.GetInt16(9);
+  var res := struct;
+  
+  res.+width;
+  res.+height;
+  
+  res.width := x;
+  res.height := y;
+  
+  var acct := FindAccount(character.acctname);
+  acct.SetProp("Resolution", res);
+
+  return 1;
+
+endfunction
+
+///////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////// UNKKNOWN  //////////////////
+///////////////////////////////////////////////////////////////////////////////////////
+
+exported function HandleUnknownOne( character, byref packet )
+
+  character := character;
+  packet := packet;
+  return 1;
+
+endfunction

@@ -1,0 +1,59 @@
+use uo;
+use os;
+use polsys;
+
+include "include/AOSTooltip";
+
+program ProcessPacket(parms)
+
+set_critical(0);
+set_priority(1);
+
+var who := parms[1];
+var packet := parms[2];
+
+
+var item_serial := packet.getInt32(3);
+
+// Check if item is an House and sends the Custom Design if it's committed.
+
+var multiitm := SystemFindObjectBySerial( item_serial);
+        
+if((multiitm.graphic > 0x4000) && (GetObjProperty(multiitm, "Committed")))
+ start_script(":CustomHouseDesignTool:custom_house", {who, item_serial});
+ return 0;
+endif
+
+//Check if there's MouseOver AOSTooltips Enabled
+
+//if(GetGlobalProperty("AOSTooltips") == "auto" )
+  sleep(2);      
+  var strbyte := cstr(hex(item_serial));
+        
+  var firstchar := hex(cint("0x" + strbyte[3]) - 8);
+  firstchar := cstr(firstchar);
+  strbyte[3] := firstchar[3];
+  item_serial := cint(strbyte);
+  var itm := SystemFindObjectBySerial( item_serial );
+    
+  if(itm.movable != 0)
+   CheckTooltipCache(who, item_serial, 0x00688312);
+    /*    
+        if(itm.isA(POLCLASS_CONTAINER) )
+            if(itm.objtype == 0x0EFA)
+             
+            else
+            	print("CONTAINER ITEM");
+                SendPropAOSTooltip(who, itm, itm.desc, {{"Oggetti", cstr(len(EnumerateItemsInContainer(itm)) )},{"Peso", cstr(itm.weight) }});
+            endif
+        else
+              print("NORMAL ITEM");
+              SendItemAOSTooltip (who, itm, itm.desc);
+        endif*/
+   endif
+     	return 0;
+/*else
+        return 0;	 	
+endif*/
+
+endprogram

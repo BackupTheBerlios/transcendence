@@ -1,0 +1,32 @@
+//this hook add AOS  features enabling flag
+// by ArT-iX
+
+
+use uo;
+use os;
+use basic;
+use polsys;
+//use unicode;
+
+include "include/packets";
+
+
+
+
+exported function A9Handle(who, byref packet)
+    //print ("OLD A9 Packet ");
+    //print (packet);
+    packet.setInt8((packet.getSize() - 1), 0x28);
+    //print ("NEW A9 Packet ");
+    //print (packet);
+    
+    	return 0;
+    
+endfunction
+
+
+program A9Hook()
+    Print( "SystemHook: A9 Hooking Enabled." );
+    return 1;
+endprogram
+

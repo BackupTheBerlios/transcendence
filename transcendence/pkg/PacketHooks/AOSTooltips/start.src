@@ -1,0 +1,10 @@
+use uo;
+use os;
+use datafile;
+
+program start()
+
+print("Starting AOSTooltips Daemon...");
+start_script(":AOSTooltips:AOSTooltipsDaemon");
+
+endprogram

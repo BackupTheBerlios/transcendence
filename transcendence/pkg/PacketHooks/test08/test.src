@@ -1,0 +1,13 @@
+use uo;
+use os;
+use polsys;
+
+exported function receivedrop(who, byref packet)
+
+ print("DROP: " + packet);
+ 
+endfunction
+
+program test()
+return 1;
+endprogram

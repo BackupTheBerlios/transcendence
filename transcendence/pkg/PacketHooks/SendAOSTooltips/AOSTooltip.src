@@ -1,0 +1,141 @@
+use uo;
+use os;
+use basic;
+use polsys;
+use datafile;
+//use unicode;
+
+include "include/packets";
+include "include/AOSTooltip";
+include ":CustomHouseDesignTool:CustomHouse";
+
+
+exported function SendItemHandle (who, byref packet)
+        //packet.sendPacket(who);
+        //print("OK");
+      
+        
+        var firstserialbyte := packet.getInt8(3);
+        var item_serial := packet.getInt32(3);
+        var bck_serial := item_serial;
+        var multiitm := SystemFindObjectBySerial( bck_serial);
+        //print(cstr(bck_serial) + ": " + cstr(multiitm.graphic));
+        if((multiitm.graphic > 0x4000) && (GetObjProperty(multiitm, "Committed")))
+         var parms := {who, bck_serial};
+         start_script("custom_house", parms);
+        endif
+        if(GetGlobalProperty("AOSTooltips") == "auto" )
+        var strbyte := cstr(hex(item_serial));
+        //print("ITMSER : " + strbyte);
+        var firstchar := hex(cint("0x" + strbyte[3]) - 8);
+        firstchar := cstr(firstchar);
+        
+        strbyte[3] := firstchar[3];
+        //strbyte := "0x6" + lastcharbyte;
+        //firstserialbyte := cint(strbyte);
+        //print("ITMSER : " + strbyte);
+        //print ("ITEMSERIAL: " + cstr(item_serial));
+        item_serial := cint(strbyte);
+        var itm := SystemFindObjectBySerial( item_serial, sysfind_flags := 0 );
+        //print ("ITEMDESC: " + cstr(itm.desc) + " " + cstr(item_serial));
+        
+        //sendsysmessage(who, itm.desc);
+        if(itm.movable != 0)
+        
+          if(itm.isA(POLCLASS_CONTAINER) )
+            if(itm.objtype == 0x0EFA)
+            else
+             SendPropAOSTooltip(who, itm, itm.desc, {{"Oggetti", cstr(len(EnumerateItemsInContainer(itm)) )},{"Peso", cstr(itm.weight) }});
+            endif
+        else
+             SendItemAOSTooltip (who, itm, itm.desc);
+        endif
+        endif
+     	return 0;
+    else
+        return 0;	 	
+    endif
+endfunction
+
+exported function SendContainerHandle (who, byref packet)
+     
+        /*var numobjects := packet.getInt16(3);
+        var itmserial;
+        var itm;
+        var iteratore := 0;
+        var i;
+        var serialoffset;
+        for (i :=1 ; i <= numobjects; i := i + 1)
+        serialoffset := 5 + iteratore;
+        itmserial := packet.getInt32(serialoffset);
+        itm := SystemFindObjectBySerial( itmserial, sysfind_flags := 0 );
+        if(itm.isA(POLCLASS_CONTAINER) )
+        SendPropAOSTooltip(who, itm, itm.desc, {{"Oggetti", cstr(len(EnumerateItemsInContainer(itm)) )},{"Peso", cstr(itm.weight) }});
+        else
+        SendItemAOSTooltip (who, itm, itm.desc);
+        endif
+        iteratore := iteratore + 19;
+        endfor*/
+        if(GetGlobalProperty("AOSTooltips") == "auto" )
+        //print (who.name);
+        var parms := {who, packet};
+        start_script("handlecontainer", parms);
+        
+        
+     	return 0;
+     	else
+        return 0;	 	
+        endif
+    
+endfunction
+
+exported function SendCharHandle (who, byref packet)
+        //packet.sendPacket(who);
+        var char_serial := packet.getInt32(3);
+        var chr := SystemFindObjectBySerial( char_serial, sysfind_flags := 0 );
+        /*if(GetObjProperty(chr, "Ethereal") == "Yes")
+        packet.setInt8(17, 0x80);
+        
+        endif*/
+        if(GetGlobalProperty("AOSTooltips") == "auto" )
+        
+        if (char_serial < 0)
+        return 0;
+        endif
+        
+        //if(Distance(who, chr ) < 4)
+        if (chr.isA(POLCLASS_MOBILE))
+        SendAOSToolTipByName(who, chr);
+        elseif(chr.isA(POLCLASS_ITEM))
+        SendItemAOSTooltip (who, chr, chr.desc);
+        endif
+        //endif
+        //var chrser := SystemFindObjectBySerial( packet.getInt32(3));
+        
+        
+        /*if (GetObjProperty( who, "dim") == 1)
+    	//if(GetObjProperty( who, "dim") != GetObjProperty( chrser, "dim" ))
+        print("DIM DIVERSA");
+        packet.setInt32(3,0);
+        packet.setInt16(7,0);
+        packet.setInt32(9,0);
+        packet.setInt32(13,0);
+        packet.setInt32(17,0);
+        packet.setInt16(21,0);
+        return 1;
+        else
+        	print("DIM UGUALE");
+	return 0;
+        endif
+    	else
+        return 0;	 	
+        endif*/
+    
+endfunction
+
+
+program AOSTooltip()
+    Print( "SystemHook: AOSTooltips Hooking Enabled." );
+    return 1;
+endprogram
+

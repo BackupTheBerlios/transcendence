@@ -1,0 +1,146 @@
+// speechHook.src
+// This hook corrects the problems caused by trigger words from the
+// speech.mul file.  This function converts the triggered speech back
+// to normal unicode speech, and players will no longer need to delete
+// their speech.mul files.
+//
+// The uopacket.cfg file should look like this (without the // comment, 
+// of course):
+//
+// Packet 0xAD
+// {
+//     Length variable
+//     ReceiveFunction speechHook:UCReceiveSpeech
+// }
+//
+// And here is the beginning of the actual function...
+
+use uo;
+use os;
+use basic;
+use polsys;
+use unicode;
+use math;
+
+include "include/packets";
+
+const OFFSET_RECV_SIZE     :=  1; // WORD == packet length
+const OFFSET_RECV_TYPE     :=  3; // BYTE == type: if type==0xc0, trigger present
+const OFFSET_RECV_SPEECH   := 12; // speech here(null terminated)
+const OFFSET_TRIGGER_START := 12;
+const OFFSET_TRIGGER_COUNT := 13;
+const OFFSET_NO_TRIG_STRING := 7;
+
+
+exported function UCReceiveSpeech(who, byref packet)
+    var speech;
+    var speechLen;
+    var triggerCheck := packet.GetInt8(OFFSET_RECV_TYPE);
+    who := who; // prevents compile spam
+    if (triggerCheck == 0xc0)
+     var offset := OFFSET_TRIGGER_START; 
+     var numwords := lsh(packet.GetInt8(12), 4) | rsh(packet.GetInt8(13), 4);
+     for(offset:=OFFSET_TRIGGER_START; offset<(numwords+1)*12; offset:=offset+12)
+//     you may extract the keywords here to use for keyword handling.
+//     keywords are integers. usage is left to the individual shard.
+//     some keywords cancel out others. this is done on client side
+//     before being sent to server
+//     var keyword := rsh(packet.GetInt8(13 + offset / 8), (4 - offset % 8)) | lsh(packet.GetInt8(12 + offset / 8) & lsh(0x00000001, 8 - offset % 8) - 1, offset % 8); 
+     endfor
+     offset := 15 + (numwords / 2 * 3);
+     if(numwords % 2 == 0)
+       offset := offset - 1;
+     endif
+     var speech := packet.GetString(offset, packet.GetSize() - offset);
+     packet.SetInt8(OFFSET_RECV_TYPE, 0);
+     packet.SetUnicodeString(OFFSET_RECV_SPEECH, CAscZ(speech), 1);
+     packet.SetInt16(OFFSET_RECV_SIZE,(12 + (len(speech) * 2)));
+        return 0;
+    else
+    	//sendsysmessage(who, "Size: " + cstr(packet.GetSize()));
+    	//speechLen := (packet.GetSize() - OFFSET_TRIGGER_START);
+    	//speech := packet.GetString(OFFSET_NO_TRIG_STRING, speechlen);
+    	//sendsysmessage(who, "used ascii or no-triggers, so...");
+    	speechLen := (packet.getSize() - 14);
+    	//speech := "Ok:" + packet.GetUnicodeString(12, (speechLen / 2) + 3);
+    	speech := "oK:" + cchrZ(packet.GetUnicodeString(12, (speechLen / 2)));
+    	//if (speech["ciao"])
+        //sendsysmessage(who, "Ciao detected");
+        if (processGesturesText(speech) != "false")
+        
+        PlayCharAnim(who, processGesturesText(speech));
+        
+        endif
+        //endif
+    	/*sendsysmessage(who, "Speech is: " + speech);
+    	sendsysmessage(who, "OK");
+    	packet.SetUnicodeString(OFFSET_RECV_SPEECH, CAscZ(speech), 1);
+        packet.SetInt16(OFFSET_RECV_SIZE, (12 + ((len(speech)) * 2)) );
+    	SendSysMessageUC(who, "UCSPeech is: " + speech, "enu");*/
+    	return 0;
+    endif
+endfunction
+
+
+program speechHook()
+    Print( "SystemHook: Speech Processor 0.2 Enabled." );
+    return 1;
+endprogram
+
+function processGesturesText(text)
+
+var returnedAnimID;
+
+
+returnedAnimID := "false";
+
+if(text["ciao"])
+returnedAnimID := 125;
+elseif (text["arrivederci"])
+returnedAnimID := 127;
+elseif (text["salve"])
+returnedAnimID := 125;
+elseif (text["ciao!!"])
+returnedAnimID := 126;
+return returnedAnimID;
+elseif (text["yeah"])
+returnedAnimID := 123;
+elseif ((text["vaffanculo"]) || (text["tiè!"]))
+returnedAnimID := 122;
+return returnedAnimID;
+endif
+
+//var primelettere := text[1] + text[2];
+
+
+if ((text == "si") || (text == "ok") || (text == "si!" || (text == "ok!")))
+returnedAnimID := 116;
+return returnedAnimID;
+elseif ((text == "no") || (text == "no"))
+returnedAnimID := 121;
+return returnedAnimID;
+endif
+
+var numwords := SplitWords(text);
+if (numwords.size() > 5)
+returnedAnimID := 103;
+endif
+
+if (text[len(text)] == "?")
+returnedAnimID := 128;
+elseif (text[len(text)] == "!")
+returnedAnimID := 103;
+endif
+
+return returnedAnimID;
+
+endfunction
+
+
+function lsh(x, n) 
+  return Cint(x * pow(2, n)); 
+endfunction 
+ 
+function rsh(x, n)
+  return Cint(x / pow(2, n)); 
+endfunction

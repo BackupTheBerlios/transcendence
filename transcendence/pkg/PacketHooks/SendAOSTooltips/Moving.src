@@ -1,0 +1,25 @@
+use uo;
+use os;
+use polsys;
+
+exported function SendMovement(character, byref packet)
+
+var serial := packet.getInt32(1);
+var chr := SystemFindObjectBySerial( serial);
+print("Hooking " + chr.name);
+
+if (GetObjProperty( chr, "Ethereal" ) == "Yes")
+packet.setInt8(15, 0x80);
+packet.setInt8(16, 1);
+print ("77 Packet hook: " + packet);
+
+endif
+return 0;
+endfunction
+
+
+
+
+program Moving()
+return 1;
+endprogram

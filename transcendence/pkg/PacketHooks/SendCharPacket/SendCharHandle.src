@@ -1,0 +1,55 @@
+use uo;
+use os;
+use polsys;
+
+
+include "include/AOSTooltip";
+
+exported function SendChar (who, byref packet)
+        //packet.sendPacket(who);
+        var char_serial := packet.getInt32(3);
+        var chr := SystemFindObjectBySerial( char_serial, sysfind_flags := 0 );
+        /*if(GetObjProperty(chr, "Ethereal") == "Yes")
+        packet.setInt8(17, 0x80);
+        
+        endif*/
+        //if(GetGlobalProperty("AOSTooltips") == "auto" )
+        
+        if (char_serial < 0)
+        return 0;
+        endif
+        
+        //if(Distance(who, chr ) < 4)
+        if (chr.isA(POLCLASS_MOBILE))
+         //SendAOSToolTipByName(who, chr);
+         CheckTooltipCache(who, char_serial, 0x40000000 + 0x01046631);
+        endif
+        //endif
+        //var chrser := SystemFindObjectBySerial( packet.getInt32(3));
+        
+        
+        /*if (GetObjProperty( who, "dim") == 1)
+    	//if(GetObjProperty( who, "dim") != GetObjProperty( chrser, "dim" ))
+        print("DIM DIVERSA");
+        packet.setInt32(3,0);
+        packet.setInt16(7,0);
+        packet.setInt32(9,0);
+        packet.setInt32(13,0);
+        packet.setInt32(17,0);
+        packet.setInt16(21,0);
+        return 1;
+        else
+        	print("DIM UGUALE");
+	return 0;
+        endif
+    	else
+        return 0;	 	
+        endif*/
+    
+endfunction
+
+
+program AOSTooltip()
+    Print( "SystemHook: AOSTooltips Hooking Enabled." );
+    return 1;
+endprogram

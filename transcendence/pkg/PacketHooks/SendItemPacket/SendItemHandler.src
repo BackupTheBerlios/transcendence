@@ -1,0 +1,27 @@
+use uo;
+use os;
+use basic;
+use polsys;
+use datafile;
+//use unicode;
+
+//include "include/packets";
+//include "include/AOSTooltip";
+//include ":CustomHouseDesignTool:CustomHouse";
+
+
+exported function SendItem (who, byref packet)
+        
+        
+        start_script(":SendItemPacket:ProcessPacket", {who, packet});
+        return 0;
+ 
+endfunction
+
+
+
+program SendItemHandler()
+    //Print( "SystemHook: AOSTooltips Hooking Enabled." );
+    return 1;
+endprogram
+

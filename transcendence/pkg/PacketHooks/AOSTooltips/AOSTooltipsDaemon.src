@@ -1,0 +1,62 @@
+use uo;
+use os;
+use polsys;
+use cfgfile;
+use datafile;
+
+include "include/AOSTooltips";
+include ":Localization:localization";
+include ":DaemonProcesses:processes";
+
+program AOSTooltipsDaemon()
+
+set_critical(0);
+
+RegisterDaemon("AOSTooltipsDaemon", getpid() );
+
+var ev;
+
+while(1)
+
+ev := wait_for_event(3);
+
+if(GetGlobalProperty("AOSTooltips") == "auto")
+
+
+//set_priority(1);
+//set_debug(1);
+if (ev.type == "AOSTooltipRequest") 
+
+var who := ev.client;
+var serial := ev.serial;
+
+
+var obj := SystemFindObjectBySerial( serial);
+if(obj.isA(POLCLASS_ITEM))
+if(obj.isA(POLCLASS_SPELLBOOK))
+// SendPropAOSTooltip(who, obj, obj.desc, {{"Spells", cstr(obj.countInsertedSpells() )}});
+elseif(obj.isA(POLCLASS_CONTAINER))
+// SendPropAOSTooltip(who, obj, obj.desc, {{"Oggetti", cstr(len(EnumerateItemsInContainer(obj)) )},{"Peso", cstr(obj.weight) }});
+else
+ SendAOSToolTipString(who, obj, obj.desc);	
+endif 
+
+elseif(obj.isA(POLCLASS_MOBILE))
+if((GetObjProperty(who, "lang") == "ITA") && (obj.npctemplate))
+//   SendAOSToolTipString(who, obj, GetLocalizedNPCName(obj, "ItaName"));
+ SendAOSToolTipString(who, obj, GetLocalizedNPCName(obj, "ItaName"));
+else   
+// SendAOSToolTipByName(who, obj);
+ SendAOSToolTipString(who, obj, obj.name);
+endif 
+endif
+//SendSysMessage( who, "RPM: " + cstr(system_rpm() ), 3, 38);
+//SendSysMessage( who, "Ser:" + cstr(serial) , 3, 38);
+
+endif
+endif
+endwhile
+
+endprogram
+
+
