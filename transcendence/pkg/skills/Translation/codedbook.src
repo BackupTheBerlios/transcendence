@@ -1,0 +1,23 @@
+//
+// CodedBook Script
+//
+// 
+//
+// Creator: Artix
+// Contact: <email>
+//
+// Created: 26-Sept-2001
+// Updated: 
+//
+
+use uo;
+use os;
+
+program codedbook (who);
+
+var layout := array ("page 0","gumppic 0 0 6784");
+var data := array ("");
+SendSysMessage(who, "The book is written in a strange, unkown, arcane language, you have to translate it", 0x003, 0x005a);
+SendDialogGump(who, layout, data);
+
+endprogram

@@ -1,0 +1,27 @@
+use uo;
+use os;
+use cfgfile;
+
+var itemdesc := ReadConfigFile("itemdesc");
+
+program unequiparmor(who,item)
+      
+var checkhair := GetEquipmentByLayer(who, 11);
+if (checkhair.graphic == 0x203d)
+ var ok := 1;
+else
+  
+   var haircol := GetObjProperty(who, "caphaircolor");
+   var hairtype := GetObjProperty(who, "caphairtype");
+   var the_hair := CreateItemInBackpack(who, hairtype, 1);
+   the_hair.color := haircol;
+   if (checkhair)
+    DestroyItem(checkhair);
+   endif
+   EquipItem(who, the_hair);
+endif
+
+   
+
+        return 1;
+endprogram

@@ -1,0 +1,586 @@
+use uo;
+use os;
+use basic;
+use util;
+
+include "include/whitealchemy";
+include "include/attributes";
+include "include/client";
+include "include/blackalchbook";
+include "include/effects";
+include "include/checkmount";
+include "include/magicwords";
+include "include/counttools";
+var layout := {
+    "noclose",
+    "nodispose",
+     "page 0",
+    "gumppic 0 0 500",
+    "button 32 236 4020 4022 1 0 0",
+    "text 50 20 300 0",
+    "button 32 60 4020 4022 1 0 101",
+    "text 70 60 0 1",
+    "button 32 90 4020 4022 1 0 102",
+    "text 70 90 0 2",
+    "button 32 120 4020 4022 1 0 103",
+    "text 70 120 0 3",
+    "button 32 150 4020 4022 1 0 104",
+    "text 70 150 0 4",
+    "button 32 180 4020 4022 1 0 105",
+    "text 70 180 0 5",
+    "button 230 60 4020 4022 1 0 106",
+    "text 268 60 0 6",
+    "button 230 90 4020 4022 1 0 107",
+    "text 268 90 0 7"
+    };
+
+
+
+var data := {
+    "Black Alchemy",
+    "Blind Potion",
+    "Fake Stamina",
+    "Fake Heal",
+    "SuperExplosion",
+    "Daemon Metamorph",
+    "Toxic Cloud",
+    "Create Undead"
+};
+
+program blackalchemybook (who)
+
+SendSysMessage(who, "Select a Cauldron", FONT_NORMAL, 0x005a);
+
+var cauldron := Target(who);
+var nearcauldron := Accessible(who, cauldron);
+var alchemy := CInt(GetEffectiveSkill(who, SKILLID_ALCHEMY));
+var school := GetObjProperty(who, "school");
+var level := GetObjProperty(who, "balchlvl");
+var advlevel := level + 1;
+
+var is_mounted := checkmount(who);
+
+if (cauldron.objtype != 0xdc22)
+  SendSysMessage(who, "It's not a Cauldron!", FONT_NORMAL, 0x005a);
+endif
+
+if ((!school) || (school != "blackalch"))
+  SendSysMessage(who, "You cannot use this book until you join the Black Alchemy School", FONT_NORMAL, 0x005a);
+endif
+
+if (alchemy < 100)
+     SendSysMessage(who, "You have not the required alchemical ability to use this book!", FONT_NORMAL, 0x005a);
+endif
+
+if (!nearcauldron)
+        SendSysMessage(who, "You must be near a Cauldron to make these potions!", FONT_NORMAL, 0x005a);
+endif
+
+if (is_mounted == 1)
+SendSysMessage(who, "You Have to Dismount to cook your potion!!", FONT_NORMAL, 0x005a);
+endif
+if ((school == "blackalch") && (alchemy >= 100)  && (nearcauldron) && (is_mounted == 0)) 
+        var thebook := SendDialogGump(who, layout, data);
+        var is_bottle := checkbottle(who);
+        var bottleitem := 0x0f0e;
+           case (thebook[0])
+              101:
+                  var xpos := cauldron.x - 1;
+                  var ypos := cauldron.y - 1;
+                  var cauldfire := CreateItemAtLocation(cauldron.x, cauldron.y, cauldron.z, 0x0de3, 1, cauldron.realm);
+                  var blind := SendDialogGump(who, layouti, datai);
+                  if (blind[0] == 101)
+                  SendSysMessage(who, "You try to make potion", FONT_NORMAL, 0x005a);
+                  var mwords := "An Lor";
+                  var mwordsii := "Taenebrae Noctis";
+                  var word1 := magicwords(who, mwords);
+                  PerformAction(who, ANIM_CAST_AREA );
+                  var word2:= magicwords(who, mwordsii);
+                  PerformAction(who, ANIM_CAST_AREA );
+                  var word3:= magicwords(who, mwords);
+                  PerformAction(who, ANIM_CAST_AREA );
+                  SendSysMessage(who, CStr(word1) + CStr(word2) +CStr(word3));
+                  sleep(4);
+                  var has_batwing := checkreagentamount(who, 0x0f78, 30);
+                  var has_caps := checkreagentamount(who, 0x0f83, 10);
+                    if((word1 == 0) || (word2 == 0) || (word3 == 0))
+                      SendSysMessage(who, "Some Magic Forumla is maybe wrong!", FONT_NORMAL, 0x005a);
+                     endif
+                   if (level < 10) 
+                    var probability := RandomInt(15);
+                     if ((word1 == 1) && (word2 == 1) && (word3 == 1) &&(has_batwing == 1) && (has_caps == 1)&& (is_bottle == 1))
+                        if (probability < 3)
+                          PlaySoundEffect(who, SFX_SPELL_EXPLOSION );
+                          effetto(xpos, ypos, cauldron.z, cauldron.realm, 0x3709, 965, 3);
+                          SendSysMessage(who, "You created the potion!", FONT_NORMAL, 0x005a);
+                          CreateItemInBackpack(who, 0xdc28, 1);
+                          reagentconsume(who, 0x0f78, 30);
+                          reagentconsume(who, 0x0f83, 10);
+                          reagentconsume(who, 0x0f0e, 1);
+                          SetObjProperty(who, "balchlvl", advlevel);
+                          DestroyItem(cauldfire);                      
+                        else
+                          var altez := cauldron.z + 5;
+                          effetto(cauldron.x, cauldron.y, altez, cauldron.realm,0x3735, 0, 2);
+                          reagentconsume(who, 0x0f78, 15);
+                          reagentconsume(who, 0x0f83, 5);
+                          SendSysMessage(who, "You failed to make potion!", FONT_NORMAL, 0x005a);
+                          DestroyItem(cauldfire);
+                        endif
+                     else
+                        DestroyItem(cauldfire);
+                        SendSysMessage(who, "You have no bottles or reagents!", FONT_NORMAL, 0x005a);
+                     endif
+                   endif
+                  
+                   if (level >= 10)
+                         if ((word1 == 1) && (word2 == 1) && (word3 == 1) &&(has_batwing == 1) && (has_caps == 1)&& (is_bottle == 1))
+                          PlaySoundEffect(who, SFX_SPELL_EXPLOSION );
+                          effetto(xpos, ypos, cauldron.z, cauldron.realm,0x3709, 965, 3);
+                         
+                          CreateItemInBackpack(who, 0xdc28, 1);
+                          reagentconsume(who, 0x0f78, 30);
+                          reagentconsume(who, 0x0f83, 10);
+                          reagentconsume(who, 0x0f0e, 1);
+                          SendSysMessage(who, "You created the potion!", FONT_NORMAL, 0x005a);
+                          DestroyItem(cauldfire);
+                        else
+                          DestroyItem(cauldfire);
+                          SendSysMessage(who, "You have no bottles or reagents!", FONT_NORMAL, 0x005a);
+                         endif
+                    endif
+                endif  
+                if (blind[0]== 0)
+                  DestroyItem(cauldfire);
+                endif
+          102 :
+                var xpos := cauldron.x - 1;
+                var ypos := cauldron.y - 1;
+                var cauldfire := CreateItemAtLocation(cauldron.x, cauldron.y, cauldron.z, 0x0de3, 1, cauldron.realm);
+                var fakestam := SendDialogGump(who, layoutii, dataii);
+                  if (fakestam[0] == 101)
+                  SendSysMessage(who, "You try to make potion", FONT_NORMAL, 0x005a);
+                  PerformAction(who, ANIM_CAST_AREA );
+                  sleep(4);
+                  var has_redpot := countitemsinbackpack(who, 0x0f0b);
+                  var has_mandrake := checkreagentamount(who, 0x0f86, 30);
+                  var has_blood := checkreagentamount(who, 0x0f7d, 2);
+                   if ((level >= 10) && (level < 20)) 
+                    var probability := RandomInt(19);
+                     if ((has_redpot >= 10) && (has_mandrake == 1)&& (is_bottle == 1)&& (has_blood == 1))
+                        if (probability < 3)
+                          PlaySoundEffect(who, SFX_SPELL_EXPLOSION );
+                          effetto(xpos, ypos, cauldron.z, cauldron.realm,0x3709, 965, 3);
+                          SendSysMessage(who, "You created the potion!", FONT_NORMAL, 0x005a);
+                          CreateItemInBackpack(who, 0xdc2a, 1);
+                          reagentconsume(who, 0x0f0b, 10);
+                          reagentconsume(who, 0x0f86, 30);
+                          reagentconsume(who, 0x0f7d, 2);
+                          reagentconsume(who, 0x0f0e, 1);
+                          SetObjProperty(who, "walchlvl", advlevel);
+                          DestroyItem(cauldfire);
+                        else
+                          var altez := cauldron.z + 5;
+                          effetto(cauldron.x, cauldron.y, altez, cauldron.realm,0x3735, 0, 2);
+                          reagentconsume(who, 0x0f0b, 5);
+                          reagentconsume(who, 0x0f86, 15);
+                          reagentconsume(who, 0x0f7d, 1);
+                          DestroyItem(cauldfire);
+                          SendSysMessage(who, "You failed to make potion!", FONT_NORMAL, 0x005a);
+                        endif
+                     else
+                        DestroyItem(cauldfire);
+                        SendSysMessage(who, "You have no bottles or reagents!", FONT_NORMAL, 0x005a);
+                     endif
+                   endif
+                  
+                   if (level >= 20)
+                         if ((has_redpot >= 10) && (has_mandrake == 1)&& (is_bottle == 1)&& (has_blood == 1))
+
+                          PlaySoundEffect(who, SFX_SPELL_EXPLOSION );
+                          effetto(xpos, ypos, cauldron.z, cauldron.realm,0x3709, 965, 3);
+                          SendSysMessage(who, "You created the potion!", FONT_NORMAL, 0x005a);
+                          CreateItemInBackpack(who, 0xdc2a, 1);
+                          reagentconsume(who, 0x0f0b, 10);
+                          reagentconsume(who, 0x0f86, 30);
+                          reagentconsume(who, 0x0f7d, 2);
+                          reagentconsume(who, 0x0f0e, 1);
+                          DestroyItem(cauldfire);
+                        else
+                          DestroyItem(cauldfire);
+                          SendSysMessage(who, "You have no bottles or reagents!", FONT_NORMAL, 0x005a);
+                         endif
+                    endif
+                  if (level < 10)
+                    DestroyItem(cauldfire);
+                    SendSysMessage(who, "You aren't enough able to create this potion!", FONT_NORMAL, 0x005a);
+                  endif
+               
+                endif  
+                if (fakestam[0]== 0)
+                  DestroyItem(cauldfire);
+                endif
+          103:
+               var xpos := cauldron.x - 1;
+                var ypos := cauldron.y - 1;
+                var cauldfire := CreateItemAtLocation(cauldron.x, cauldron.y, cauldron.z, 0x0de3, 1, cauldron.realm);
+                var fakeheal := SendDialogGump(who, layoutiii, dataiii);
+                  if (fakeheal[0] == 101)
+                  SendSysMessage(who, "You try to make potion", FONT_NORMAL, 0x005a);
+                  PerformAction(who, ANIM_CAST_AREA );
+                  sleep(4);
+                  var has_heal := countitemsinbackpack(who, 0x0f0c);
+                  var has_blood := checkreagentamount(who, 0x0f7d, 15);
+                  var has_bpearls := checkreagentamount(who, 0x0f7a, 35);
+                   if ((level >= 20) && (level < 30)) 
+                    var probability := RandomInt(19);
+                     if ((has_heal >= 10) && (has_blood == 1)&& (is_bottle == 1)&& (has_bpearls == 1))
+                        if (probability < 3)
+                          PlaySoundEffect(who, SFX_SPELL_EXPLOSION );
+                          effetto(xpos, ypos, cauldron.z, cauldron.realm,0x3709, 965, 3);
+                          SendSysMessage(who, "You created the potion!", FONT_NORMAL, 0x005a);
+                          CreateItemInBackpack(who, 0xdc29, 1);
+                          reagentconsume(who, 0x0f0c, 10);
+                          reagentconsume(who, 0x0f7d, 15);
+                          reagentconsume(who, 0x0f7a, 35);
+                          reagentconsume(who, 0x0f0e, 1);
+                          SetObjProperty(who, "walchlvl", advlevel);
+                          DestroyItem(cauldfire);
+                        else
+                          var altez := cauldron.z + 5;
+                          effetto(cauldron.x, cauldron.y, altez, cauldron.realm,0x3735, 0, 2);
+                          reagentconsume(who, 0x0f0c, 5);
+                          reagentconsume(who, 0x0f7d, 7);
+                          reagentconsume(who, 0x0f7a, 17);
+                          DestroyItem(cauldfire);
+                          SendSysMessage(who, "You failed to make potion!", FONT_NORMAL, 0x005a);
+                        endif
+                     else
+                        DestroyItem(cauldfire);
+                        SendSysMessage(who, "You have no bottles or reagents!", FONT_NORMAL, 0x005a);
+                     endif
+                   endif
+                  
+                   if (level >= 30)
+                       if ((has_heal == 1) && (has_blood == 1)&& (is_bottle == 1)&& (has_bpearls == 1))
+
+                          PlaySoundEffect(who, SFX_SPELL_EXPLOSION );
+                          effetto(xpos, ypos, cauldron.z, cauldron.realm,0x3709, 965, 3);
+                          SendSysMessage(who, "You created the potion!", FONT_NORMAL, 0x005a);
+                          CreateItemInBackpack(who, 0xdc29, 1);
+                         reagentconsume(who, 0x0f0c, 10);
+                          reagentconsume(who, 0x0f7d, 15);
+                          reagentconsume(who, 0x0f7a, 35);
+                          reagentconsume(who, 0x0f0e, 1);
+                          DestroyItem(cauldfire);
+                        else
+                          DestroyItem(cauldfire);
+                          SendSysMessage(who, "You have no bottles or reagents!", FONT_NORMAL, 0x005a);
+                         endif
+                    endif
+                  if (level < 20)
+                    DestroyItem(cauldfire);
+                    SendSysMessage(who, "You aren't enough able to create this potion!", FONT_NORMAL, 0x005a);
+                  endif
+               
+                endif  
+                if (fakeheal[0]== 0)
+                  DestroyItem(cauldfire);
+                endif
+          104:
+               var xpos := cauldron.x - 1;
+                var ypos := cauldron.y - 1;
+                var cauldfire := CreateItemAtLocation(cauldron.x, cauldron.y, cauldron.z, 0x0de3, 1, cauldron.realm);
+                var superexp := SendDialogGump(who, layoutiv, dataiv);
+                  if (superexp[0] == 101)
+                  SendSysMessage(who, "You try to make potion", FONT_NORMAL, 0x005a);
+                  var mwords := "Hym Ra'sh Fe'Nor";
+                  var mwordsii := "In Corp Por";
+                  var word1 := magicwords(who, mwords);
+                 
+                  PerformAction(who, ANIM_CAST_AREA );
+                  var word2:= magicwords(who, mwordsii);
+                  PerformAction(who, ANIM_CAST_AREA );
+                  var word3:= magicwords(who, mwords);
+                  PerformAction(who, ANIM_CAST_AREA );
+             
+                  sleep(4);
+                  var has_explo := countitemsinbackpack(who, 0x0f0d);
+                  var has_sulph := checkreagentamount(who, 0x0f8c, 35);
+                  var has_volc := checkreagentamount(who, 0x0f8f, 15);
+                  
+                   if((word1 == 0) || (word2 == 0) || (word3 == 0))
+                      SendSysMessage(who, "Some Magic Forumla is maybe wrong!", FONT_NORMAL, COLOR_BLUE_LIGHT);
+                     endif
+                   if ((level >= 30) && (level < 40)) 
+                    var probability := RandomInt(19);
+                    
+                    
+                     if ((word1 == 1) && (word2 == 1) && (word3 == 1) && (has_explo >= 20) && (has_sulph == 1)&& (is_bottle == 1)&& (has_volc == 1))
+                        if (probability < 3)
+                          PlaySoundEffect(who, SFX_SPELL_EXPLOSION );
+                          effetto(xpos, ypos, cauldron.z, cauldron.realm,0x3709, 965, 3);
+                          SendSysMessage(who, "You created the potion!", FONT_NORMAL, 0x005a);
+                          CreateItemInBackpack(who, 0xdc2c, 1);
+                          reagentconsume(who, 0x0f0d, 20);
+                          reagentconsume(who, 0x0f8c, 35);
+                          reagentconsume(who, 0x0f8f, 15);
+                          reagentconsume(who, 0x0f0e, 1);
+                          SetObjProperty(who, "walchlvl", advlevel);
+                          DestroyItem(cauldfire);
+                        else
+                          var altez := cauldron.z + 5;
+                          effetto(cauldron.x, cauldron.y, altez, cauldron.realm,0x3735, 0, 2);
+                          reagentconsume(who, 0x0f0d, 10);
+                          reagentconsume(who, 0x0f8c, 17);
+                          reagentconsume(who, 0x0f8f, 7);
+                          DestroyItem(cauldfire);
+                          SendSysMessage(who, "You failed to make potion!", FONT_NORMAL, 0x005a);
+                        endif
+                     else
+                        DestroyItem(cauldfire);
+                        SendSysMessage(who, "You have no bottles or reagents!", FONT_NORMAL, 0x005a);
+                     endif
+                   endif
+                  
+                   if (level >= 40)
+                        if ((word1 == 1) && (word2 == 1) && (word3 == 1) && (has_explo >= 20) && (has_sulph == 1)&& (is_bottle == 1)&& (has_volc == 1))
+
+                          PlaySoundEffect(who, SFX_SPELL_EXPLOSION );
+                          effetto(xpos, ypos, cauldron.z, cauldron.realm,0x3709, 965, 3);
+                          SendSysMessage(who, "You created the potion!", FONT_NORMAL, 0x005a);
+                          CreateItemInBackpack(who, 0xdc2c, 1);
+                          reagentconsume(who, 0x0f0d, 20);
+                          reagentconsume(who, 0x0f8c, 35);
+                          reagentconsume(who, 0x0f8f, 15);
+                          reagentconsume(who, 0x0f0e, 1);
+                          DestroyItem(cauldfire);
+                        else
+                          DestroyItem(cauldfire);
+                          SendSysMessage(who, "You have no bottles or reagents!", FONT_NORMAL, 0x005a);
+                         endif
+                    endif
+                  if (level < 30)
+                    DestroyItem(cauldfire);
+                    SendSysMessage(who, "You aren't enough able to create this potion!", FONT_NORMAL, 0x005a);
+                  endif
+               
+                endif  
+                if (superexp[0]== 0)
+                  DestroyItem(cauldfire);
+                endif
+          105 :
+                var xpos := cauldron.x - 1;
+                var ypos := cauldron.y - 1;
+                var cauldfire := CreateItemAtLocation(cauldron.x, cauldron.y, cauldron.z, 0x0de3, 1, cauldron.realm);
+                var daemon := SendDialogGump(who, layoutv, datav);
+                  if (daemon[0] == 101)
+                  SendSysMessage(who, "You try to make potion", FONT_NORMAL, 0x005a);
+                  var mwords := "Hys Vor L'Dron Hel";
+                  var mwordsii := "Ab Inferno";
+                  var word1 := magicwords(who, mwords);
+                 
+                  PerformAction(who, ANIM_CAST_AREA );
+                  var word2:= magicwords(who, mwordsii);
+                  PerformAction(who, ANIM_CAST_AREA );
+                  var word3:= magicwords(who, mwords);
+                  PerformAction(who, ANIM_CAST_AREA );
+             
+                  sleep(4);
+                  var has_bat := checkreagentamount(who, 0x0f78, 10);
+                  var has_daemon := checkreagentamount(who, 0x0f80, 15);
+                  var has_blood := checkreagentamount(who, 0x0f7d, 25);
+                  var has_humanhead := checkreagentamount(who, 0x1dae, 1);
+                  
+                   if((word1 == 0) || (word2 == 0) || (word3 == 0))
+                      SendSysMessage(who, "Some Magic Forumla is maybe wrong!", FONT_NORMAL, COLOR_BLUE_LIGHT);
+                     endif
+                   if ((level >= 40) && (level < 50)) 
+                    var probability := RandomInt(19);
+                    
+                    
+                     if ((word1 == 1) && (word2 == 1) && (word3 == 1) && (has_bat == 1) && (has_daemon == 1)&& (is_bottle == 1)&& (has_blood == 1) && (has_humanhead == 1))
+                        if (probability < 3)
+                          PlayLightningBoltEffect( cauldron );
+                          sleep(2);
+                          PlaySoundEffect(who, SFX_SPELL_EXPLOSION );
+                          effetto(xpos, ypos, cauldron.z, cauldron.realm,0x3709, 965, 3);
+                          SendSysMessage(who, "You created the potion!", FONT_NORMAL, 0x005a);
+                          CreateItemInBackpack(who, 0xdc2b, 1);
+                          reagentconsume(who, 0x0f78, 10);
+                          reagentconsume(who, 0x0f80, 15);
+                          reagentconsume(who, 0x0f7d, 25);
+                          reagentconsume(who, 0x1dae, 1);
+                          reagentconsume(who, 0x0f0e, 1);
+                          SetObjProperty(who, "walchlvl", advlevel);
+                          DestroyItem(cauldfire);
+                        else
+                          var altez := cauldron.z + 5;
+                          effetto(cauldron.x, cauldron.y, altez, cauldron.realm,0x3735, 0, 2);
+                          reagentconsume(who, 0x0f78, 5);
+                          reagentconsume(who, 0x0f80, 7);
+                          reagentconsume(who, 0x0f7d, 12);
+                          reagentconsume(who, 0x1dae, 1);
+                          DestroyItem(cauldfire);
+                          SendSysMessage(who, "You failed to make potion!", FONT_NORMAL, 0x005a);
+                        endif
+                     else
+                        DestroyItem(cauldfire);
+                        SendSysMessage(who, "You have no bottles or reagents!", FONT_NORMAL, 0x005a);
+                     endif
+                   endif
+                  
+                   if (level >= 50)
+                       if ((word1 == 1) && (word2 == 1) && (word3 == 1) && (has_bat == 1) && (has_daemon == 1)&& (is_bottle == 1)&& (has_blood == 1) && (has_humanhead == 1))
+
+                           PlayLightningBoltEffect( cauldron );
+                          sleep(2);
+                          PlaySoundEffect(who, SFX_SPELL_EXPLOSION );
+                          effetto(xpos, ypos, cauldron.z, cauldron.realm,0x3709, 965, 3);
+                          SendSysMessage(who, "You created the potion!", FONT_NORMAL, 0x005a);
+                          CreateItemInBackpack(who, 0xdc2b, 1);
+                          reagentconsume(who, 0x0f78, 10);
+                          reagentconsume(who, 0x0f80, 15);
+                          reagentconsume(who, 0x0f7d, 25);
+                          reagentconsume(who, 0x1dae, 1);
+                          reagentconsume(who, 0x0f0e, 1);
+                          DestroyItem(cauldfire);
+                        else
+                          DestroyItem(cauldfire);
+                          SendSysMessage(who, "You have no bottles or reagents!", FONT_NORMAL, 0x005a);
+                         endif
+                    endif
+                  if (level < 40)
+                    DestroyItem(cauldfire);
+                    SendSysMessage(who, "You aren't enough able to create this potion!", FONT_NORMAL, 0x005a);
+                  endif
+               
+                endif  
+                if (daemon[0]== 0)
+                  DestroyItem(cauldfire);
+                endif
+          107 :
+                var xpos := cauldron.x - 1;
+                var ypos := cauldron.y - 1;
+                var cauldfire := CreateItemAtLocation(cauldron.x, cauldron.y, cauldron.z, 0x0de3, 1, cauldron.realm);
+                var undead := SendDialogGump(who, layoutvii, datavii);
+                  if (undead[0] == 101)
+                  SendSysMessage(who, "You try to create an UnDead", FONT_NORMAL, 0x005a);
+                  var mwords := "Corp Myrh Tra'h";
+                  var mwordsii := "Mortis Negatio";
+                  var word1 := magicwords(who, mwords);
+                 
+                  PerformAction(who, ANIM_CAST_AREA );
+                  var word2:= magicwords(who, mwordsii);
+                  PerformAction(who, ANIM_CAST_AREA );
+                  var word3:= magicwords(who, mwords);
+                  PerformAction(who, ANIM_CAST_AREA );
+             
+                  sleep(4);
+                  var has_blkmoor := checkreagentamount(who, 0x0f79, 10);
+                  var has_daemon := checkreagentamount(who, 0x0f7c, 15);
+                  var has_blood := checkreagentamount(who, 0x0f7d, 25);
+                  var has_humanhead := checkreagentamount(who, 0x1dae, 1);
+                  var has_humanarms :=  checkreagentamount(who, 0x1db0, 1);
+                  var has_humanlegs :=  checkreagentamount(who, 0x1ce2, 1);
+                  var has_humanentrails :=  checkreagentamount(who, 0x1cef, 1);
+                   var has_humanheart :=  checkreagentamount(who, 0x1ced, 1);
+                   var has_humantorso :=  checkreagentamount(who, 0x1dad, 1);
+                  
+                   if((word1 == 0) || (word2 == 0) || (word3 == 0))
+                      SendSysMessage(who, "Some Magic Forumla is maybe wrong!", FONT_NORMAL, COLOR_BLUE_LIGHT);
+                     endif
+                   if ((level >= 60) && (level < 70)) 
+                    var probability := RandomInt(19);
+                    
+                    
+                     if ((word1 == 1) && (word2 == 1) && (word3 == 1) && (has_blkmoor == 1) && (has_daemon == 1)&& (is_bottle == 1)&& (has_blood == 1) && (has_humanhead == 1) && (has_humanarms == 1) && (has_humanlegs == 1) && (has_humanentrails == 1) && (has_humanheart == 1) && (has_humantorso == 1))
+                        if (probability < 3)
+                          PlayLightningBoltEffect( cauldron );
+                          sleep(2);
+                          PlaySoundEffect(who, SFX_SPELL_EXPLOSION );
+                          effetto(xpos, ypos, cauldron.z, cauldron.realm,0x3709, 965, 3);
+                          SendSysMessage(who, "You created the UnDead", FONT_NORMAL, 0x005a);
+                          var critt := "zombie";
+                          CreateNpcFromTemplate(critt, cauldron.x, cauldron.y, cauldron.z, 0, cauldron.realm);
+                          reagentconsume(who, 0x0f79, 10);
+                          reagentconsume(who, 0x0f7c, 15);
+                          reagentconsume(who, 0x0f7d, 25);
+                          reagentconsume(who, 0x1dae, 1);
+                          reagentconsume(who, 0x1db0, 2);
+                          reagentconsume(who, 0x1ce2, 2);
+                          reagentconsume(who, 0x1cef, 1);
+                          reagentconsume(who, 0x1ced, 1);
+                           reagentconsume(who, 0x1dad, 1);
+                         
+                         
+                         
+                         
+                          reagentconsume(who, 0x0f0e, 1);
+                          SetObjProperty(who, "walchlvl", advlevel);
+                          DestroyItem(cauldfire);
+                        else
+                          var altez := cauldron.z + 5;
+                          effetto(cauldron.x, cauldron.y, altez, cauldron.realm,0x3735, 0, 2);
+                         reagentconsume(who, 0x0f79, 10);
+                          reagentconsume(who, 0x0f7c, 15);
+                          reagentconsume(who, 0x0f7d, 25);
+                          reagentconsume(who, 0x1dae, 1);
+                          reagentconsume(who, 0x1db0, 2);
+                          reagentconsume(who, 0x1ce2, 2);
+                          reagentconsume(who, 0x1cef, 1);
+                          reagentconsume(who, 0x1ced, 1);
+                           reagentconsume(who, 0x1dad, 1);
+                          DestroyItem(cauldfire);
+                          SendSysMessage(who, "You failed to make potion!", FONT_NORMAL, 0x005a);
+                        endif
+                     else
+                        DestroyItem(cauldfire);
+                        SendSysMessage(who, "You have no bottles or reagents!", FONT_NORMAL, 0x005a);
+                     endif
+                   endif
+                  
+                   if (level >= 70)
+                       if ((word1 == 1) && (word2 == 1) && (word3 == 1) && (has_blkmoor == 1) && (has_daemon == 1)&& (is_bottle == 1)&& (has_blood == 1) && (has_humanhead == 1) && (has_humanarms == 1) && (has_humanlegs == 1) && (has_humanentrails == 1) && (has_humanheart == 1) && (has_humantorso == 1))
+
+                           PlayLightningBoltEffect( cauldron );
+                          sleep(2);
+                          PlaySoundEffect(who, SFX_SPELL_EXPLOSION );
+                          effetto(xpos, ypos, cauldron.z, cauldron.realm,0x3709, 965, 3);
+                          SendSysMessage(who, "You created the Undead!", FONT_NORMAL, 0x005a);
+                         
+                          reagentconsume(who, 0x0f79, 10);
+                          reagentconsume(who, 0x0f7c, 15);
+                          reagentconsume(who, 0x0f7d, 25);
+                          reagentconsume(who, 0x1dae, 1);
+                          reagentconsume(who, 0x1db0, 2);
+                          reagentconsume(who, 0x1ce2, 2);
+                          reagentconsume(who, 0x1cef, 1);
+                          reagentconsume(who, 0x1ced, 1);
+                           reagentconsume(who, 0x1dad, 1);
+                          DestroyItem(cauldfire);
+                        else
+                          DestroyItem(cauldfire);
+                          SendSysMessage(who, "You have no bottles or reagents!", FONT_NORMAL, 0x005a);
+                         endif
+                    endif
+                  if (level <60)
+                    DestroyItem(cauldfire);
+                    SendSysMessage(who, "You aren't enough able to create this potion!", FONT_NORMAL, 0x005a);
+                  endif
+               
+                endif  
+                if (undead[0]== 0)
+                  DestroyItem(cauldfire);
+                endif
+          endcase
+       
+  
+ endif
+
+endprogram
+
+                  
+                 
+                                     
+

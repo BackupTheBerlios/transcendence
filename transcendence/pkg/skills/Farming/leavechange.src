@@ -1,0 +1,58 @@
+// nature script made by Artix
+use uo;
+use os;
+
+program leaveschanges (tree)
+
+var leaves;
+var wstuff;
+var season;
+var leavestype;
+while (1)
+ wstuff := GetGlobalProperty("Weather");
+ season := wstuff[8];
+ leavestype := CheckTreeType(tree);
+
+ case (season)
+
+   0: leaves := CreateItemAtLocation(tree.x, tree.y, tree.z, leavestype[1], 1, tree.realm);
+   1: leaves := CreateItemAtLocation(tree.x, tree.y, tree.z, leavestype[2], 1, tree.realm);
+   2: leaves := CreateItemAtLocation(tree.x, tree.y, tree.z, leavestype[3], 1, tree.realm);
+   3: leaves := CreateItemAtLocation(tree.x, tree.y, tree.z, leavestype[4], 1, tree.realm);
+
+ endcase
+
+ sleep(3600);
+
+ DestroyItem(leaves);
+
+endwhile
+endprogram
+
+function CheckTreeType(tree)
+
+var lvstype := {};
+
+case (tree.graphic)
+ 
+  0x0cda: lvstype := {0x0cdb, 0x0cdc, 0x0cda, 0x0cdb}; //oak1
+  0x0cdd: lvstype := {0x0cde, 0x0cdf, 0x0cdd, 0x0cde}; //oak2
+  0x0d94: lvstype := {0x0d95, 0x0d97, 0x0d94, 0x0d96}; //apple1
+  0x0d92: lvstype := {0x0d99, 0x0d9b, 0x0d92, 0x0d9a}; //apple2
+  0x0da4: lvstype := {0x0da5, 0x0da7, 0x0da4, 0x0da6}; //pear1
+  0x0da8: lvstype := {0x0da9, 0x0dab, 0xda8, 0x0daa}; //pear2
+  0x0d9c: lvstype := {0x0d9e, 0xd9f, 0xd9c, 0x0d9d}; //peach1
+  0x0da0: lvstype := {0x0da2, 0xda3, 0xda0, 0x0da1}; //peach2
+  0x0ce0: lvstype := {0x0ce1, 0x0ce2, 0x0ce0, 0x0ce1}; //walnut1
+  0x0ce3: lvstype := {0x0ce4, 0x0ce5, 0x0ce3, 0x0ce4}; //walnut2
+  0x0ce6: lvstype := {0x0ce7, 0x0ce8, 0x0ce6, 0x0ce7}; //willow
+  0x0cd3: lvstype := {0x0cd4, 0x0cd5, 0x0cd3, 0x0cd4}; //tree1
+  0x0cd0: lvstype := {0x0cd1, 0x0cd2, 0x0cd0, 0x0cd1}; //tree2
+  0x0ccd: lvstype := {0x0cce, 0x0ccf, 0x0ccd, 0x0cce}; //tree3
+ 
+endcase
+
+return lvstype;
+
+endfunction
+  

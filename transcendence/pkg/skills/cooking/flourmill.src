@@ -1,0 +1,98 @@
+//
+// Flour Mill Script
+//
+// creates a flour mill
+//
+// Creator: Artix
+// Contact: 
+//
+// Created: 14-Oct-2000
+// Updated: 
+//
+
+use uo;
+use os;
+
+program flourmilldeed (who, mill)
+
+ var x := mill.x;
+ var y := mill.y;
+ var z := mill.z;
+
+
+
+ SendSysMessage(who, "Select the wheat you want to mill", 0x03, 0x005a);
+
+ var wheat := Target(who);
+
+ if (!wheat)
+  SendSysMessage(who, "Target Cancelled", 0x003, 0x005a);
+  return;
+ endif
+ if (wheat.objtype == 0xda04)
+  if (wheat.amount >= 50)
+    var quality := GetObjProperty(wheat, "quality");
+    SubtractAmount(wheat, 50);
+    DestroyItem(mill);
+   
+    var place := ListItemsNearLocation( x, y, z, 4 , who.realm);
+     foreach it in place
+       if ((it.graphic >= 0x1920) && (it.graphic <= 0x1937))
+        DestroyItem(it);
+       endif
+      endforeach
+
+    var movingmill := CreateItemAtLocation(x, y,z, 0x1925, 1, who.realm);
+    var movingmillii := CreateItemAtLocation(x + 1, y, z, 0x1926, 1, who.realm);
+    var movingmillthree := CreateItemAtLocation(x + 2, y, z, 0x1928, 1, who.realm); 
+
+    SendSysMessage(who, "You're milling the wheat...", 0x03, 0x005a);
+    sleep(3);
+    SendSysMessage(who, "You're milling the wheat...", 0x03, 0x005a);
+    sleep(3);
+    SendSysMessage(who, "You obtained the flour, select an empty sack", 0x03, 0x005a);
+    var sack := Target(who);
+     if (sack.objtype == 0xfff0)
+      DestroyItem(sack);
+      var newsack := CreateItemAtLocation(who.x, who.y, who.z, 0x1045, 1, who.realm);
+       SetObjProperty(newsack, "quality", quality);    
+      SendSysMessage(who, "Here's your sack of flour", 0x03, 0x005a);
+       DestroyItem(movingmill);
+       DestroyItem(movingmillii);
+       DestroyItem(movingmillthree);
+      
+      CreateItemAtLocation(x, y, z, 0x1920, 1, who.realm);
+      CreateItemAtLocation(x + 1, y, z, 0x1922, 1, who.realm);
+      CreateItemAtLocation(x + 2, y, z, 0x1924, 1, who.realm);
+    else
+     
+      SendSysMessage(who, "You have no sack to take the flour, it will remain in the mill", 0x003, 0x005a);
+      DestroyItem(movingmill);
+       DestroyItem(movingmillii);
+       DestroyItem(movingmillthree);
+      var fullmill := CreateItemAtLocation(x, y, z, 0x1921, 1, who.realm);
+      var fullmillii :=CreateItemAtLocation(x + 1, y, z, 0x1923, 1, who.realm);
+      var fullmillthree := CreateItemAtLocation(x + 2, y, z, 0x1924, 1, who.realm);
+      SetObjProperty(fullmill, "quality", quality);
+       SetObjProperty(fullmillii, "quality", quality);
+        SetObjProperty(fullmillthree, "quality", quality);
+      Detach();
+      sleep(120);
+      DestroyItem(fullmill);
+       DestroyItem(fullmillii);
+        DestroyItem(fullmillthree);
+      CreateItemAtLocation(x, y, z, 0x1920, 1, who.realm);
+      CreateItemAtLocation(x + 1, y, z, 0x1922, 1, who.realm);
+      CreateItemAtLocation(x + 2, y, z, 0x1924, 1, who.realm);   
+      endif 
+  else
+    SendSysMessage(who, "Sorry, you must have more than 50 wheat seeds to mill", 0x003, 0x005a);
+    return;
+  endif
+else
+  SendSysMessage(who, "That's not wheat", 0x003, 0x005a);
+  return;
+endif
+  	    
+endprogram
+

@@ -1,0 +1,116 @@
+
+//
+// Translate Script
+//
+// Translates a Coded Book and write the translation in an empty book
+//
+// Creator: Artix
+// Contact: artix@artix.f2s.com
+//
+// Created: 26-Sept2001
+// Updated: 
+//
+use uo;
+use os;
+use util;
+
+include "include/moreskillssystem";
+
+program translate (who);
+
+SendSysMessage(who, "Which book do you want to translate?", 0x003, 0x005a);
+
+var sourcebook := Target(who);
+if (!sourcebook)
+ SendSysMessage(who, "Target Cancelled", 0x003, 0x005a);
+ return;
+elseif (sourcebook.objtype != 0xdf10);
+ SendSysMessage(who, "This is not a Coded Book", 0x003, 0x005a);
+ return;
+endif
+
+SendSysMessage(who, "Please, select an empty book where do you want to write the translation", 0x003, 0x005a);
+
+var book := Target(who);
+if (!book)
+ SendSysMessage(who, "Target Cancelled", 0x003, 0x005a);
+ return;
+endif
+if ((book.graphic >= 0x0fef) && (book.graphic <= 0x0ff4))
+var difficulty := GetObjProperty(sourcebook, "diffi");
+if (!difficulty)
+ SendSysMessage(who, "Error : book not configured, please contact a GM", 0x003, 0x0028);
+ return;
+endif
+SendSysMessage(who, "You're trying to translate the book...", 0x03, 0x005a);
+sleep(10);
+var oldrawskill := MSSGetRawSkill(who, 51);
+var oldskill := RawSkillToBaseSkill(oldrawskill);
+oldskill := oldskill / 10.0;
+
+
+if (MSSCheckSkill(who, 51, difficulty, 50))
+ var newrawskill := MSSGetRawSkill(who, 51);
+         var newskill := RawSkillToBaseSkill(newrawskill);
+         newskill := newskill / 10.0;
+        
+                                                                                                                                 
+         var increasevalue := newskill - oldskill;                                                                                                                                  
+         if (increasevalue > 0)                                                                                                                                                                             
+         SendSysMessage( who, "Translation Skill increased (+" + CStr(increasevalue) + ")" + ". Now it's " + CStr(newskill), 0x003, 0x0028);                                             
+         endif
+var myskill := MSSGetSkill(who, 51);
+
+var contents := GetObjProperty(sourcebook, "contents");
+var author := GetObjProperty(sourcebook, "author");
+var title := GetObjProperty(sourcebook, "title");
+var chkcontents := GetObjProperty(book, "contents");
+var chkauthor := GetObjProperty(book, "author");
+var chktitle := GetObjProperty(book, "title");
+if ((chkcontents) || (chkauthor) || (chktitle))
+ SendSysMessage("That book is not empty, choose an empty book please", 0x003, 0x005a);
+ return;
+endif
+if (!contents)
+ contents := "";
+endif
+
+if (!author)
+ author := "";
+endif 
+
+if (!title)
+ title := "";
+endif
+
+var wordsnumb := len(contents);
+wordsnumb := wordsnumb - 1;
+var penalty;
+if (myskill < difficulty)
+ penalty := CInt(difficulty - myskill);
+
+var wrongwords := CInt(penalty / 2);
+var i;
+var index;
+if (penalty > 0)
+ for (i := 1; i <= wrongwords; i := i + 1)
+   index := RandomInt(wordsnumb);
+   contents[index] := "**";
+ endfor 
+endif
+endif
+SetObjProperty(book, "contents", contents);
+SetObjProperty(book, "author", author);
+ SetObjProperty(book, "title", title);
+  SendSysMessage("Ok, you worte the translation on the empty book, open it to read", 0x03, 0x005a);
+else
+  SendSysMessage(who, "You failed to translate the book", 0x003, 0x0028);
+endif
+else
+ SendSysMessage(who, "This is not a book", 0x003, 0x005a);
+ return;
+endif
+ 
+
+
+endprogram

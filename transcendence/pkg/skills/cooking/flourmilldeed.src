@@ -1,0 +1,31 @@
+//
+// Flour Mill Script
+//
+// creates a flour mill
+//
+// Creator: Artix
+// Contact: 
+//
+// Created: 14-Oct-2000
+// Updated: 
+//
+
+use uo;
+use os;
+
+program flourmilldeed (who, deed)
+
+ var where := TargetCoordinates(who);
+
+ if (!where)
+  SendSysMessage(who, "Target Cancelled", 0x003, 0x005a);
+  return;
+ endif
+  
+ CreateItemAtLocation(where.x, where.y, where.z, 0x1920, 1, who.realm);
+ CreateItemAtLocation(where.x + 1, where.y, where.z, 0x1922, 1, who.realm);
+ CreateItemAtLocation(where.x + 2, where.y, where.z, 0x1924, 1, who.realm); 
+
+DestroyItem(deed);
+endprogram
+

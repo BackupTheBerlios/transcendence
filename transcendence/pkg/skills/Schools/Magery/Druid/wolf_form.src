@@ -1,0 +1,63 @@
+use uo;
+use os;
+use util;
+use polsys;
+
+//include "include/packets";
+include "include/particles";
+include "include/animations";
+include "include/audio";
+include "include/pgfacing";
+include "include/attributes";
+include "include/eventID";
+include "include/client3d";
+include "include/statMod";
+include ":Localization:localization";
+//include "necroUtils";
+
+
+program wolfform(parms)
+
+var i;
+var who := parms[1];
+//var what := target(who);
+
+//xyface(who, what.x, what.y);
+ParticleOnCharEffect(who, 5011, 2);
+
+ PlaySoundEffect( who, 0x212 );
+
+
+
+PlayCharAnim( who, 266);
+
+sleep(3);
+
+var exgraph := who.graphic;
+var excolor := who.color;
+var exname := who.name;
+var newgraph;
+case(RandomInt(5))
+0: newgraph := 0xe1;
+1: newgraph := 99;
+2: newgraph := 25;
+3: newgraph := 100;
+4: newgraph := 37;
+default: newgraph := 0xe1;
+endcase	
+ChangeCharGraphic(who, newgraph);
+//who.color := 0x4631;
+//SetObjProperty(who, "NecroVampire", 1);
+SetName( who, "a wolf" );
+Detach();
+DoTempMod(who, "str", 120, 30);
+sleep(30);
+
+ChangeCharGraphic(who, exgraph);
+    who.color := excolor;
+    SetName( who, exname );
+//EraseObjProperty(who, "NecroVampire");
+endprogram    
+
+
+

@@ -1,0 +1,44 @@
+use uo;
+use os;
+
+
+program setcontentintocodedbook (who);
+
+var sourcebook := Target(who);
+if (!sourcebook)
+ SendSysMessage(who, "Target Cancelled", 0x003, 0x005a);
+ return;
+elseif (sourcebook.graphic != 0x0ff2);
+ SendSysMessage(who, "You can only use this command on contentbook, create it with .contentbook", 0x003, 0x005a);
+ return;
+endif
+
+var book := Target(who);
+if (!book)
+ SendSysMessage(who, "Target Cancelled", 0x003, 0x005a);
+ return;
+elseif (book.objtype != 0xdf10);
+ SendSysMessage(who, "You can only use this command on a coded book", 0x003, 0x005a);
+ return;
+endif
+ 
+var contents := GetObjProperty(sourcebook, "contents");
+var author := GetObjProperty(sourcebook, "author");
+var title := GetObjProperty(sourcebook, "title");
+if (!contents)
+ contents := "";
+endif
+
+if (!author)
+ author := "";
+endif 
+
+if (!title)
+ title := "";
+endif
+
+SetObjProperty(book, "contents", contents);
+SetObjProperty(book, "author", author);
+ SetObjProperty(book, "title", title);
+ 
+endprogram

@@ -1,0 +1,8 @@
+use uo;
+
+program cutgrass (who, grass)
+
+SendSysMessage(who, "You cut the infesting grass", 0x003, 0x005a);
+DestroyItem(grass);
+
+endprogram

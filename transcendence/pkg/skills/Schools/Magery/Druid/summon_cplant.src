@@ -1,0 +1,39 @@
+use uo;
+use os;
+use util;
+use polsys;
+
+//include "include/packets";
+include "include/particles";
+include "include/animations";
+include "include/audio";
+include "include/pgfacing";
+include "include/attributes";
+include "include/eventID";
+include "include/client3d";
+include "include/statMod";
+include ":Localization:localization";
+include ":Druid:summon";
+
+
+
+program summon_carnivore_plant(parms)
+
+var i;
+var who := parms[1];
+var where := targetcoordinates(who);
+
+xyface(who, where.x, where.y);
+ParticleOnCharEffect(who, 5011, 2);
+
+ PlaySoundEffect( who, 0x212 );
+
+
+
+PlayCharAnim( who, 266);
+
+sleep(3);
+
+summon_creature( who,  "carnivoreplant", where, 60 );
+
+endprogram

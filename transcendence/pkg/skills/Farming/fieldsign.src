@@ -1,0 +1,500 @@
+//
+// fieldsign.src
+//
+// Returns a gump to manage the field
+//
+// Creator: Artix
+// Contact: artix@artix.f2s.com
+//
+// Created: 18-sept-2001
+// Updated:
+//
+
+use uo;
+use os;
+use util;
+//include "include/client";
+//include "include/moreskillssystem";
+include "include/attributes";
+
+var halflay := {"PAGE 0",
+                 "GUMPPIC 200 200 6785",
+                 "TEXT 360 250 95 0",
+                 "BUTTON 360 300 2118 2117 1 0 101",
+                 "TEXT 380 300 960 1",
+                 "BUTTON 360 330 2118 2117 1 0 102",
+                 "TEXT 380 330 960 2"
+                
+                 };
+                
+var halfdata := {"Select the Vineyard's extension",
+               "Entire Field",
+               "Half Field"
+              };
+
+var halfsel;
+
+program fieldsign (who, sign);
+var fieldprice;
+var price := GetObjProperty(sign, "fieldprice");
+if (!price)
+ fieldprice := "Not Set";
+else
+ fieldprice := CStr(price);	
+endif
+var owner := GetObjProperty(sign, "owner");
+var the_owner;
+if (!owner)
+the_owner := "None";
+else
+the_owner := owner;
+endif
+var ownerserial := GetObjProperty(sign, "ownerserial");
+if (!ownerserial)
+ownerserial := 0;
+endif
+var sellprice;
+var pricetext;
+
+var for_sell := GetObjProperty(sign, "forsell");
+if (!for_sell)
+ sellprice := "";
+ pricetext := "";
+else
+  sellprice := CStr(GetObjProperty(sign, "fieldprice"));
+  pricetext := "Sell Price";
+endif  
+var gmoptions;
+var gmtext;
+if (who.cmdlevel > 2)
+ gmoptions := "button 25 450 2117 2118 1 0 200";
+
+ gmtext := "text 45 450 1500 5";
+else
+ gmoptions := 	"text 45 360 1500 4";
+ gmtext := "text 45 360 1500 5";
+endif
+var messages := {};
+messages := GetObjProperty(sign, "messages");
+var vinestype;
+vinestype := GetObjProperty(sign, "vinetype");
+if (!vinestype)
+vinestype := "Not Set";
+endif
+
+var layout;
+var data;
+var is_msg := GetObjProperty(sign, "messages");
+var alertmsg;
+var readmsgbutt;
+
+if ((!is_msg) || (len(is_msg) < 1))
+ alertmsg := "text 45 360 1500 4";
+ readmsgbutt := "text 45 360 1500 4";
+else 	
+ alertmsg := "text 460 450 1500 12";
+ readmsgbutt := "button 430 450 2118 2117 1 0 900";
+endif
+
+if (ownerserial != who.serial)
+ layout := array (
+			"nodispose",
+			"page 0",
+			"resizepic 20 50 5120 600 30",		// Intestazione
+			"resizepic 20 85 5120 600 400",		// Corpo
+		
+			"button 25 95 2118 2117 1 0 505",		// EXIT
+			gmoptions,
+			gmtext,
+			"text 25 55 1500 0",				// Prop & CProp Viewer - by Fitzban
+			"text 45 90 1500 1", //buy field				// Del Edit
+		
+			"text 45 120 1500 2",				// Add CProp
+                        "text 150 120 1500 3",
+                        "text 45 150 1500 6",
+                        "text 120 150 1500 7"
+);
+
+ data := {"Field Management",
+               "Buy Field",
+               "Field Price",
+               fieldprice,
+               "",
+               "GM Options",
+               "Owner : ",
+               the_owner};
+
+else
+
+ layout := array (
+			"nodispose",
+			"page 0",
+			"resizepic 20 50 5120 600 30",		// Intestazione
+			"resizepic 20 85 5120 600 400",		// Corpo
+		
+			"button 25 95 2118 2117 1 0 506",
+			//"text 45 90 1500 1",
+			gmoptions,
+			gmtext,
+			"text 25 55 1500 0",				// Prop & CProp Viewer - by Fitzban
+			"text 45 90 1500 1", //buy field				// Del Edit
+			"text 45 120 1500 2",				// Add CProp
+                        "text 150 120 1500 3",
+                        "text 45 150 1500 6",
+                        "text 120 150 1500 7",
+                        "button 25 195 2118 2117 1 0 101",
+                        "text 45 190 1500 8",
+                        "button 25 225 2118 2117 1 0 102",
+                        "text 45 220 1500 9",
+                        "text 45 250 1500 10",
+                        "text 190 250 1500 11",
+                        readmsgbutt,
+                        alertmsg
+);
+
+ data := {"Field Management",
+               "Sell Field",
+               pricetext,
+               sellprice,
+               "",
+               "GM Options",
+               "Owner : ",
+               the_owner,
+               "Create GrapeVines",
+               "Destroy Grapevines",
+               "GrapeVines Type",
+               vinestype,
+               "Read Offer Messages"};
+endif
+
+var select := SendDialogGump(who, layout, data);
+
+if (select[0] == 505)
+ SendSysMessage(who, "OK!");
+ if (!owner)
+   SendSysMessage(who, "no owner", 3, 38);
+   if (!price)
+     SendSysMessage(who, "Sorry, there's no price for this field, so it's not for sell", 0x003, 38);
+     return;
+   else
+     var moneycheck := 0;
+     var possess := EnumerateItemsInContainer(who.backpack);
+        foreach it in possess
+          if ((it.graphic == 0x0eed) && (it.amount >= price))
+            moneycheck := 1;
+            SubtractAmount(it, price);
+            SetObjProperty(sign, "ownerserial", who.serial);
+            SetObjProperty(sign, "owner", who.name);
+            SendSysMessage(who, "Greetings! You bought the field!", 0x003, 0x005a);
+            return;
+          endif 
+         endforeach
+          if (moneycheck != 1)
+           SendSysMessage(who, "Sorry, you haven't enough money to buy this field", 0x00d3, 38);
+           return;
+          endif    
+   endif
+ else
+    if (!GetObjProperty(sign, "forsell"))
+    SendSysMessage(who, "Field is already owned. Please type in a message if you want to send your offer or type ESC", 0x03, 0x005a);
+     var msg :=RequestInput( who, who.backpack, "Offer Message : " ); 
+     messages.append (who.name + " : " + msg);
+     SetObjProperty(sign, "messages", messages);
+     SendSysMessage(who, "Your message was sent");
+    else
+     var moneycheck := 0;
+     var posses := EnumerateItemsInContainer(who.backpack);
+        foreach itm in posses
+          if ((itm.graphic == 0x0eed) && (itm.amount >= price))
+            moneycheck := 1;
+            SubtractAmount(itm, price);
+            SetObjProperty(sign, "ownerserial", who.serial);
+            SetObjProperty(sign, "owner", who.name);
+            SendSysMessage(who, "Greetings! You bought the field!", 0x003, 0x005a);
+            EraseObjProperty(sign, "forsell");
+            return;
+          endif 
+         endforeach
+          if (moneycheck != 1)
+           SendSysMessage(who, "Sorry, you haven't enough money to buy this field", 0x00d3, 38);
+          endif    
+    endif
+ endif
+endif
+    
+if (select[0] == 900)
+ var msgs := GetObjProperty(sign, "messages");
+
+ var msgamount := len(msgs);
+ 
+ SendSysMessage(who, "There are " + CStr(msgamount) + " messages. Please select which message you want to read :", 0x003, 0x005a);
+ var msel := RequestInput(who, who.backpack, "Message Number : ");
+ SendSysMessage(who, msgs[CInt(msel)], 0x03, 0x005a);
+ var delm := RequestInput(who, who.backpack, "Do you want to delete the message?(y/n)");
+  if (delm == "y")
+   messages.erase (CInt(msel));
+  elseif (delm == "n")
+   return;
+  else
+   SendSysMessage(who, "Invalid chioce!");
+  endif
+endif
+
+if (select[0] == 506)
+ var newprice := SendTextEntryGump( who, "Enter your selling price" );
+ newprice := CInt(newprice);
+ SetObjProperty(sign, "fieldprice", newprice);
+ SetObjProperty(sign, "forsell", 1);
+ SendSysMessage(who, "New price is " + CStr(newprice));
+ return;
+endif  
+
+if (select[0] == 200)
+ var layoutii := array ( "nodispose",
+			"page 0",
+			"resizepic 20 50 5120 600 30",	
+			"resizepic 20 85 5120 600 400",
+			"text 25 55 1500 0",
+		
+			"button 25 95 2118 2117 1 0 505",
+                        "text 45 90 1500 1",
+                        "button 25 125 2118 2117 1 0 506",
+                        "text 45 120 1500 2",
+                        "button 25 155 2118 2117 1 0 507",
+                        "text 45 150 1500 3",
+                        "button 25 185 2118 2117 1 0 508",
+                        "text 45 180 1500 4",
+                        "button 25 215 2118 2117 1 0 509",
+                        "text 45 210 1500 5",
+                        "button 25 245 2118 2117 1 0 510",
+                        "text 45 240 1500 6",
+                        "button 25 275 2118 2117 1 0 511",
+                        "text 45 270 1500 7",
+                        "button 25 305 2118 2117 1 0 512",
+                        "text 45 300 1500 8"
+                        );
+                       
+   var dataii := array ("GM Field Management",
+                          "SetOwner",
+                          "SetPrice",
+                          "SetVineType",
+                          "SetVineSize",
+                          "SetStartPoint",
+                          "SetXsize",
+                          "SetYsize",
+                          "SetZlevel"
+                          );
+                         
+                         
+                                             
+                     
+
+var gmmenu := SendDialogGump(who, layoutii, dataii);
+case (gmmenu[0])
+505:
+     SendSysMessage(who, "Select the field's owner", 3, 95);
+     var trg := Target(who);
+     if (!trg)
+      SendSysMessage(who, "Cancelled!", 3, 38);
+     endif
+    
+     SetObjProperty(sign, "owner", trg.name);
+     SetObjProperty(sign, "ownerserial", trg.serial);
+506:
+     var prz := SendTextEntryGump( who, "Enter new price :" );     
+     SetObjProperty(sign, "fieldprice", CInt(prz));
+507:
+     var vntype := SendTextEntryGump( who, "Select Grapevines direction (1 = Vertical, 2 = Horizontal) :" );    
+     if (vntype == "1")
+      SetObjProperty(sign, "vinetype", "Vertical");
+     elseif (vntype == "2")
+      SetObjProperty(sign, "vinetype", "Horizontal");
+     else
+      SendSysMessage(who, "Invalid Selection!");
+      return;
+     
+     endif
+508:
+    
+     var vnsize := SendTextEntryGump( who, "Select Grapevines size (small, medium, large) :" );    
+     if (vnsize == "small")
+      SetObjProperty(sign, "vinesize", "small");
+     elseif (vnsize == "medium")
+      SetObjProperty(sign, "vinesize", "medium");
+     elseif (vnsize == "large")
+      SetObjProperty(sign, "vinesize", "large");
+     
+     else
+      SendSysMessage(who, "Invalid Selection!");
+     return;
+     endif     	
+509 :
+     var startp :=  SendTextEntryGump( who, "Enter StartPoint Coord (X Y Z) :" );          
+     var startpnt := SplitWords(startp);
+     SetObjProperty(sign, "startpoint", startpnt);
+510 :
+     var xsize := SendTextEntryGump( who, "Enter Field's X size (tiles)" );    
+     SetObjProperty(sign, "xdim", CInt(xsize));
+511:
+    var ysize := SendTextEntryGump( who, "Enter Field's Y size (tiles)" );    
+     SetObjProperty(sign, "ydim", CInt(ysize));
+512:
+     var z := SendTextEntryGump( who, "Enter Field's Z level" );    
+     SetObjProperty(sign, "zlvl", CInt(z));
+
+endcase
+
+
+
+
+
+endif
+
+if  (select[0] == 101)
+  //SendSysMessage (who, "Create test OK");
+  var myskill := GetEffectiveSkill(who, 52);
+  myskill := CInt(myskill);
+ 
+  var check := 1;
+  var xdim := GetObjProperty(sign, "xdim");
+  var ydim := GetObjProperty(sign, "ydim");
+  var zlvl := GetObjProperty(sign, "zlvl");
+  var startpoint := GetObjProperty(sign, "startpoint");
+  var vinesdirect := GetObjProperty(sign, "vinetype");
+  if (!xdim)
+   SendSysMessage(who, "Sorry, this field is not configured for VineYards", 0x003, 38);
+   return;
+  elseif (!ydim)
+   SendSysMessage(who, "Sorry, this field is not configured for VineYards", 0x003, 38);
+   return;
+  /*elseif (!zlvl) 
+   SendSysMessage (who, "Sorry, this field is not configured for VineYards", 0x003, 38);
+   return; */ 
+  elseif (!startpoint)
+   SendSysMessage(who, "Sorry, this field is not configured for VineYards", 0x003, 38);
+   return;
+  elseif (!vinesdirect)
+   SendSysMessage(who, "Sorry, this field is not configured for VineYards", 0x003, 38);
+   return;
+  endif 
+  var dimension := GetObjProperty(sign, "vinesize");
+ var checkdeed := 0;
+ var bag := EnumerateItemsInContainer(who.backpack);
+ foreach thing in bag
+  if ((thing.objtype == 0xdb03) || (thing.objtype == 0xdb04) || (thing.objtype == 0xdb05))
+   if (GetObjProperty(thing, "dimens") == dimension)
+    checkdeed := 1;
+    DestroyItem(thing);
+   endif
+  endif
+  endforeach 
+  if (checkdeed == 1)
+ 
+  if (vinesdirect == "Vertical")
+   var halfsel := SendDialogGump(who, halflay, halfdata);
+   case (halfsel[0])
+       101: xdim := xdim;
+       102: xdim := xdim / 2;
+   endcase   
+  
+   var x;
+   var y;
+   for (x := 0; x <= xdim; x := x + 2)
+    var startvine := {};
+    startvine[x] := CreateItemAtLocation(CInt(startpoint[1]) + x, CInt(startpoint[2]), CInt(zlvl), 0x0d1b, 1, sign.realm );
+    SetObjProperty(startvine[x], "quality", myskill);
+     for (y := 1; y <= ydim - 1; y := y + 1)
+      var rnd := RandomInt(100);
+      var vineobj;
+      if (rnd < 50)
+       vineobj := 0x0d1e;
+       else
+       vineobj := 0x0d1f;
+      endif
+      var vine := {};
+      
+      vine[y] := CreateItemAtLocation(CInt(startpoint[1]) + x, CInt(startpoint[2]) - y, CInt(zlvl), vineobj, 1, sign.realm);
+      SetObjProperty(vine[y], "quality", myskill);
+     endfor
+    var endvine := {};
+   
+    endvine[x] := CreateItemAtLocation( CInt(startpoint[1]) + x, CInt(startpoint[2]) - ydim, CInt(zlvl), 0x0d1d, 1, sign.realm ); 
+    SetObjProperty(endvine[x], "quality", myskill);
+    endfor
+  elseif (vinesdirect == "Horizontal")
+   var halfsel := SendDialogGump(who, halflay, halfdata);
+   case (halfsel[0])
+       101: ydim := ydim;
+       102: ydim := ydim / 2;
+   endcase  
+  
+   var x;
+   var y;
+   for (y := 0; y <= ydim; y := y + 2)
+    var startvine := {};
+   
+    startvine[y] := CreateItemAtLocation(CInt(startpoint[1]), CInt(startpoint[2]) - y, CInt(zlvl), 0x0d22, 1, sign.realm );
+     SetObjProperty(startvine[y], "quality", myskill);
+     for (x := 1; x <= xdim - 1; x := x + 1)
+      var rnd := RandomInt(90);
+      var vineobj;
+      if (rnd < 30)
+       vineobj := 0x0d21;
+      elseif ((rnd >= 30) && (rnd < 60))
+       vineobj :=  0x0d23;
+       else
+       vineobj := 0x0d24;
+      endif
+       var vine := {};
+      
+      vine[x] := CreateItemAtLocation(CInt(startpoint[1]) + x, CInt(startpoint[2]) - y, CInt(zlvl), vineobj, 1, sign.realm);
+      SetObjProperty(vine[x], "quality", myskill);
+     endfor
+    var endvine := {};
+   
+    endvine[y] := CreateItemAtLocation( CInt(startpoint[1]) + xdim, CInt(startpoint[2]) - y, CInt(zlvl), 0x0d1d, 1, sign.realm ); 
+    SetObjProperty(endvine[y], "quality", myskill);
+    endfor
+ 
+  endif
+else
+ SendSysMessage(who, "Sorry, you have no Deed for this Vineyard!", 0x03, 38);
+ return;
+endif
+endif
+
+if (select[0] == 102)
+ //SendsysMessage (who, "TESTDESTROY");
+ var startloc := GetObjProperty(sign, "startpoint");
+ var xdim := GetObjProperty(sign, "xdim");
+ var ydim := GetObjProperty(sign, "ydim");
+ var zlvl := GetObjProperty(sign, "zlvl");
+ var greatest;
+ if (xdim > ydim)
+  greatest := xdim;
+ elseif (xdim < ydim)
+  greatest := ydim;
+ else
+  greatest := xdim;
+ endif
+ var radius := greatest + 2;
+ if ((!startloc) || (!xdim)  || (!ydim))
+  SendSysMessage(who, "Error : could not destroy vineyards, field not Configurated! Please, contact a GM", 0x03, 0x005a);
+  return;
+ endif
+ var xpoint := CInt(startloc[1]) + (CInt(xdim) / 2);
+ var ypoint := CInt(startloc[2]) - (CInt(ydim) / 2);
+ SendSysMessage(who, "Xpoint : " + CStr(xpoint) + " Ypoint : " + CStr(ypoint));
+
+ var objs := ListItemsNearLocation( xpoint, ypoint, zlvl, radius, who.realm );
+ foreach thing in objs
+  //SendSysMessage (who, "testitem");
+  if ((thing.graphic >= 0x0d1b) && (thing.graphic <= 0x0d1f))
+   DestroyItem(thing);
+  elseif ((thing.graphic >= 0x0d20) && (thing.graphic <= 0x0d24))
+   DestroyItem(thing);
+  endif
+ endforeach
+endif
+ 
+endprogram

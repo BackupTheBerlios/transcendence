@@ -1,0 +1,31 @@
+use uo;
+use os;
+
+program emptysack (who, sack)
+
+ var mill := Target(who);
+ if (mill.graphic == 0x1921)
+ 
+ var x := mill.x;
+ var y := mill.y;
+ var z := mill.z;
+
+  DestroyItem(sack);
+  var newsack := CreateItemAtLocation(who.x, who.y, who.z, 0x1045, 1, who.realm);
+  var quality := GetObjProperty(mill, "quality");
+  SetObjProperty(newsack, "quality", quality);
+  var place := ListItemsNearLocation( x, y, z, 4, who.realm );
+     foreach it in place
+       if ((it.graphic >= 0x1920) && (it.graphic <= 0x1937))
+        DestroyItem(it);
+       endif
+      endforeach
+      CreateItemAtLocation(x, y, z, 0x1920, 1, who.realm);
+      CreateItemAtLocation(x + 1, y, z, 0x1922, 1, who.realm);
+      CreateItemAtLocation(x + 2, y, z, 0x1924, 1, who.realm);
+    else
+     SendSysMessage(who, "invalid target");
+     return;
+    endif
+endprogram
+      

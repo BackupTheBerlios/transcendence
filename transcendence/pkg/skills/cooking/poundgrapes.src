@@ -1,0 +1,21 @@
+use uo;
+use os;
+
+program poundgrapes (who, grapes)
+
+var amt := GetObjProperty(grapes, "amt");
+var pounded := GetObjProperty(grapes, "poundedamt");
+if (!pounded)
+pounded := 0;
+endif
+
+if (pounded >= amt)
+SendSysMessage(who, "All grapes are pounded", 3, 0x005a);
+return;
+endif
+
+pounded := pounded + 10;
+
+SetObjProperty(grapes, "poundedamt", pounded);
+endprogram
+

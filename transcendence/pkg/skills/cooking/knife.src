@@ -1,0 +1,92 @@
+use uo;
+use os;
+
+program useknife (who)
+var layout := {"PAGE 0",
+                 "GUMPPIC 200 200 6785",
+                 "TEXT 360 250 95 0",
+                 "BUTTON 360 300 2118 2117 1 0 101",
+                 "TEXT 380 300 960 1",
+                 "BUTTON 360 330 2118 2117 1 0 102",
+                 "TEXT 380 330 960 2"
+                
+                 };
+                
+var data := {"What do you want to make?",
+               "Bread Loaf",
+               "French Bread"
+              };
+             
+var food := Target(who);
+
+
+if (!food)
+ SendSysMessage(who, "Target Cancelled", 0x003, 0x005a);
+ return;
+endif
+
+
+if (Distance(who, food) > 2)
+ SendSysMessage(who, "you're too fare away");
+ return;
+endif              
+var prodotto;
+var quality := GetObjProperty(food, "quality");
+if (food.objtype == 0x103d)
+   var select := SendDialogGump(who, layout, data);
+    case (select[0])
+     101:
+         DestroyItem(food);
+         prodotto := CreateItemInBackpack(who, 0xfff4, 1);
+         SetObjProperty( prodotto, "quality", quality );  
+     102:
+         DestroyItem(food);
+         prodotto := CreateItemInBackpack(who, 0xfff5, 1);   
+         SetObjProperty( prodotto, "quality", quality );  
+    endcase
+elseif (food.objtype == 0xfff1)
+    DestroyItem(food);
+    prodotto := CreateItemInBackpack(who, 0xfff6, 3);  
+    SetObjProperty( prodotto, "quality", quality );  
+elseif (food.objtype == 0x09c9)
+ var slices := GetObjProperty(food, "slices");
+ var prodotto := CreateItemInBackpack(who, 0x1e1f, 1);
+ SetObjProperty(food, "slices", slices - 1);
+ SetObjProperty( prodotto, "quality", quality );
+ slices := GetObjProperty(food, "slices");
+ if (slices < 1)
+  SendSysMessage(who, "Ham finished!", 0x003, 0x0028);
+  DestroyItem(food);
+ endif
+elseif (food.objtype == 0x0977)
+ var slices := GetObjProperty(food, "slices");
+ var prodotto := CreateItemInBackpack(who, 0x0979, 1);
+ SetObjProperty(food, "slices", slices - 1);
+ SetObjProperty( prodotto, "quality", quality );
+ slices := GetObjProperty(food, "slices");
+ if (slices < 1)
+  SendSysMessage(who, "Bacon finished!", 0x003, 0x0028);
+  DestroyItem(food);
+ endif
+elseif (food.objtype == 0x097e)
+ var slices := GetObjProperty(food, "slices");
+ var prodotto := CreateItemInBackpack(who, 0x097c, 1);
+ food.graphic := 0x097d;
+ SetObjProperty(food, "slices", slices - 1);
+ SetObjProperty( prodotto, "quality", quality );
+ slices := GetObjProperty(food, "slices");
+ if (slices < 1)
+  SendSysMessage(who, "Cheese finished!", 0x003, 0x0028);
+  DestroyItem(food);
+ endif
+else
+  SendSysMessage(who, "you can't cut that");
+  return;
+endif
+
+endprogram
+  	 
+
+
+
+	            

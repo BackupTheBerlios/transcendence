@@ -1,0 +1,543 @@
+use uo;
+use cfgfile;
+use os;
+use util;
+
+include "util/repair";
+include "include/attributes";
+include "include/client";
+include "include/objtype";
+include "include/skillpoints";
+include "util/key";
+/* To do:
+
+fix so you can use boards, logs, etc, rather than just logs
+take out hard coding of skill pointvalue
+
+
+*/
+
+
+        
+const CARPENTER_SOUND := 0x23e;
+const CLANK_SOUND := SFX_ANVIL;        
+const UOBJECT_CHEST := 0x0e42;
+const UOBJECT_POISON_POTION := 0x0f0a;
+const UOBJECT_PURPLE_POTION := 0x0f0d;
+const EXPLOSION_SOUND := 0x208;
+const EXPLOSION_ANIM := 0x36b0;
+const POISON_SOUND  := 0x247;
+const HIT_ACTION := 0x148b;
+var keys := {0x100e, 0x100f, 0x100f, 0x1012, 0x1013};
+var tinker_cfg:= ReadConfigFile( "tinker" );
+var itemcfg := ReadConfigFile("itemdesc");
+
+var thepoints;
+
+program MakeTinkerItems( character, item )
+
+//    local stuff;  //the use_on they're using
+    var retval;
+    thepoints := get_default_points(SKILLID_TINKERING);
+
+    if( item.objtype == UOBJ_TINKER_TOOLS )
+        SendSysMessage( character, "Select your material." );
+  
+        item := Target( character, "" );
+        if (!item)
+            SendSysMessage( character, "Targetting cancelled" );
+            return;
+        endif
+
+        if (!Accessible( character, item))
+            SendSysMessage( character, "You can't reach that!" );
+            return;
+        endif
+
+    endif
+
+       
+    case (item.objtype)
+
+        UOBJ_LOGS:
+        print("logs");   
+            make_something(character, "tinker:wood", item, CARPENTER_SOUND);
+        UOBJ_GLASS:
+                 print("glass");
+                make_something(character, "tinker:glass", item, SFX_GLASSBREAK4); 
+        UOBJ_IRON_INGOT:
+         print("ingot");
+            make_something(character, "tinker:metal",item, CLANK_SOUND);
+        UOBJ_CLAY:
+         print("clay");
+                make_something(character, "tinker:clay",item, SFX_HAMMER); 
+        UOBJ_GOLD_INGOT:
+         print("gold ingot");
+                make_jewelry(character, item, CLANK_SOUND);
+        UOBJ_AXLE:
+         print("axle");
+            make_complex_thing(character,UOBJ_AXLE_AND_GEARS,  item, UOBJ_GEARS, "gears", CARPENTER_SOUND);
+        UOBJ_GEARS:
+         print("logs");
+            make_complex_thing(character,UOBJ_AXLE_AND_GEARS,  item, UOBJ_AXLE, "axle", CARPENTER_SOUND);
+        UOBJ_CLOCK_FRAME:
+            make_complex_thing(character,UOBJ_CLOCK,  item, UOBJ_CLOCK_PARTS, "clock parts", CLANK_SOUND);
+        UOBJ_CLOCK_PARTS:
+            make_complex_thing(character,UOBJ_CLOCK,  item, UOBJ_CLOCK_FRAME, "clock frame", CLANK_SOUND);
+        UOBJ_AXLE_AND_GEARS:
+            make_complex_thing(character, UOBJ_CLOCK_PARTS,  item,UOBJ_SPRINGS, "springs", CLANK_SOUND );
+        UOBJ_SPRINGS:
+            make_complex_thing(character, UOBJ_CLOCK_PARTS,  item,UOBJ_CLOCK_PARTS, "clock parts", CLANK_SOUND );
+        UOBJ_SEXTANT_PARTS:
+            make_complex_thing(character, UOBJ_SEXTANT,  item, UOBJ_AXLE, "axle", CLANK_SOUND);
+        UOBJ_HINGE:
+            make_complex_thing(character,UOBJ_SEXTANT_PARTS, item, UOBJ_AXLE_AND_GEARS, "axle and gears", CLANK_SOUND);
+        UOBJ_CHEST:
+            set_trap(character, item);
+        UOBJ_BOX:
+            set_trap(character, item);
+        default:
+            if (item.objtype in keys)
+                rekey(character, item);
+            elseif (is_tinker_item(item))
+               repair_item(character, item, SKILLID_TINKERING);
+            endif
+    endcase
+       
+endprogram
+
+
+function make_something( character, menu, use_on, thesound)
+    var material;
+    var skill;
+    var what;
+    var element;
+    var retval;
+    var theitem;
+    var max_hp;
+    var quality;
+    var itemname;
+
+    if (!tinker_cfg)
+        SendSysMessage(character, "Could not open Tinker.cfg");
+        return;
+    endif
+
+    what := SelectMenuItem2( character, menu );
+   
+    if (  what.index < 1)
+          SendSysMessage( character, "Targetting cancelled" );
+          return;
+    endif
+   
+    element :=  tinker_cfg[what.objtype ];
+   
+    if (element)
+        material := element.material;
+        skill :=  element.skill;
+        max_hp := itemcfg[what.objtype].maxhp;
+        itemname := element.Name;
+    else
+        print( "Could not find entry for menu selection");
+        return;
+    endif
+
+    //first, check to see that they have enough wood
+
+    if ( use_on.amount  < material )
+        SendSysMessage(character, "You don't have enough material to make this!");
+        return;
+    endif
+        if (CheckSkill( character, SKILLID_TINKERING, skill, thepoints))
+            set_critical(1);
+                SubtractAmount( use_on, material );
+            set_critical(0);
+           
+            play_sound(character, thesound);
+           
+            theitem := CreateItemInBackpack( character, what.objtype, 1 );
+       
+            if (theitem) //they sucessfully create the item
+
+                if ((CheckSkill( character, SKILLID_TINKERING, 90, thepoints )) && (!tinker_cfg[theitem.objtype].exceptional) && RandomInt(100) < 4)
+                    //they make an exceptional item
+                    theitem.quality := 1.5;
+                    theitem.hp := theitem.maxhp;
+                    SetObjProperty(theitem, "type","t");
+                    SetName(theitem, "Exceptional " + itemname);
+                    SendSysMessage(character, "You make an exceptional item and put it in your pack");
+                else
+                    //regular-quality
+                    quality := (60 + (RandomInt(GetEffectiveSkill(character, SKILLID_TINKERING))/2))/100.0;
+                    theitem.quality := quality;
+                    theitem.hp := theitem.maxhp;
+                    SetObjProperty(theitem, "type","t");
+                    SetName(theitem, itemname );
+                    SendSysMessage( character, "You create the item and place it in your pack." );
+                endif
+        if ((theitem.objtype in array( UOBJ_CHEST, UOBJ_BOX )) || (tinker_cfg[theitem.objtype].lockable))
+                var tinker:= CheckSkill( character, SKILLID_TINKERING, 40, thepoints );
+                if (tinker)
+                        SetObjProperty(theitem, "lockable","1");
+                        var lockid := AllocLockId();
+                        theitem.locked := 1;
+                        var thekey := CreateItemInBackpack( character, UOBJ_COPPER_KEY, 1 );
+                        SetObjProperty(thekey, "lockid",lockid);
+                        SetObjProperty(theitem,"lockid",lockid);
+                        SendSysMessage(character, "You will find the key in your backpack.");
+                endif //tinker
+        endif //getobjtype is chest
+            endif //theitem
+        else   // checkskill
+            SubtractAmount( use_on, CInt(material/2) );
+            SendSysMessage( character, "You destroy some material." );
+        endif //checkskill
+
+endfunction
+
+
+function make_jewelry(character, stuff, thesound)
+    var material;
+    var skill;
+    var what;
+    var element;
+    var retval;
+    var theitem;
+    var max_hp;
+    var quality;
+    var itemname;
+
+    if (!tinker_cfg)
+        SendSysMessage(character, "Could not open Tinker.cfg");
+        return;
+    endif
+
+    what := SelectMenuItem2( character, "tinker:gold");
+   
+    if (  what.index < 1)
+        SendSysMessage( character, "Targetting cancelled" );
+        return;
+    endif
+   
+    element := FindConfigElem( tinker_cfg,what.objtype ); //need to make sure the key reflects the menu return value
+   
+    if (element)
+        material := element.material;
+        skill :=  element.skill;
+        max_hp := itemcfg[what.objtype].maxhp;
+        itemname := element.Name;
+    else
+        SendSysMessage(character, "Could not find entry for menu selection");
+        return;
+    endif
+
+    //first, check to see that they have enough wood
+
+    if ( GetAmount(stuff)  > material )
+        SendSysMessage(character, "Select a gem for this item");
+        var thegem := Target(character, "");
+       
+        if (! thegem) 
+            SendSysMessage(character, "Targetting cancelled.");
+            return;
+        endif
+        if ((thegem.objtype <= 0x0f0f) && (thegem.objtype >= 0x0f30))
+            SendSysMessage(character, "That is not  a gem!");
+            return;
+        endif
+        if (! Accessible(character, thegem))
+            SendSysMessage(character, "You can't reach that!");
+            return;
+        endif
+       
+        SubtractAmount(thegem, 1);
+       
+        if (CheckSkill( character, SKILLID_TINKERING, skill,  thepoints ))
+            set_critical(1);
+                SubtractAmount( stuff, material );
+            set_critical(0);
+            play_sound(character, thesound);
+
+            theitem := CreateItemInBackpack( character, what.objtype, 1 );
+
+            if (theitem) //they sucessfully create the item
+          
+                if (CheckSkill( character, SKILLID_TINKERING, 90,  thepoints ))
+                    //they make an exceptional item
+                    quality := 1.5;
+                    theitem.quality := 1.5;
+                    theitem.hp := quality * max_hp;
+                    SetObjProperty(theitem, "type","t");
+                    SetName(theitem, "Exceptional " + itemname);
+                    SendSysMessage(character, "You make an exceptional item and put it in your pack");
+                else
+                    //regular-quality
+                    quality := ((RandomInt(100) + 1) / 100) + (GetEffectiveSkill(character, SKILLID_TINKERING) /250);
+                    theitem.quality := quality;
+                    theitem.hp := quality * max_hp;
+                    SetObjProperty(theitem, "type","t");
+                    SetName(theitem, itemname );
+                    SendSysMessage( character, "You create the item and place it in your pack." );
+                endif
+            endif //theitem
+        else   // checkskill
+            SubtractAmount( stuff, CInt(material/2) );
+            SendSysMessage( character, "You destroy some material." );
+        endif //checkskill
+    else //getamount
+        SendSysMessage(character, "You don't have enough material!");
+    endif  //getamount    
+endfunction
+
+function make_complex_thing(character, desired_item, clicked_part, required_part, required_name, thesound)
+    var skill;
+    var material;
+    var element;
+    var retval;
+    var max_hp;
+    var quality;
+    var itemname;
+
+
+    element := FindConfigElem( tinker_cfg,desired_item );
+
+    if (element)
+        material := element.material;
+        skill :=  element.skill;
+        max_hp := itemcfg[desired_item].maxhp;
+        itemname := element.Name;
+    else
+        SendSysMessage(character, "Could not find entry for menu selection");
+        return;
+    endif
+
+    SendSysMessage(character, "Select the " + required_name + " you want to use that on");
+
+    var use_on := Target(character, "");
+
+    if (!use_on)
+        SendSysMessage(character, "Targetting cancelled.");
+        return;
+    endif
+
+    if (!Accessible( character, use_on))
+        SendSysMessage( character, "You can't reach that!" );
+        return;
+    endif
+   
+    if (use_on.objtype != required_part)
+        SendSysMessage(character, "You must use that on " + required_name);
+        return;
+    endif
+
+    if ( GetAmount(use_on)  >= material )
+        if (CheckSkill( character, SKILLID_TINKERING, skill,  thepoints ))
+            set_critical(1);
+            SubtractAmount( use_on, material );
+            SubtractAmount( clicked_part, 1 );
+            set_critical(0);
+            play_sound(character, thesound);
+           
+            var theitem := CreateItemInBackpack( character, desired_item, 1 );
+       
+            if (theitem) //they sucessfully create the item
+           
+               
+                if (CheckSkill( character, SKILLID_TINKERING, 90,  thepoints ))
+                    //they make an exceptional item
+                    quality := 1.5;
+                    theitem.quality := 1.5;
+                    theitem.hp := quality * max_hp;
+                    SetObjProperty(theitem, "type","t");
+                    SetName(theitem, "Exceptional " + itemname);
+                    SendSysMessage(character, "You make an exceptional item and put it in your pack");
+                else
+                    //regular-quality
+                    quality := ((RandomInt(100) + 1) / 100) + (GetEffectiveSkill(character, SKILLID_TINKERING) /250);
+                    theitem.quality := quality;
+                    theitem.hp := quality * max_hp;
+                    SetObjProperty(theitem, "type","t");
+                    SetName(theitem, itemname );
+                    SendSysMessage( character, "You create the item and place it in your pack." );
+                endif
+            endif //theitem
+        else   // checkskill
+            SubtractAmount( use_on, 1 );
+        SubtractAmount( clicked_part, 1 );
+            SendSysMessage( character, "You destroy some material." );
+        endif //checkskill
+    else //getamount
+        SendSysMessage(character, "You don't have enough material!");
+    endif  //getamount
+
+endfunction
+
+function set_trap(character, chest)
+    var cfg_id;
+    var skill;
+    var strength;
+    var trap_type;
+    var retval;
+    var poison_level;
+    var trap_item;
+   
+    if (GetObjProperty(chest, "lockable") != "1") then
+        SendSysMessage(character, "Only lockable chests can be trapped!");
+        return;
+    endif
+
+    trap_item := Target(character, "");
+
+
+    if (!trap_item)
+        SendSysMessage(character,"Targetting canceled.");
+        return;
+    endif 
+
+    if (not Accessible(character, trap_item))
+        SendSysMessage(character, "You can't reach that!");
+        return;
+    endif
+
+
+    if (trap_item.graphic == UOBJECT_POISON_POTION)
+        cfg_id := 0xffff;
+        strength := GetObjProperty(trap_item,"strength");
+        trap_type := 2;
+
+    elseif (trap_item.graphic  == UOBJECT_PURPLE_POTION)
+        strength := GetObjProperty(trap_item,"strength");
+        cfg_id := 0xfffe;
+        trap_type := 3;
+    elseif (trap_item.objtype == UOBJ_IRON_INGOT)
+        cfg_id := 0xfffd;
+        strength := 1;
+        trap_type := 1;
+
+    else
+        SendSysMessage(character, "I don't know how to use these items together");
+        return;
+    endif
+
+    if (strength <= 0)
+        strength := 1;
+    endif
+
+    var element := FindConfigElem( tinker_cfg,cfg_id );
+
+    if (element)
+        skill := CInt(GetElemProperty( element, "skill" ));
+    else
+        print("Could not find entry for  selection");
+        return;
+    endif
+  
+    if (CheckSkill( character, SKILLID_TINKERING, skill, thepoints )) 
+        SubtractAmount(trap_item, 1);
+        SetObjProperty(chest, "trap_type", CStr(trap_type));
+        SetObjProperty(chest, "trap_strength", strength);
+        SendSysMessage(character, "The trap is set successfully");
+        chest.usescript := ":traps:traps";
+    else
+        var results := RandomInt(9) + 1;
+        if (results == 1)
+            var the_damage := (RandomInt(29) + 1) * strength;
+            if (trap_type == 1)
+                SendSysMessage(character, "You fail and harm yourself!");
+                ApplyDamage(character, the_damage);
+                SubtractAmount(trap_item, 1);
+                SubtractAmount(chest, 1);
+            elseif (trap_type == 2)
+                SendSysMessage(character, "You fail, and poison yourself!");
+                poison_level := CInt(GetObjProperty(character, "poison_level"));
+                if (poison_level > 0 )
+                    retval := SetObjProperty(character, "poison_level",CStr(poison_level + strength));
+                else
+                    retval := SetObjProperty(character, "poison_level",CStr( strength));
+                    start_script( "spells/poisondamage", character );
+                endif
+                SubtractAmount(trap_item, 1);
+                SubtractAmount(chest, 1);
+            else  //explosion potion
+                SendSysMessage(character, "You fail, and set off the explosion!");
+                PlayObjectCenteredEffect( character,  EXPLOSION_ANIM,5,0 );
+                PlaySoundEffect( character, EXPLOSION_SOUND );
+                ApplyDamage(character, the_damage);
+                SubtractAmount(trap_item, 1);
+                SubtractAmount(chest, 1);
+            endif //critical failure
+        else
+             //regular failure
+            SendSysMessage(character, "You failed to place the trap");
+            SubtractAmount(trap_item, 1);
+       
+        endif
+    endif
+endfunction
+
+
+function is_tinker_item(stuff)
+
+    var elem := FindConfigElem(tinker_cfg, stuff.objtype);
+    if (elem)
+        return 1;
+    else
+        return 0;
+    endif
+
+endfunction
+
+
+
+function play_sound(character, sound)
+    var cntr;
+
+    for (cntr := 1; cntr <= 3; cntr := cntr + 1)
+        PlaySoundEffect(character, sound);
+        sleep(3);
+    endfor
+endfunction
+
+
+function rekey(character, key)
+var source;
+var destination;
+
+if (GetObjProperty(key, "lockid"))
+        source := key;
+        SendSysMessage(character, "Select the blank key you wish to  use");
+        destination := Target(character, TGTOPT_CHECK_LOS);
+        if (GetObjProperty(destination, "lockid"))
+                SendSysMessage(character, "That key isn't blank!");
+                return;
+        endif
+        if (destination.objtype in keys)
+        else
+                SendSysMessage(character, "That's not a key!");
+                return;
+        endif
+              
+else
+        destination := key;
+        SendSysMessage(character, "Select the key you wish to copy");
+        source := Target(character, TGTOPT_CHECK_LOS);
+                if (source.objtype in keys)
+                else
+                SendSysMessage(character, "That's not a key!");
+                return;
+                endif
+endif
+
+if (!source || !destination)
+        return;
+endif
+
+if (CheckSkill(character, SKILLID_TINKERING, 50, 50))
+        SetObjProperty(destination, "lockid", GetObjProperty(source, "lockid"));
+        SendSysMessage(character, "You successfully copied the key");
+else
+        DestroyItem(destination);
+        SendSysMessage(character, "You fail, and break the destination key");
+endif
+
+endfunction

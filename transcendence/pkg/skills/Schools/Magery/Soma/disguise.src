@@ -1,0 +1,94 @@
+use uo;
+use os;
+use util;
+use polsys;
+use cfgfile;
+
+//include "include/packets";
+include "include/particles";
+include "include/animations";
+//include "include/audio";
+include "include/pgfacing";
+//include "include/attributes";
+//include "include/eventID";
+include ":Localization:localization";
+include "include/client3d";
+//include "include/statMod";
+include ":Soma:somaUtils";
+include "include/npcs";
+
+program disguise(parms)
+
+var i;
+var who := parms[1];
+var what := target(who);
+
+xyface(who, what.x, what.y);
+
+ParticleOnCharEffect(who, 5011, 2);
+
+ PlaySoundEffect( who, 0x212 );
+
+
+
+PlayCharAnim( who, 266);
+
+sleep(3);
+
+var exgraph := who.graphic;
+var excolor := who.color;
+var exname := who.name;
+var crim := who.criminal;
+var murd := who.murderer;
+
+var equip1, equip2;
+var self_eqp, eqp1, eqp2 ;
+
+equip1 := {};
+equip2 :={};
+
+ChangeCharGraphic(who, what.graphic);
+who.color := what.color;
+SetName(who, what.name);
+CopyCharacterAlignment(who, what);
+
+for (i := 1; i <= 0x18; i := i + 1)
+
+self_eqp := GetEquipmentByLayer( who, i );
+MoveItemToContainer( self_eqp, who.backpack);
+equip1.append(self_eqp);
+
+endfor
+
+for (i := 1; i <= 0x18; i := i + 1)
+
+eqp1 := GetEquipmentByLayer( what, i );
+eqp2 := CreateItemInBackpack( who, eqp1.objtype);
+eqp2.color := eqp1.color;
+equip2.append(eqp2);
+equipitem(who, eqp2);
+
+endfor
+
+detach();
+
+sleep(30);
+
+foreach eq in equip2
+destroyitem(eq);
+endforeach
+
+
+foreach eq in equip1
+equipitem(who, eq);
+endforeach
+
+ChangeCharGraphic(who, exgraph);
+who.color := excolor;
+SetName( who, exname );
+
+who.setcriminal(crim);
+who.murderer := murd;
+
+endprogram
+

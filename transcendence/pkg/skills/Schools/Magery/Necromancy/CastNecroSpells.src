@@ -1,0 +1,96 @@
+use uo;
+use os;
+use cfgfile;
+use polsys;
+
+include "include/attributes";
+include "include/client";
+include "include/effects2D";
+include "include/particles";
+include ":Localization:localization";
+
+var spellscfg := ReadConfigFile(":Necromancy:necrospells");
+
+program castnecrospells(parms)
+
+var who := parms[1];
+var spellid := parms[2];
+var type := parms[3];
+
+var spell, circle, requiredMana, level, reags, relPos, onehand, twohand, success;
+
+
+if(!spellid)
+ return;
+endif
+
+if((GetEffectiveSkill(who, SKILLID_MAGERY) < 100) && (who.cmdlevel < 3))
+ SendCustomSysMessageByLanguage( who,  GetUserPreferredLanguage(who), "You need at least 100 of Magery to cast this spells!", "Devi avere almeno 100 punti in Magia per lanciare quest'incantesimo!", 38);
+ return;
+endif
+
+if((GetObjProperty(who, "MagerySchool") != "Necromantic") && (who.cmdlevel < 3))
+ SendCustomSysMessageByLanguage( who,  GetUserPreferredLanguage(who), "You're not a Necromancer!", "Non sei un Negromante!", 38);
+ return;
+endif
+
+onehand := GetEquipmentByLayer( who, 1 );
+twohand := GetEquipmentByLayer( who, 2 );
+
+if((onehand) && (onehand != 0x26bc) )
+ SendCustomSysMessageByLanguage( who,  GetUserPreferredLanguage(who), "You must free your hands!", "Devi avere le mani libere!", 38);
+ return;
+endif
+
+if((twohand) && (onehand != 0x26ba) && (onehand != 0x2556) )
+ SendCustomSysMessageByLanguage( who,  GetUserPreferredLanguage(who), "You must free your hands!", "Devi avere le mani libere!", 38);
+ return;
+endif
+
+level := GetObjProperty(who, "NecroLevel");
+spell := spellscfg[spellid];
+circle := spell.Circle;
+reags := GetConfigStringArray( spell, "Reagent" );
+
+if ((level < circle) && (who.cmdlevel < 3))
+ SendCustomSysMessageByLanguage( who,  GetUserPreferredLanguage(who), "You must reach level " + cstr(circle), "Devi raggiungere il livello " + cstr(circle), 38);
+ return;
+endif
+
+if ((level - circle) == 0)
+ success := 50;
+elseif ((level - circle) == 1)
+ success := 70;
+elseif ((level - circle) >= 2 )
+ success := 100;
+endif
+
+if((RandomInt(100) + 1) >= success)
+FailCast(who); 
+return;
+endif
+
+relPos := spellid - (4 * (circle - 1));
+requiredMana := 20 + (circle * 10) + (relPos * 2);
+print("REQMANA: " + cstr(requiredMana));
+
+if((GetMana(who) < requiredMana))
+ SendLocalizedSysMessage(who, 11, GetUserPreferredLanguage(who), 0);
+ return;
+endif
+
+
+SetMana(who, GetMana(who) - requiredMana);
+
+start_script(":Necromancy:" + spell.Script, who);
+
+endprogram
+
+function FailCast(char)
+
+ PlaySoundEffect(char,0x005d);
+ ParticleOnCharEffect(char, 9943, 1);
+ Play2DObjectCenteredEffectHuefx( char, 0x3735,0x0a, 0x1e);
+ SendCustomSysMessageByLanguage( char,  GetUserPreferredLanguage(char), "You failed to cast the spell!", "L'incantesimo ti è fallito!", 38);
+
+endfunction

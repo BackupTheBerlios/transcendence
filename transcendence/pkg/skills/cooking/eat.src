@@ -1,0 +1,188 @@
+
+use uo;
+use util;
+use os;
+use cfgfile;
+include "include/attributes";
+include ":Localization:localization";
+
+const SOUND_EFFECT_EAT1 := 0x3b;     
+const SOUND_EFFECT_EAT2 := 0x3c; 
+const SOUND_EFFECT_EAT3 := 0x3d; 
+const POISON_SOUND := 0x247;
+const EFFECT_SPARKLE  := 0x374a;
+const ACTION_EAT := 0x22;
+
+//fixme : return control to character after poison ingested
+
+program eat_food( character, food )
+
+ if (GetObjProperty( character, "noeat") == 1)
+    SendSysMessage(character, "You're Stuffed!", 0x003, 0x005a);
+   
+    return;
+endif
+
+ var cfg := ReadConfigFile("foods");
+ var the_food := cfg[food.objtype];
+ var stufftime := the_food.stufftime;
+ var energy := the_food.energy;
+ var quality := GetObjProperty(food, "quality");
+  //print ("stufftime : " + cstr (stufftime) + " , Energy : " + cstr (energy));
+ var retval;
+ var themsg;
+ var poison := CInt(GetObjProperty(food, "poison_level"));
+ var maxstufftime := 3600;
+ var percent;
+ var maxhpregen := GetObjProperty(character, "maxhpregen");
+ var maxstamregen := GetObjProperty(character, "maxstamregen");
+ if (!maxhpregen)
+  maxhpregen := 200;
+ elseif (!maxstamregen)
+  maxstamregen := 200;
+ endif
+  
+ //stufftime := Cint ((quality * stufftime) / 100);
+ //print ("real stufftime" + cstr(stufftime));
+ energy := CInt((quality * energy) / 100);
+
+ SubtractAmount( food, 1);
+ PerformAction(character, ACTION_EAT);
+ if (poison > 0 )
+  SendSysMessage(character, "You have been poisoned!");   
+  var poison_level :=CInt(GetObjProperty(character, "poison_level"));
+  poison_level := poison_level + poison;
+  if (poison_level >= 15) then
+	        poison_level := 15;
+  endif 
+  if ( poison_level > 0)
+ 
+  retval := SetObjProperty(character, "poison_level",CStr(poison_level));
+  else
+ 
+  retval := SetObjProperty(character, "poison_level",CStr(poison_level));
+  start_script( ":spells:poisondamage", character );
+  endif
+      
+  SetObjProperty(character, "poison_level",CStr(poison_level));
+  start_script( ":spells:poisondamage", character );
+
+
+ else      
+ var rand_nbr := RandomInt(3) + 1;
+  if (rand_nbr == 1)
+         PlaySoundEffect(character,SOUND_EFFECT_EAT1);
+        
+  elseif (rand_nbr == 2)
+         PlaySoundEffect(character,SOUND_EFFECT_EAT2);
+         //themsg := "Yum!";
+  else
+         PlaySoundEffect(character,SOUND_EFFECT_EAT3);
+         //themsg := "Very tasty!"; 
+        
+  endif
+ //local quality := GetObjProperty (food, "quality");
+     if (quality)
+       var qualitystring;
+       if ((quality >= 0) && (quality < 20))
+         qualitystring := "has an horrible taste";
+       elseif ((quality >=20) && (quality < 30))
+         qualitystring := "has a bad taste";  
+       elseif ((quality >= 30) && (quality < 40))
+         qualitystring := "is neither good nor bad";
+       elseif ((quality >= 40) && (quality < 50))
+         qualitystring := "is somewhat good";
+       elseif ((quality >= 50) &&  (quality < 60));
+         qualitystring := "has a good taste";
+       elseif ((quality >= 60) &&  (quality < 70));
+         qualitystring := "is of a very good taste";  
+       elseif ((quality >= 70) &&  (quality < 80));
+         qualitystring := "is delicious!";
+       elseif ((quality >= 80) &&  (quality < 90));
+         qualitystring := "has an exceptional taste";
+       elseif ((quality >= 90) &&  (quality <= 99));
+         qualitystring := "has an excellent taste";
+       elseif ((quality >= 50) &&  (quality < 60));
+         qualitystring := "is an High-Cuisine food!";
+       endif
+      SendSysMessage(character, "This food "  + qualitystring, 3, 0x005a);
+    endif 
+
+ var hungrytime := GetObjProperty(character, "hungrytime");
+ var time := ReadGameClock();
+   percent := CInt((GetStrength(character)) * 2); 
+  maxstufftime := CInt((percent * maxstufftime) / 100);
+ 
+  if ((hungrytime - time) > maxstufftime)
+  //print ("A");
+  SetObjProperty(character, "stuffed", 1);
+ endif
+    
+   if (time >= hungrytime)
+     SetObjProperty(character, "hungrytime", time + stufftime);
+   else
+     SetObjProperty(character, "hungrytime", hungrytime + stufftime);
+   endif
+ 
+   
+   var eatenfood := GetObjProperty(character, "eatenfood");
+   if (!eatenfood)
+    eatenfood := {energy};
+   endif
+   if (GetObjProperty(character, "stuffed") == 0)
+   
+    eatenfood.append (energy);
+    SetHpRegenRate(character , ( GetHpRegenRate(character) + energy) * 12);
+    SetStaminaRegenRate(character , ( GetStaminaRegenRate(character) + energy) * 12);
+    
+   elseif (GetObjProperty(character, "stuffed") == 1)    
+    var newvalue := GetMedia(eatenfood);
+    SendSysMessage(character, "You're Stuffed!", 0x003, 0x005a);
+    SetObjProperty(character, "noeat", 1);
+    eatenfood := {energy};
+    
+    if ((newvalue > maxhpregen) || (newvalue > maxstamregen))
+     maxhpregen := CInt((newvalue + maxhpregen) / 2);
+     maxstamregen := CInt((newvalue + maxstamregen) / 2);
+    elseif ((newvalue < CInt(maxhpregen / 2)) || (newvalue < CInt(maxstamregen / 2)))
+     maxhpregen := CInt((newvalue + maxhpregen) / 2);
+     maxstamregen := CInt((newvalue + maxstamregen) / 2);
+    endif
+    SetHpRegenRate(character , ( GetHpRegenRate(character) + energy) * 12);
+    SetStaminaRegenRate(character , ( GetStaminaRegenRate(character) + energy) * 12);
+   endif
+   SetObjProperty(character, "eatenfood", eatenfood);
+   SetObjProperty(character, "maxhpregen", maxhpregen);
+   SetObjProperty(character, "maxstamregen", maxstamregen);
+   if (GetHpRegenRate(character) > GetObjProperty(character, "maxhpregen"))
+    SetHpRegenRate(character , ( GetObjProperty(character, "maxhpregen")) * 12);
+   endif
+   if (GetStaminaRegenRate(character) > GetObjProperty(character, "maxstamregen"))
+    SetStaminaRegenRate(character , ( GetObjProperty(character, "maxstamregen")) * 12);
+   endif
+    
+ endif
+
+
+
+endprogram
+
+function GetMedia(thearray)
+
+var i;
+var sum;
+for (i := 1; i < len(thearray); i := i + 1)
+ if (i == 1)
+  sum := thearray[1];
+ endif
+ sum := sum + thearray[i + 1];
+endfor
+var result := CInt(sum / len(thearray));
+
+
+
+
+/*local  somma := thearray[1] + thearray[2] + thearray[3] + thearray[4] + thearray[5] + thearray [6] + thearray[7] + thearray[8] + thearray[9] + thearray[10];
+local result := cint (somma / 10);*/
+return result;
+endfunction 

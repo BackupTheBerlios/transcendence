@@ -1,0 +1,32 @@
+use uo;
+use os;
+use cfgfile;
+
+var itemdesc := ReadConfigFile("itemdesc");
+program equiparmor(who,item,startup)
+
+set_critical(1);
+
+
+var hair := GetEquipmentByLayer(who, 11);
+if (hair.graphic == 0x203c)
+ SetObjProperty(who, "caphairtype", hair.graphic);
+ SetObjProperty(who, "caphaircolor", hair.color);
+ var col := hair.color;
+ DestroyItem(hair);
+ var bandhair := CreateItemInBackpack(who, 0x203c, 1);
+ bandhair.graphic := 0x3dc1;
+ bandhair.color := col;
+ EquipItem(who, bandhair);
+elseif (hair.graphic == 0x203d)
+ var ok := 1;
+
+else
+ SetObjProperty(who, "caphairtype", hair.graphic);
+ SetObjProperty(who, "caphaircolor", hair.color);
+ DestroyItem(hair);
+endif
+ 	
+return 1;
+       
+endprogram

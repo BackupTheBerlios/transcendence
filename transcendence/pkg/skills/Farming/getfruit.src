@@ -1,0 +1,142 @@
+use uo;
+use cfgfile;
+use os;
+use util;
+
+//include "include/client";
+include "include/objtype";
+include "include/utility";
+include "include/dist";
+include "include/moreskillssystem";
+const UACTION_CHOP := 0x0d;
+const SKILLID_FARMING := 50;
+program getfruit( me )
+
+SendSysMessage(me, "Select the tree", 0x03, 95);
+var plant := Target(me, 0x0000);
+if (!plant)
+ SendSysMessage(me, "Cancelled!", 0x03, 38);
+ return;
+endif
+
+if ((plant.graphic != 0x0d96) && (plant.graphic != 0x0d9a) && (plant.graphic != 0x0da6) && (plant.graphic != 0x0daa) && (plant.graphic != 0x0d9e) && (plant.graphic != 0x0da2) && (plant.graphic != 3240))
+SendSysMessage(me, "You can use it only on fruit plants", 0x03, 0x005a);
+return;
+endif
+
+if (Distance(me, plant) > 3)
+        SendSysMessage(me, "That is too far away!", 3, 38);
+        return;
+endif
+
+var cfg := ReadConfigFile("plants");
+if (!cfg)
+        return;
+endif
+
+var resource_type := cfg[plant.objtype].product;
+if (!resource_type)
+        return;
+endif
+var minrain := cfg[plant.objtype].minrain;
+var evergreen := cfg[plant.objtype].evergreen;
+var maxamount := cfg[plant.objtype].maxamount;
+var curamount := GetObjProperty(plant, "#amt");
+var gain := 0;
+//if ((plant.graphic >= 0x0d1b) and (plant.graphic <= 0x0d1f))
+                            var myskill := MSSGetSkill(me, SKILLID_FARMING);
+                            gain := myskill / 10;
+                            maxamount := maxamount + gain;
+                           
+                            
+ 
+if (curamount == maxamount)
+        SendSysMessage(me, "This has already been harvested. Come back later!", 3, 38);
+        SetObjProperty(plant, "harvested", 1);
+       
+        case (plant.graphic)
+          0x0d96: plant.graphic := 0x0d95; //apple1
+          0x0d9a: plant.graphic := 0x0d99; //apple2
+          0x0da6: plant.graphic := 0x0da5; //pear1
+          0x0daa: plant.graphic := 0x0da9; //pear2
+          0x0d9e: plant.graphic :=  0x0d9d; //peach1
+          0x0da2: plant.graphic :=  0x0da1; //peach2
+        endcase
+        return;
+endif
+
+
+var difficulty := cfg[plant.objtype].farmingskill;
+// print(me.name + " is trying to farm; difficulty is " + difficulty);
+/*if (me.cmdlevel)
+        Sendsysmessage(me, "Difficulty is " + difficulty);
+endif*/
+
+	var i;
+	var num_chops;
+	var theamount;
+	var wood_amount;
+	var distt;
+        var wstuff := GetGlobalProperty("Weather");
+        var season := wstuff[8];
+        var farmingtime := cfg[plant.objtype].farmingtime;
+       
+        if ((farmingtime == season) || (farmingtime == 5))
+	var rain := GetObjProperty(plant, "rain");
+	var seedlingtime := cfg[plant.objtype].seedlingtime;
+	if (rain)
+	 if (seedlingtime != 5)
+	 if (rain < minrain)
+	   SendSysMessage(me, "The plant had no fruits because there was not enough water! there was scarcity!", FONT_NORMAL, 38);
+	   return;
+	 endif
+	endif
+	endif  
+	var quality := GetObjProperty(plant, "quality");
+	if (MSSCheckSkill(me, SKILLID_FARMING, difficulty, difficulty))
+        	var theroll := RandomInt(100) + 1;
+   
+	 if (theroll == 100)
+			var a := 1;
+        	       else
+                
+            		wood_amount := 1;
+			if (wood_amount == 0)
+				SendSysMessage(me, "This area has already been harvested!", 3, 38);
+				return 0;
+			endif
+	   
+			var theproduct := CreateItemInBackpack(me,cfg[plant.objtype].product, wood_amount);
+	
+		
+                           /* local farmerskill := MSSGetSkill (me, SKILLID_FARMING);
+                            local vinequality := farmerskill;
+                            SetObjProperty (theproduct, "quality", cint (vinequality));*/
+                            
+                       
+		
+			if (quality)
+			SetObjProperty(theproduct, "quality", quality);
+			endif
+			SendSysMessage(me, "You put the fruit in your pack", 3, 0x005a);
+			SetObjProperty(plant, "#amt", CInt(curamount) + 1);
+			if (evergreen == 0)
+			  if (GetObjProperty(plant, "#amt") >= maxamount)
+			    DestroyItem(plant);
+			  endif 
+			endif
+			var parms := {};
+			parms[1] := plant;
+			parms[2] := cfg[plant.objtype].replenishperiod;
+			start_script("regrow", parms);
+			return 1;
+		endif
+	else
+		SendSysMessage(me, "You're not a very good farmer.", 3, 38);
+		return 1;
+	endif
+     else
+     	SendSysMessage(me, "We're in the wrong season to crop it!", FONT_NORMAL, 38);
+        return;
+     endif  
+endprogram

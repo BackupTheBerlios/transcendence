@@ -1,0 +1,96 @@
+use uo;
+use os;
+use util;
+use polsys;
+
+//include "include/packets";
+include "include/particles";
+include "include/animations";
+//include "include/audio";
+include "include/pgfacing";
+include "include/attributes";
+//include "include/eventID";
+include ":Localization:localization";
+include "include/client3d";
+//include "include/statMod";
+include "include/skillsUtils";
+include ":Soma:somaUtils";
+
+program disguise(parms)
+
+var i;
+var who := parms[1];
+var what := target(who);
+
+xyface(who, what.x, what.y);
+
+ParticleOnCharEffect(who, 5011, 2);
+
+ PlaySoundEffect( who, 0x212 );
+
+
+
+PlayCharAnim( who, 266);
+
+sleep(3);
+
+var cloned := CreateNpcFromTemplate( "man", what.x + 1, what.y, what.z, 0, what.realm);
+/*
+var exgraph := who.graphic;
+var excolor := who.color;
+var exname := who.name;*/
+
+ChangeCharGraphic(cloned, what.graphic);
+//cloned.graphic := what.graphic;
+cloned.color := what.color;
+cloned.facing := what.facing;
+SetAttributeBaseValue(cloned, "strength",  GetStrength(what) * 10);
+SetAttributeBaseValue(cloned, "intelligence", GetIntelligence(what) * 10);
+SetAttributeBaseValue(cloned, "dexterity",  GetDexterity(what) * 10);
+SetHP(cloned, GetHP(what));
+SetMana(cloned, GetMana(what));
+SetStamina(cloned, GetStamina(what));
+SetObjProperty(cloned, "master", who.serial);
+cloned.script := "tamed";
+RestartScript(cloned);
+
+var equip1, equip2;
+var self_eqp, eqp1, eqp2 ;
+
+equip1 := {};
+equip2 :={};
+
+
+//who.color := what.color;
+SetName(cloned, what.name);
+
+
+
+
+
+for (i := 1; i <= 0x18; i := i + 1)
+
+eqp1 := GetEquipmentByLayer( what, i );
+eqp2 := CreateItemCopyAtLocation(5276, 1164, 0, eqp1);
+//eqp2.color := eqp1.color;
+
+equip2.append(eqp2);
+equipitem(cloned, eqp2);
+
+endfor
+CopyAllSkills(what, cloned);
+detach();
+
+sleep(30);
+
+foreach eq in equip2
+destroyitem(eq);
+endforeach
+
+
+
+ApplyRawDamage( cloned, GetHP(cloned) + 10 );
+
+
+endprogram
+

@@ -1,0 +1,78 @@
+use uo;
+use os;
+use util;
+use polsys;
+
+//include "include/packets";
+include "include/particles";
+include "include/animations";
+include "include/audio";
+include "include/pgfacing";
+include "include/attributes";
+include "include/eventID";
+include ":Localization:localization";
+include "include/client3d";
+include "include/statMod";
+include "include/animations";
+include "include/gestures";
+//include "include/packetUtils";
+
+program oldmanform(parms)
+
+//var i;
+var who := parms[1];
+var what := target(who);
+
+xyface(who, what.x, what.y);
+
+ParticleOnCharEffect(who, 5011, 2);
+
+ PlaySoundEffect( who, 0x212 );
+
+
+
+PlayCharAnim( who, 266);
+
+sleep(3);
+
+if((what.graphic != 400) && (what.graphic != 401) && (what.graphic != 744) && (what.graphic != 745) && (what.graphic != 184) && (what.graphic != 183))
+ SendSysMessage(who, "It works only on humans");
+ return;
+endif
+
+var hair, beard;
+
+hair := GetEquipmentByLayer( what, 0xb );
+beard := GetEquipmentByLayer( what, 0x10 );
+
+var exhaircol, exbeardcol;
+
+if(hair)
+exhaircol := hair.color;
+hair.color := 0;
+endif
+
+if(beard)
+exbeardcol := beard.color;
+hair.color := 0;
+endif
+
+detach();
+
+DoTempMod(what, "str", 0 - (GetStrength(who) / 2), 30);
+DoTempMod(what, "dex", 0 - (GetDexterity(who) / 2), 30);
+var i;
+for (i := 1; i <= 6; i := i + 1)
+ AgedFidget(what);
+ sleep(5);
+endfor
+if(hair)
+
+hair.color := exhaircol;
+endif
+
+if(beard)
+hair.color := exbeardcol;
+endif
+
+endprogram

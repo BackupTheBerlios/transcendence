@@ -1,0 +1,458 @@
+/////////////////////////////////////////////////////////////////////////////
+//
+//  cooking.src: for using foods on ovens or combining with other foods
+//
+//  A food item is double-clicked, and used on either food or an oven.
+//
+//  Modifications:
+//      19990414 ENS reformatted, cleaned up
+//                   restructured so cookit is used for campires too
+//                   mixit never inited newname; removed it
+//
+//  TODO: 
+//    Find out why sometimes a for-loop is used to create n items,
+//        while sometimes a non-1 'amount' is passed to the create function
+//    is_oven appears to include too many objtypes.
+//    mixit doesn't consume items if the skills check fails
+//    Create() calls are not checked; if they fail, raw materials will be
+//        lost.
+//    When mixing items together, if skills check fails, nothing is consumed
+//
+/////////////////////////////////////////////////////////////////////////////
+
+use uo;
+use util;
+use os;
+use cfgfile;
+
+include "include/client";
+include "include/attributes";
+include "include/objtype";
+include "include/utility";
+include "include/quality";
+include "include/skilladv";
+
+program Cook( character, stuff )
+    var targetted;
+    var use_on;
+    var exceptional;
+    if (! Accessible( character, stuff))
+        SendSysMessage( character, "You can't reach that!", 3, 38);
+        return;
+    endif
+  
+    SendSysMessage(character, "Select an object to use this on", 3, 95);
+ 
+ 
+    targetted := TargetCoordinates(character);
+       
+    if (targetted.item.objtype) then  //targetted an item
+        use_on := targetted.item;
+    elseif (targetted.mobile.objtype)
+       SendSysMessage(character, "How are you going to use this on that?", 3, 38);
+       return;
+    else
+        use_on := targetted;      //targetted an item in the world
+    endif
+    var prevskill := getoldskill(character, SKILLID_COOKING);
+    var advskill;
+   
+    if  (use_on.objtype == UOBJ_CAMPFIRE)
+        cookit(character, stuff, use_on, prevskill);
+    elseif (is_oven(use_on.objtype))
+        cookinoven(character, stuff, use_on, prevskill);
+    else   
+        mixit(character, stuff, use_on, prevskill);
+    endif
+endprogram
+
+
+
+var config;
+var elem;
+
+
+
+function mixit(character, stuff, use_on, prevskill)
+    var advskill;
+    if (is_oven(use_on))
+     cookinoven(character, stuff, use_on, prevskill);
+     return;
+    endif
+    var key_id;
+    config := ReadConfigFile( "cooking" );
+    key_id := CStr(stuff.objtype) + "+" + CStr(use_on.objtype);
+    var thestring := CStr(key_id);
+    print(thestring);
+   
+    elem := FindConfigElem(config, thestring);
+
+    if (!elem)
+        SendSysMessage(character, "You don't have a recipe for this");
+        return;
+    endif
+   
+    var need_oven := GetConfigInt(elem, "need_oven");    
+    var skill_needed := GetConfigInt(elem, "skill_needed");
+    var points  :=  GetConfigInt(elem, "points");
+    var amount1 := GetConfigInt(elem, "amount1");
+    var amount2 := GetConfigInt(elem, "amount2");
+    var product_amount := GetConfigInt(elem, "product_amount");
+    var leftover := GetConfigInt(elem, "leftover");
+    var leftover_amount := GetConfigInt(elem, "leftover_amount");
+    var product:= GetConfigInt(elem, "product");
+    var needothers := GetConfigInt(elem, "needothers");
+    var other1 := GetConfigInt(elem, "other1");
+    var newname := GetConfigString(elem, "newname");
+    if (needothers == 1)
+     SendSysMessage(character, "now you need another ingeredient", 0x003, 0x005a);
+    
+     var other := Target(character);
+       if (other.graphic == 0x097c)
+        DestroyItem(other);
+       else
+       	 SendSysMessage(character, "That's not the right ingredient", 0x003, 0x0028);
+       	 return;
+       endif
+     endif  	
+    if ((stuff.amount < amount1) || (use_on.amount < amount2))
+        SendSysMessage(character, "You don't have enough ingredients");
+        return;
+    endif
+
+    if (CheckSkill(character, SKILLID_COOKING, skill_needed, points) )
+        SendSysMessage(character, "You mix the ingredients together", 3, 0x005a);
+        advskill := getincreasevalue(character, SKILLID_COOKING, prevskill);
+        if (advskill > 0.0)
+         SendSysMessage(character, "Skill Cooking changed, now it's " + CStr(prevskill + advskill) + ". (Increased by " + CStr(advskill) + ".", 3, 50);
+        endif
+        var can_make := min(CInt(stuff.amount/amount1),
+                              CInt(use_on.amount/amount2));
+        var cookskill := GetEffectiveSkill(character, SKILLID_COOKING);
+        var tasteid := GetEffectiveSkill(character, SKILLID_TASTEID);
+        var bonus;
+        var qualitystuff := GetObjProperty(stuff, "quality");
+        var qualityuseon := GetObjProperty(use_on, "quality");
+        var rawquality;
+        var quality;
+        var exceptional;
+        if (qualitystuff == "none")
+         rawquality := qualityuseon;
+        endif
+        if (qualityuseon == "none")
+         rawquality := qualitystuff;
+        endif
+       
+        if ((qualitystuff != "none") && (qualityuseon != "none"))
+        
+         rawquality := qualitystuff + qualityuseon;
+         rawquality := CInt(rawquality / 2);
+        endif
+        var coverage;
+        /*if (cookskill >= skill_needed)
+         coverage := 100;
+        else
+         coverage := cdbl (cookskill / cdbl (skill_needed));
+         coverage := cint (coverage * 100);
+        endif*/
+        coverage := GetQuality(skill_needed, cookskill);
+         
+       
+        tasteid := CInt((tasteid / 10 ) * 2);
+        bonus := (tasteid * coverage);
+        bonus := CInt(bonus / 100);
+       
+        coverage := coverage + bonus;
+        if (coverage > 100)
+         coverage := 100;
+         exceptional := 1;
+        endif
+       
+        quality := coverage * rawquality;
+        quality := CInt(quality / 100);
+       
+      
+        if (need_oven == 1)
+            SendSysMessage(character, "Select an oven to cook this on", 3, 95);
+            var theoven := TargetCoordinates(character);
+           
+            if (!theoven)
+                return;
+            endif
+          
+            if (! is_oven(theoven.objtype))
+                SendSysMessage(character, "You must cook that on an oven!", 3, 38);
+                return;
+            endif
+           
+                //
+                // FIXME why is this done with a for-loop, 
+                // and below with amount <> 1 ?
+                //
+           
+            var j;
+            var the_food := {};
+            for (j := 1; j <= can_make* product_amount; j := j + 1)
+                the_food [j] := CreateItemInBackpack(character, product, 1);
+                 SetObjProperty(the_food[j], "quality", quality);
+                 if (exceptional == 1)
+                  SetObjProperty(the_food[j], "exceptional", 1);
+                  SetName(the_food[j], "An exceptional " + the_food[j].name);
+                 endif
+                 if (len(newname) > 1)
+                  SetName(the_food[j], newname);
+                 endif
+              
+            endfor
+        else
+            if (use_on.graphic == 0x09ec)
+             if (GetObjProperty(use_on, "full") != 1);
+             SendSysMessage(character, "That jar is empty", 0x003, 38);
+             return;
+             endif
+            endif
+            var the_food := CreateItemInBackpack(character, product, product_amount *can_make);
+            if (len(newname) > 1)
+                  SetName(the_food, newname);
+                 endif
+            SetObjProperty(the_food, "quality", quality);
+        endif
+
+        if (leftover)
+            CreateItemInBackpack(character, leftover, leftover_amount * can_make);
+        endif
+        if (stuff.graphic == 0x0ff8)
+         print("water");
+         DestroyItem(stuff);
+         CreateItemInBackpack(character, 0x0ff7, 1);
+        else
+       
+        SubtractAmount(stuff, amount1 * can_make);
+        endif
+        if (use_on.graphic  == 0x1046)
+         print("sack");
+         var amt := GetObjProperty(use_on, "amt");
+         SetObjProperty(use_on, "amt", amt - 1);
+         amt := GetObjProperty(use_on, "amt");
+         if (amt <= 0)
+          DestroyItem(use_on );
+          SendSysMessage(character, "The sack is now empty", 0x003, 0x005a);
+         
+          CreateItemInBackpack(character, 0xfff0, 1);      
+         endif
+        elseif (use_on.graphic == 0x09ec)
+         SetObjProperty(use_on, "full", 0);
+         SetName(use_on, "A full " + use_on.name);
+        else
+        	
+        SubtractAmount(use_on, amount2 * can_make);
+        endif
+    endif
+endfunction
+
+
+
+// cookit - an item is used on an oven
+//          cooks or consumes entire stacks
+function cookit(character, stuff, use_on, prevskill)
+   var rawqualit := GetObjProperty(stuff, "quality");
+   if (!rawqualit)
+    rawqualit := 0;
+   endif
+    var advskill;
+    config := ReadConfigFile( "cooking" );
+    elem := FindConfigElem(config, stuff.objtype);
+   
+    if (!elem)
+        SendSysMessage(character, "You don't have a recipe for this.", 3, 38);
+        return;
+    endif     
+
+    var need_oven := GetConfigInt(elem, "need_oven");
+
+    if (need_oven && (!is_oven( use_on.objtype)))
+        SendSysMessage(character, "You need an oven to cook this!", 3, 38);
+        return;
+    endif
+    if (need_oven == 1)
+     cookinoven(character, stuff, use_on, prevskill);
+     return;
+    endif 
+    var skill_needed := GetConfigInt(elem, "skill_needed");
+    var points  :=  GetConfigInt(elem, "points");
+    var newname := GetConfigString(elem, "newname");
+   
+    SendSysMessage(character, "That's beginning to smell good!", 3, 0x005a);
+    sleep(2);
+    SendSysMessage(character, "Almost done!", 3, 0x005a);
+    sleep(2);   
+
+    if (CheckSkill(character, SKILLID_COOKING, skill_needed, points))
+        advskill := getincreasevalue(character, SKILLID_COOKING, prevskill);
+        if (advskill > 0.0)
+         SendSysMessage(character, "Skill Cooking changed, now it's " + CStr(prevskill + advskill) + ". (Increased by " + CStr(advskill) + ".", 3, 50);
+        endif
+        SendSysMessage(character,
+                       "Ahh, just right! You put the goods in your backpack", 3, 0x005a);
+        var i;
+        var product := GetConfigInt(elem, "product");
+        var thestuff;
+        var qlity := GetQuality(skill_needed, GetEffectiveSkill(character, SKILLID_COOKING));
+        qlity := CInt((qlity * rawqualit) / 100);
+        //for (i := 1; i <= stuff.amount; i := i + 1)
+            thestuff := CreateItemInBackpack(character, product, 1);
+            SubtractAmount(stuff, 1);
+            SetObjProperty(thestuff, "quality", qlity);
+            if (newname)
+                SetName(thestuff, newname);
+            endif
+        //endfor
+    else
+        SendSysMessage(character, "Darn! You burned it!", 3, 38);
+   endif
+   //Destroyitem( stuff );
+
+endfunction
+
+
+       
+
+
+
+
+
+
+function is_oven(an_objtype)
+    if ((an_objtype >= 0x0461) && (an_objtype <= 0x0466))
+        return 1;
+    elseif ((an_objtype >= 0x046a) && (an_objtype <= 0x046f))
+        return 1;
+    /*elseif ((an_objtype >= 0x0DE3) and (an_objtype <= 0x0DE8)) 
+        return 1;
+    elseif ((an_objtype >= 0x0E31) and (an_objtype <= 0x0E33)) 
+        return 1;
+    elseif ((an_objtype >= 0x197A) and (an_objtype <= 0x19A9)) */
+        return 1;
+    elseif ((an_objtype >= 0x092b) && (an_objtype <= 0x092f))
+        return 1;
+    elseif ((an_objtype >= 0x0930) && (an_objtype <= 0x0934))
+        return 1;
+   
+    elseif ( an_objtype == 0x0fb1 )
+        return 1;
+    else
+        return 0;
+    endif
+endfunction
+
+function cookinoven(character, food, oven, prevskill)
+    
+     var advskill;
+     var a := 1;
+     var qualita := GetObjProperty(food, "quality");
+     var keyid;
+    var cfg := ReadConfigFile( "cooking" );
+    keyid := CStr(food.objtype);// + "+" + cstr(oven.objtype);
+    var the_string := CStr(keyid);
+   // print (thestring);
+   
+    var elm := FindConfigElem(cfg, the_string);
+
+    if (!elm)
+        SendSysMessage(character, "You don't have a recipe for this");
+        return;
+    endif
+ var oldname := GetConfigInt(elm, "oldname");
+
+ var produt:= GetConfigInt(elm, "product");
+ var skillneeded := GetConfigInt(elm, "skill_needed");
+ var point  :=  GetConfigInt(elm, "points");
+ var time  :=  GetConfigInt(elm, "time");
+
+ var graph := food.graphic;
+ var amt := food.amount;
+ var name;
+ var component;
+ var smallsmoke;
+  name := food.name;
+var charge;
+if ((oven.graphic == 0x0461) || (oven.graphic == 0x046f) || (oven.graphic == 0x0930) || (oven.graphic == 0x092b))
+ charge := GetObjProperty(oven, "charge");
+else
+ if (oven.facing == 19)
+  component := ListItemsAtLocation( oven.x, oven.y + 1, oven.z, oven.realm );	
+  component := component[1];
+ elseif (oven.facing == 12)
+  component := ListItemsAtLocation( oven.x + 1, oven.y, oven.z, oven.realm );
+  component := component[1];
+ endif
+ charge := GetObjProperty(component, "charge");
+endif  
+
+if (!charge)
+ SendSysMessage(character, "The oven has not logs", 3, 38);
+ return;
+endif
+
+var neededlogs := CInt(time / 10);
+if (charge < neededlogs)
+ SendSysMessage(character, "Not enough logs! You need at least " + CStr(neededlogs) + " logs", 3, 38);
+ return;
+endif
+
+if ((oven.graphic == 0x0461) || (oven.graphic == 0x046f) || (oven.graphic == 0x0930) || (oven.graphic == 0x092b))
+ SetObjProperty(oven, "charge", charge - neededlogs);
+ SetName(oven, "");
+ SetName(oven, "oven " + " (" + CStr(GetObjProperty(oven, "charge")) + " logs)");
+ smallsmoke := CreateItemAtLocation( oven.x, oven.y, oven.z + 33, 0x3735, 1, oven.realm );
+ smallsmoke.color := 1154;
+else
+ SetObjProperty(component, "charge", charge - neededlogs);
+ SetName(component, "");
+ SetName(component, "oven " + " (" + CStr(GetObjProperty(component, "charge")) + " logs)");
+ smallsmoke := CreateItemAtLocation( component.x, component.y, component.z + 33, 0x3735, 1, component.realm );
+ smallsmoke.color := 1154;
+endif
+
+SendSysMessage(character, "you put the " + food.name + " in the oven and you try to cook it", 0x003, 0x005a);
+ SendSysMessage(character, food.name + " will take " + CStr(time) + " seconds to cook", 0x003, 0x005a);
+  DestroyItem(food);
+ Detach();
+ sleep(time);
+ DestroyItem(smallsmoke);
+ var success := CheckSkill(character, SKILLID_COOKING, skillneeded, point);
+ if (success)
+  advskill := getincreasevalue(character, SKILLID_COOKING, prevskill);
+        if (advskill > 0.0)
+         SendSysMessage(character, "Skill Cooking changed, now it's " + CStr(prevskill + advskill) + ". (Increased by " + CStr(advskill) + ".", 3, 50);
+        endif
+  var newfood := CreateItemAtLocation(oven.x + 1, oven.y, oven.z, produt, amt, oven.realm);
+  SetObjProperty(newfood, "quality", qualita);
+  if (oldname == 1)
+    SetName(newfood, name);
+  endif 
+ else
+  SendSysMessage(character, "You burn your food!", 0x003, 0x0028);
+  var burnedfood :=  CreateItemAtLocation(oven.x + 1, oven.y, oven.z, 0x3da1, amt, oven.realm);
+  burnedfood.graphic := graph;
+  burnedfood.color := 1157;
+  if (graph == 0x09ea)
+   SetName(burnedfood, "burned muffins");
+  elseif (graph == 0x1083)
+   SetName(burnedfood, "burned pizza");
+  elseif (graph == 0x103c)
+   SetName(burnedfood, "burned bread");
+  elseif (graph == 0x098c)
+   SetName(burnedfood, "burned bread");
+  elseif (graph == 0x1042)
+   SetName(burnedfood, "burned pie");
+  elseif (graph == 0x3a9a)
+   SetName(burnedfood, "burned cake");
+  else
+   SetName(burnedfood, "burned " + burnedfood.name);
+  endif
+  return;
+ endif
+endfunction
+   
+ 

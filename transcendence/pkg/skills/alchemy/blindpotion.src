@@ -1,0 +1,40 @@
+use os;
+use uo;
+use util;
+use cfgfile;
+
+include "drinkpotion";
+include "include/statmod";
+
+
+program blindpotion (character, potion)
+
+if (!checkifcandrink(character))
+        return;
+endif
+
+    var potion_strength := get_potion_strength(potion);
+
+
+    if (is_poison(potion))
+        do_poison(character, potion);
+    else
+          empty_bottle(character, potion);
+           var victim := Target(character);
+	   if (!victim)
+	    SendSysMessage(character, "target cancelled");
+	    endif
+	
+	     victim.setlightlevel (10, 120);
+	  
+	   
+
+
+
+
+    endif
+
+
+
+
+endprogram

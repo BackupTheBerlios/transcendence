@@ -1,0 +1,116 @@
+use os;
+use uo;
+use cfgfile;
+
+include "include/moreskillssystem";
+
+include "include/checktemp";
+
+var SKILLID_FARMING := 50;
+
+program seedling(parms)
+ var where := parms[1];
+ var what := parms[2];
+ var who := parms[3];
+ var realm := parms[4];
+ var i;
+ var j;
+
+// prima pausa : 1 ora
+for (i := 1; i <= 10; i := i + 1)
+        for (j := 1; j <= 6; j := j + 1)
+                sleep(60);
+        endfor
+endfor
+
+
+// lettura config file
+var oldskill := MSSGetSkill(who, SKILLID_FARMING);
+var cfg := ReadConfigFile("plants");
+var diffi := cfg[what].farmingskill;
+print("Farming difficulty : " + CStr(diffi));
+var seedlingtime := cfg[what].seedlingtime;
+var farmingtime := cfg[what].farmingtime;
+var maxtemp := cfg[what].maxtemperature;
+var mintemp := cfg[what].mintemperature;
+
+// controllo se c'è un periodo preciso in cui piantare i semi
+if (seedlingtime == 5)
+
+ var success := MSScheckskill(who, SKILLID_FARMING, diffi, 50);
+  if (success)
+    CreateItemAtLocation(where.x, where.y, where.z, what, 1, realm);
+    var newskill := MSSGetSkill(who, SKILLID_FARMING);
+    var increasevalue := newskill - oldskill;
+
+    SendSysMessage( who, "Farming Skill increased by " + CStr(increasevalue) + ". Now it's " + CStr(newskill), 0x003, 0x005a);
+    SendSysMessage( who, "Your seeds are growing!" );
+  else
+     SendSysMessage(who, "Your seeds died!", 0x003, 0x005a);
+     return;
+  endif 
+else
+ var wstuff := GetGlobalProperty("Weather");
+ var season := wstuff[8];
+  if (season == seedlingtime)
+      var success := MSScheckskill(who, SKILLID_FARMING, diffi, 50);                                                                                                               
+       if (success)                                                                                                                                                                   
+         var the_plant := CreateItemAtLocation(where.x, where.y, where.z, what, 1, realm);                                                                                                                    
+         var newskill := MSSGetSkill(who, SKILLID_FARMING);                                                                                                                        
+         var increasevalue := newskill - oldskill;                                                                                                                                  
+                                                                                                                                                                                      
+         SendSysMessage( who, "Farming Skill increased by " + CStr(increasevalue) + ". Now it's " + CStr(newskill), 0x003, 0x005a);                                             
+         SendSysMessage( who, "Your seeds are growing!" );                                                                                                                            
+         while (wstuff[8] != farmingtime)
+           sleep(3600);
+           wstuff := GetGlobalProperty("Weather");
+           var tempdamage := GetObjProperty(the_plant, "tempdam");
+           if (!tempdamage)
+            tempdamage := 0;
+           elseif (tempdamage > 55) // massimo danno sopportabile
+            DestroyItem(the_plant);
+            SendSysMessage(who, "Your plant died!", 0x003, 0x005a);
+            return;
+           endif
+           var rainbonus := GetObjProperty(the_plant, "rain");
+            if (!rainbonus)
+              rainbonus := 0;
+            endif
+              
+           wstuff := GetGlobalProperty("Weather");
+           if (wstuff[7] == 3)
+            rainbonus := rainbonus + 1;
+           
+           endif
+           if ((checktemperature(the_plant) <=  mintemp) || (checktemperature(the_plant) >= maxtemp))   
+            tempdamage := tempdamage + 1;
+           
+           endif
+           SetObjProperty( the_plant, "rain", rainbonus);
+           SetObjProperty(the_plant, "tempdam", tempdamage);
+           wstuff := GetGlobalProperty("Weather");
+         endwhile
+         var quality;
+         var rawquality := diffi / CInt(MSSGetSkill(who, SKILLID_FARMING));
+         if (CInt(MSSGetSkill(who, SKILLID_FARMING)) > diffi)
+          rawquality := 100;
+         endif
+         quality := CInt(rawquality * 10);
+         SetObjProperty(the_plant, "quality", quality);   
+      
+       else                                                                                                                                                                           
+          SendSysMessage(who, "Your seeds died!", 0x003, 0x005a);                                                                                                              
+          return;                                                                                                                                                                     
+       endif                                                                                                                                                                          
+      
+  else
+     SendSysMessage(who, "You planted it in the wrong season, it will die!", 0x003, 0x005a); 		 
+	  return;
+  endif
+endif
+  	  
+endprogram
+     
+     
+     
+     

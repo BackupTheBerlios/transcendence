@@ -1,0 +1,61 @@
+use uo;
+use os;
+use util;
+use cfgfile;
+include "include/eventid";
+
+const MOVING_EFFECT_PURPLE_POTION  := 0x0f0d;
+const SOUND_EFFECT_EXPLOSION	   := 0x208;
+const EFFECT_EXPLOSION             := 0x36b0;
+
+program use_explosion( character, potion )
+
+    if (!Accessible( character, potion))
+	SendSysMessage(character,"You can't get to that!");
+	return;
+    endif
+   
+    set_critical(1);
+    if (GetObjProperty(potion, "#bomb"))
+        SendSysMessage(character, "That is already going to explode!");
+        return;
+    else
+        SetObjProperty(potion, "#bomb", 1);
+    endif
+    set_critical(0);
+   
+    var tobjtype := potion.objtype;
+    character.hidden := 0;
+    SendSysMessage(character, "Select a target");
+    var parms := {};
+    parms[1] := potion;
+    parms[2] := character;
+    start_script(":alchemy:explosiontimer", parms);
+    var cast_on := TargetCoordinates( character );
+    if (!cast_on)
+        return;
+    endif
+    if (!potion)
+        return;
+    endif
+   
+    if (!CheckLosAt( character, cast_on.x, cast_on.y, cast_on.z ))
+        SendSysMessage(character, "You can't see that!");
+        return;
+    endif
+    if (!potion)
+        return;
+    endif
+      
+    Detach();
+    if (!potion)
+        return;
+    endif
+    PlayMovingEffectXYZ( character.x, character.y, character.z+15,
+                         cast_on.x, cast_on.y, cast_on.z,
+                         MOVING_EFFECT_PURPLE_POTION, 8, 0, 0, character.realm );
+    if (!potion)
+        return;
+    endif
+    MoveItemToLocation(potion, cast_on.x, cast_on.y, cast_on.z, MOVEITEM_FORCELOCATION );
+endprogram

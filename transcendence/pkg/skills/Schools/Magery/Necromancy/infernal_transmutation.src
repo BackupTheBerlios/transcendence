@@ -1,0 +1,73 @@
+use uo;                                                     
+use os;                                                     
+use polsys;                                                 
+                                                            
+//include "include/packets";                                
+include "include/particles";                                
+include "include/animations"; 
+include "include/attributes";
+include "include/pgfacing";
+include ":Localization:localization";                              
+                                                            
+program infernal_transmutation(parms)                                    
+                                                            
+var who := parms[1];                                        
+var critter;   
+var newcritt;                                              
+var x,y,z;                                                            
+if(who.npctemplate)                                         
+  critter := parms[2];                                       
+else                                                        
+  critter := target(who);                                    
+endif    
+
+if(!critter)                                                                    
+ SendLocalizedSysMessage(who, 1, "ITA", {}, 9);     
+ return;                                         
+endif                           
+
+
+if(!critter.npctemplate)                                     
+ SendLocalizedSysMessage(who, 1, "ITA", {}, 9);  
+ return;                                         
+endif                
+
+xyface(who, critter.x, critter.y);        
+ParticleOnCharEffect(who, 5028, 2); 
+if(who.graphic == 400)              
+ PlaySoundEffect( who, 0x47E );     
+elseif (who.graphic == 401)         
+PlaySoundEffect( who, 0x4B5 );      
+endif                               
+	                            
+                                    
+PlayCharAnim( who, 266);            
+                                                                                
+sleep(3);                           
+if((critter.graphic == 0xd9) || (critter.graphic == 225) || (critter.graphic == 100) || (critter.graphic == 25) || (critter.graphic == 27) || (critter.graphic == 34) || (critter.graphic == 37))
+ newcritt := "hellhound";
+elseif((critter.graphic == 214) || (critter.graphic == 64) || (critter.graphic == 63) || (critter.graphic == 65))  
+ newcritt := "hellcat";
+elseif((critter.graphic == 0xcc) || (critter.graphic == 0xc8) || (critter.graphic == 0xe4) || (critter.graphic == 0xe2))                      
+ newcritt := "nightmare";   
+else
+	ParticleOnCharEffect(critter, 9906, 2);
+sleep(6);
+        critter.script := "killpcs";
+        RestartScript(critter); 
+	return;
+endif 
+
+x := critter.x;
+y := critter.y;
+z := critter.z;
+var realm := critter.realm;
+ParticleOnCharEffect(critter, 9906, 2);
+sleep(6);
+MoveCharacterToLocation( critter, 0, 0, 0, MOVECHAR_FORCELOCATION );
+CreateNpcFromTemplate( newcritt, x, y, z, 0, realm);
+
+ApplyRawDamage(critter, GetMaxHp(critter) + 20);
+
+endprogram
+                                            

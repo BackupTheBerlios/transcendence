@@ -1,0 +1,50 @@
+use uo;
+use cfgfile;
+use polsys;
+
+include "include/spellRestrictions";
+include "include/attributes";
+include "include/particles";
+include "include/effects2D";
+include "checkeffects";
+include "include/AOSPackets";
+
+var spellscfg := ReadConfigFile(":spells:spells"); 
+
+program cast_magicarrow( parms )
+  var circle := 1;
+  var delivery := "direct";
+  var noto := "harmful";
+  var result := maincast(parms, delivery, circle, noto, 5);
+  if(result == 0)
+    return;
+  endif
+  var caster := result[1];
+  var cast_on := result[2];
+     CheckForSpell3DEffects(spellscfg, caster, cast_on, 5, FX_MAGIC_ARROW );
+     Play2DMovingEffectHuefx( caster, cast_on, FX_MAGIC_ARROW, 5, 1 );
+  //PlayMovingEffect( caster, cast_on, FX_MAGIC_ARROW, 5, 1 );
+  PlaySoundEffect( caster, SFX_SPELL_MAGIC_ARROW );
+  var dmg := RandomDiceRoll("1d8");
+  if(Reflected(cast_on))
+	CheckForSpell3DEffects(spellscfg, caster, cast_on, 5, FX_MAGIC_ARROW );
+        Play2DMovingEffectHuefx( caster, cast_on, FX_MAGIC_ARROW, 5, 1 );
+	//PlayMovingEffect( cast_on, caster, FX_MAGIC_ARROW, 5, 1 );
+	PlaySoundEffect( cast_on, SFX_SPELL_MAGIC_ARROW );
+    ApplyRawDamage( caster, Resisted(circle,caster,cast_on,dmg) );
+    if(!caster.npctemplate)
+     SendVisualHPloss(caster, cast_on, dmg);
+    endif
+  else
+    if(GetHp(cast_on) > 1)
+	  SetObjProperty(cast_on, "LastHit", {caster.name,caster.serial, "magic arrow" });
+      if(cast_on.isA(POLCLASS_NPC))
+        dmg := dmg * 2;
+      endif
+      ApplyRawDamage(cast_on, Resisted(circle,caster,cast_on,dmg));
+      if(!caster.npctemplate)
+      SendVisualHPloss(caster, cast_on, dmg);
+      endif
+    endif
+  endif
+endprogram

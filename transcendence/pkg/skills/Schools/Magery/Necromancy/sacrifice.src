@@ -1,0 +1,73 @@
+use uo;
+use os;
+use util;
+use polsys;
+
+//include "include/packets";
+include "include/particles";
+include "include/animations";
+include "include/audio";
+include "include/pgfacing";
+include "include/attributes";
+include "include/eventID";
+include ":Localization:localization";
+include "necroUtils";
+
+
+program skeletonarmy(parms)
+
+var i, undeads;
+var who := parms[1];
+//var what := target(who);
+
+//xyface(who, what.x, what.y);
+ParticleOnCharEffect(who, 5028, 2);
+if(who.graphic == 400)
+ PlaySoundEffect( who, 0x47E );
+elseif (who.graphic == 401)
+ PlaySoundEffect( who, 0x4B5 );
+endif
+	
+
+PlayCharAnim( who, 266);
+
+sleep(3);
+
+undeads := ListMobilesNearLocation( who.x, who.y, who.z, 8, who.realm );
+
+foreach mob in undeads
+
+if(GetObjProperty( mob, "Undead" ))
+ xyface(mob, who.x, who.y);
+ PrintLocalizedTextAbovePrivate( mob, who,  107, "ITA");
+else
+  continue;
+endif 	
+ 
+endforeach
+
+sleep(4);
+
+foreach mob in undeads
+
+if(GetObjProperty( mob, "Undead" ))
+ //xyface(mob, who.x, who.y);
+ if(GetHp(who) < GetMaxHp(who))
+  SetHp(who, GetHp(who) + (GetHp(mob) / 2));
+ else
+  SetHp(who, GetMaxHp(who));
+  continue;	
+ endif  
+ ApplyRawDamage( mob, GetMaxHp(mob) + 10 );
+else
+  continue;
+endif 	
+ 
+endforeach
+
+endprogram
+
+
+
+
+

@@ -1,0 +1,21 @@
+use uo;
+use os;
+
+program necroicon(parms)
+
+var who := parms[1];
+var book := SystemFindObjectBySerial( parms[2]);
+
+var layout :=
+{
+"page 0",
+"gumppic 30 30 11011",
+"button 30 30 11011 11011 1 0 1"
+//"page 1"
+};
+
+var res := SendDialogGump(who, layout, {});
+if(res[0] == 1)
+ start_script(":Necromancy:iconnecrobook", {who, book});
+endif
+endprogram

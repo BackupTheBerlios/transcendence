@@ -1,0 +1,67 @@
+use uo;
+use os;
+use util;
+use polsys;
+use cfgfile;
+
+//include "include/packets";
+include "include/particles";
+include "include/animations";
+//include "include/audio";
+include "include/pgfacing";
+include "include/attributes";
+//include "include/eventID";
+include ":Localization:localization";
+include "include/client3d";
+//include "include/statMod";
+include ":Soma:somaUtils";
+include "include/npcs";
+include "include/client";
+include "include/effects2D";
+
+program bodybomb(parms)
+
+var i;
+var who := parms[1];
+var what := target(who);
+
+xyface(who, what.x, what.y);
+
+ParticleOnCharEffect(who, 5011, 2);
+
+ PlaySoundEffect( who, 0x212 );
+
+
+
+PlayCharAnim( who, 266);
+
+sleep(3);
+
+detach();
+sleep(30);
+
+PlaySoundEffect( what, SFX_SPELL_EXPLOSION );
+Play2DStationaryEffectHuefx( what.x, what.y, what.z, FX_EXPLODE_3, 7, what.realm, 0x10);
+ParticleOnCharEffect(what, 5044, 3);
+
+var whatx := what.x;
+var whaty := what.y;
+var whatz := what.z;
+var realm := what.realm;
+
+SetObjProperty(what, "nocorpse", 1);
+ApplyRawDamage( what, GetHp(what) + 10 );
+
+foreach chr in ListMobilesNearLocation( whatx, whaty, whatz, 5, realm )
+ ApplyRawDamage( chr, RandomInt(20) + 40);
+endforeach
+sleep(2);
+
+if((what.graphic == 400) || (what.graphic == 401))
+ CreateItemAtLocation( whatx, whaty - 1, whatz, 0x1cde, 1, what.realm);
+ CreateItemAtLocation( whatx - 1, whaty + 1, whatz, 0x1ce2, 1, what.realm);
+ CreateItemAtLocation( whatx + 1, whaty + 1, whatz, 0x1ce5, 1, what.realm);
+ CreateItemAtLocation( whatx - 1, whaty - 1, whatz, 0x1cec, 1, what.realm);
+endif
+
+endprogram

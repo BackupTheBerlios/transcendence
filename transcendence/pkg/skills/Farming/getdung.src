@@ -1,0 +1,71 @@
+//
+// GetDung Script for Farming Package
+//
+// 
+//
+// Creator: Artix
+// Contact: artix@artix.f2s.com
+//
+// Created: 25-Sept-2001
+// Updated: 
+//
+use uo;
+use os;
+
+
+include "include/client";
+
+program getdunk (who, shovel);
+
+var dung := Target(who, TGTOPT_CHECK_LOS);
+if (!dung)
+ SendSysMessage(who, "Target Cancelled", 0x003, 38);
+ return;
+endif
+
+if (!Accessible(who, dung))
+ SendSysMessage(who, "that's too far away", 0x003, 38);
+ return;
+endif
+
+if ((dung.graphic != 0x0f3b) && (dung.graphic != 0x0f3c))
+ SendSysMessage(who, "It hasn't a  good smell, but you have to use it on dung", 0x03, 38);
+ return;
+endif
+
+SendSysMessage(who, "Where do you want to put it now?", 0x003, 95);
+var destination := Target(who, TGTOPT_CHECK_LOS);
+if (!destination)
+ SendSysMessage(who, "Target Cancelled", 0x003, 38);
+ return;
+endif
+  
+if (!Accessible(who, destination))
+ SendSysMessage(who, "that's too far away", 0x003, 38);
+ return;
+endif
+
+if (destination.objtype == 0xdd17);
+ var dungamt := GetObjProperty(destination, "dungamt");
+ /* if (!dungamt)
+  dungamt := 0;
+ endif */
+
+ if (dungamt <= 4)
+  SetObjProperty(destination, "dungamt", dungamt + 1);
+  DestroyItem(dung);
+ else
+  SetObjProperty(destination, "dungamt", 5);
+  SendSysMessage(who, "The sack is full", 0x003, 0x0028);
+ endif
+
+elseif (destination.objtype == 0x7007)
+ DestroyItem(dung);
+endif
+
+endprogram
+
+     
+
+
+

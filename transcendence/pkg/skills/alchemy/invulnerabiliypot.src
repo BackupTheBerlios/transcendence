@@ -1,0 +1,53 @@
+use os;
+use uo;
+use util;
+use cfgfile;
+
+include "drinkpotion";
+include "include/attributes";
+include "include/statmod";
+
+
+program ivulnpotion (character, potion)
+
+if (!checkifcandrink(character))
+        return;
+endif
+
+    var potion_strength := get_potion_strength(potion);
+
+
+    if (is_poison(potion))
+        do_poison(character, potion);
+    else
+           empty_bottle(character, potion);
+           PlaySoundEffect(character, 0x01ee);
+    	PlayObjectCenteredEffect( character, 0x373a, 7,7);
+        var origstr := GetStrength(character);
+        var origar := character.ar;
+        var orighp := GetHp(character);
+        SetObjProperty(character, "origstr", origstr);
+        SetObjProperty(character, "origar", origar);
+        SetObjProperty(character, "orighp", orighp);
+	character.ar := 10000;
+	SetBaseStrength(character,5000);
+	SetHp(character, 5000);
+	Detach();
+	sleep(90);
+	character.ar := origar;
+	SetBaseStrength(character,origstr);
+	SetHp(character, orighp);
+	EraseObjProperty(character, "origstr");
+        EraseObjProperty(character, "origar");
+        EraseObjProperty(character, "orighp");
+
+
+
+
+
+    endif
+
+
+
+
+endprogram

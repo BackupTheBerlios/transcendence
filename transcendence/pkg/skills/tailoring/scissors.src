@@ -1,0 +1,30 @@
+use uo;
+
+include "include/objtype";
+include "include/client";
+
+program use_scissors( character, scissors )
+
+   SendSysMessage( character, "Select a bolt of cloth." );
+   var cloth := Target( character );
+
+   if(!cloth)
+      SendSysMessage( character, "Cancelled." );
+      return;
+   endif
+
+   if(cloth.objtype != UOBJ_CLOTH)
+      SendSysMessage( character, "You may only use that on bolts of cloth." );
+      return;
+   endif
+
+   if(CheckSkill(character, SKILLID_TAILORING, 5, 20))
+      var amt := (cloth.amount * 25);
+      CreateItemInBackpack( character, 0x0e21, amt );
+      DestroyItem( cloth );
+      SendSysMessage( character, "You create " + amt + " bandages in your pack." );
+   else
+      SendSysMessage( character, "You can't even make a scrap of cloth right!" );
+   endif
+
+endprogram

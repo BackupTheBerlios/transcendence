@@ -1,0 +1,106 @@
+//rincewind
+
+use uo;
+use os;
+
+include "include/client";
+include "include/attributes";
+include "include/skillpoints";
+
+program anatomy( character )
+
+    var strdesc;
+    var dexdesc;
+    var thepoints := get_default_points(SKILLID_ANATOMY);
+
+    SendSysMessage( character, "Select a Target." );
+    var subject := Target(character);
+
+     if (!subject)
+      SendSysMessage(character,"Targetting Cancelled.");
+      return;  
+     endif
+
+ if (CheckSkill(character,SKILLID_ANATOMY, -1, thepoints))
+
+ var str := GetMaxHp(character) / GetStrength(character) * 100;
+ var dex := GetMaxStamina(character) / GetDexterity(character) * 100;
+ var descr := "";
+
+ // Strength Description
+
+
+ if (str >= 0 && str <= 9)
+  strdesc := "would have trouble lifting small objects";
+ elseif (str >= 10 && str <= 19)
+  strdesc :=  "is rather feeble";
+ elseif (str >= 20 && str <= 29)
+  strdesc :=  "is somewhat weak";
+ elseif (str >= 30 && str <= 39)
+  strdesc := "is of normal strength";
+ elseif (str >= 40 && str <= 49)
+  strdesc := "is somewhat strong";
+ elseif (str >= 50 && str <= 59)
+  strdesc := "is very strong";
+ elseif (str >= 60 && str <= 69)
+  strdesc := "is extremely strong";
+ elseif (str >= 70 && str <= 79)
+  strdesc := "is extraordinarily strong";
+ elseif (str >= 80 && str <= 89)
+  strdesc := "is strong as an ox";
+ elseif (str >= 90 && str <= 99)
+  strdesc := "is ne of the strongest people you have ever seen";
+ elseif (str >= 100)
+  strdesc := "is superhumanly strong";
+ endif 
+
+
+ // Dexterity Description
+
+
+ if (dex >= 0 && dex <= 9)
+  dexdesc := "can barely manage to stay standing";
+ elseif (dex >= 10 && dex <= 19)
+  dexdesc := "is very clumsy";
+ elseif (dex >= 20 && dex <= 29)
+  dexdesc := "is somewhat uncoordinated";
+ elseif (dex >= 30 && dex <= 39)
+  dexdesc := "is moderately dextrous";
+ elseif (dex >= 40 && dex <= 49)
+  dexdesc := "is somewhat agile";
+ elseif (dex >= 50 && dex <= 59)
+  dexdesc := "is very agile";
+ elseif (dex >= 60 && dex <= 69)
+  dexdesc := "is extremely agile";
+ elseif (dex >= 70 && dex <= 79)
+  dexdesc := "is extraordinarily agile";
+ elseif (dex >= 80 && dex <= 89)
+  dexdesc := "moves like quicksilver";
+ elseif (dex >= 90 && dex <= 99)
+  dexdesc := "is one of the fastest people you have ever seen";
+ elseif (dex >= 100)
+  dexdesc := "is superhumanly agile";
+endif
+
+  if (CInt(GetObjProperty(subject, "poison_level")) > 0 )
+     descr := descr + ", subject is poisoned.";
+  endif 
+
+   if (GetEffectiveSkill(character,SKILLID_ANATOMY) >= 65)
+     SendSysMessage(character, "The subject " +strdesc + ", the subject's stamina is at "+dex +" %"+ descr);    
+   else
+     SendSysMessage(character, "The subject " +strdesc + " and "+dexdesc+ descr +".");       
+   endif
+
+
+  else
+    SendSysMessage(character, "You're not sure...");
+  endif
+
+
+
+endprogram
+
+
+
+

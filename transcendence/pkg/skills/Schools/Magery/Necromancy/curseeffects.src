@@ -1,0 +1,94 @@
+use uo;
+use os;
+use util;
+use polsys;
+
+include ":Necromancy:necroUtils";
+include ":Necromancy:summon";
+include "include/eventID";
+include "include/particles";
+
+program curseeffects(parms)
+
+ var caster := parms[1];
+ var who := parms[2];
+ var duration := parms[3];
+ var i, critt, ev, where;
+ 
+ where := struct;
+ where.+x;
+ where.+y;
+ where.+z;
+ 
+ ev := struct;
+ ev.+type;
+ ev.+source;
+ 
+for(i :=1; i <= (duration / 6); i := i + 1)
+ SendSysMessage(caster, "Effect!!!!");
+ case(RandomInt(4))
+  
+  0: 
+     SendSysMessage(caster, "summcr");
+     where.x := RandomCoordModifier(who.x, 1);
+     where.y := RandomCoordModifier(who.y, 1);
+     where.z := who.z;
+     critt := summon_creature( caster,  GetRandomUndead(), where );
+     ev.type := EVID_ENGAGED;
+     ev.source := caster;
+     SendEvent(ev, critt);
+     
+  1: 
+    SendSysMessage(caster, "bolt");
+    PlayLightningBoltEffect(who); 
+    ParticleOnCharEffect(who, PART_FULMINE, 3 );
+    PlaySoundEffect( who, 0x002a );
+    ApplyRawDamage( who, 25 );
+    
+  2:
+    SendSysMessage(caster, "mass");
+    PlaySoundEffect(who, 0x231);
+    PlayMovingEffectXYZ(who.x, who.y, who.z+100, who.x, who.y, who.z, 6002, 10,  0,  0, who.realm );
+    sleepms(1300);
+    PlaySoundEffect(who, 0x146);
+    sleepms(180);
+//	PlayObjectCenteredEffect(who , FX_SPARK_EFFECT , 7 , 0x10 );
+    PlaySoundEffect(who,0x15b);
+    PerformAction(who, 22);
+    sleepms(1200);
+    //who.concealed := 1;
+    sleepms(200);
+    PlaySoundEffect(who, 0x246);
+    ApplyDamage( who, 20 );
+  3:
+    SendSysMessage(caster, "poison");
+    start_script(":spells:poisonDamage", {caster, who, "poison spell", poisonresist(caster, who, 3)});
+  4: 
+    SendSysMessage(caster, "none");
+ endcase
+sleep(5);
+endfor
+ 
+endprogram
+
+function poisonresist(caster, cast_on, amt)
+  var diff := Cint(GetEffectiveSkill(caster, SKILLID_MAGERY) + Cint(GetEffectiveSkill(caster, SKILLID_EVALINT) / 10));
+  if(CheckSkill(cast_on, SKILLID_MAGICRESISTANCE, diff, (diff * 2)))
+    SendSysMessage(cast_on, "You feel yourself resisting magical energy!");
+    PlaySoundEffect(cast_on, SFX_SPELL_WEAKEN);
+    PlayObjectCenteredEffect( cast_on, FX_CURSE_EFFECT, 5,5);
+    if(amt == 5)
+      amt := 3;
+    elseif(amt == 4)
+      return 2;
+    elseif(amt == 3)
+      return 2;
+    elseif(amt == 2)
+      return 1;
+    elseif(amt == 1)
+      return 0;
+    endif
+  else
+    return amt;
+  endif
+endfunction

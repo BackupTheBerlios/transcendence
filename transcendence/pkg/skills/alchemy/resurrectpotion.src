@@ -1,0 +1,51 @@
+use os;
+use uo;
+use util;
+use cfgfile;
+include "drinkpotion";
+
+program respotion (character, potion)
+
+if (!checkifcandrink(character))
+        return;
+endif
+
+    var potion_strength := get_potion_strength(potion);
+
+
+    if (is_poison(potion))
+        do_poison(character, potion);
+    endif
+     if (!is_poison(potion)) 
+      empty_bottle(character, potion);
+        SendSysMessage(character, "Selct a Ghost to Resurrect!");
+        var fant := Target(character);
+          if (!fant)
+            SendSysMessage(character, "Target cancelled!");
+         endif
+          if (!fant.dead)
+             SendSysMessage(character, "That's not Dead!");
+          endif
+          if (fant.dead)
+             Resurrect(fant);
+              PlaySoundEffect( character,  SOUND_EFFECT_HEAL );
+             var razza := GetObjProperty(fant, "race");
+         var etnia := GetObjProperty(fant, "ethno");
+         if (razza == "elf")
+         fant.color := 1159;
+         endif
+         if (razza == "darkelf")
+         fant.color := 33690;
+         endif
+         if (etnia == "tribal")
+         fant.color := 33797;
+         endif
+
+          endif
+
+endif
+
+
+
+
+endprogram

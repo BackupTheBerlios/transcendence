@@ -1,0 +1,43 @@
+use os;
+use uo;
+use util;
+use cfgfile;
+
+include "drinkpotion";
+include "include/attributes";
+include "include/statmod";
+
+
+program summonminordaemon (character, potion)
+
+if (!checkifcandrink(character))
+        return;
+endif
+
+    var potion_strength := get_potion_strength(potion);
+
+
+    if (is_poison(potion))
+        do_poison(character, potion);
+    else
+          
+           var punto := TargetCoordinates(character);
+          
+           MoveItemToLocation( potion, punto.x, punto.y, punto.z, 0 );
+           sleep(3);
+           DestroyItem(potion);
+           var critter := CreateNpcFromTemplate("minordaemon2", punto.x, punto.y, punto.z, 0, character.realm);
+           critter.setmaster(character);
+           playobjectcenteredeffect(critter, 0x372a, 10, 10);
+           Detach();
+           sleep(120);
+           ApplyDamage(critter, GetHp(critter) + 10);
+          
+
+
+    endif
+
+
+
+
+endprogram

@@ -1,0 +1,13 @@
+use uo;
+use os;
+
+program cheese (who, tub)
+
+var quality := GetObjProperty(tub, "quality");
+tub.graphic := 0x3a84;
+SetName(tub, "empty tub");
+EraseObjProperty(tub, "quality");
+var cheese := CreateItemInBackpack(who, 0x097e, 1);
+SetObjProperty(cheese, "quality", quality);
+tub.usescript := "";
+endprogram

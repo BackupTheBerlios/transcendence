@@ -1,0 +1,208 @@
+use uo;
+use os;
+use util;
+use polsys;
+use cfgfile;
+
+//include "include/packets";
+include "include/particles";
+include "include/animations";
+//include "include/audio";
+include "include/pgfacing";
+include "include/attributes";
+//include "include/eventID";
+include ":Localization:localization";
+include "include/client3d";
+//include "include/statMod";
+include ":Soma:somaUtils";
+include "include/npcs";
+include "include/statMod";
+
+program bodyexchange(parms)
+
+var i;
+var who := parms[1];
+var what := target(who);
+
+xyface(who, what.x, what.y);
+
+ParticleOnCharEffect(who, 5011, 2);
+
+ PlaySoundEffect( who, 0x212 );
+
+
+
+PlayCharAnim( who, 266);
+
+sleep(3);
+
+var caster_graph := who.graphic;
+var caster_color := who.color;
+var caster_name := who.name;
+var caster_crim := who.criminal;
+var caster_murd := who.murderer;
+var casterHP := GetHP(who); 
+var casterMana := GetMana(who); 
+var casterStam := GetStamina(who); 
+var casterSTR := GetStrength(who);
+var casterDEX := GetDexterity(who);
+var casterINT := GetIntelligence(who);
+
+var victim_graph := what.graphic;
+var victim_color := what.color;
+var victim_name := what.name;
+var victim_crim := what.criminal;
+var victim_murd := what.murderer;
+var victimHP := GetHP(what); 
+var victimMana := GetMana(what); 
+var victimStam := GetStamina(what);
+
+var caster_equipment := {};
+var victim_equipment := {};
+
+var equip1, equip2;
+var caster_eqp, victim_eqp, eqp1, eqp2 ;
+
+equip1 := {};
+equip2 :={};
+
+ChangeCharGraphic(who, what.graphic);
+ChangeCharGraphic(what, caster_graph);
+who.color := what.color;
+what.color := caster_color;
+SetName(who, what.name);
+SetName(who, what.name);
+SetName(what, caster_name);
+CopyCharacterAlignment(who, what);
+
+var whox := who.x;
+var whoy := who.y;
+var whoz := who.z;
+
+MoveCharacterToLocation( who, what.x, what.y, what.z, MOVECHAR_FORCELOCATION);
+MoveCharacterToLocation( what, whox, whoy, whoz, MOVECHAR_FORCELOCATION);
+
+
+
+for (i := 1; i <= 0x18; i := i + 1)
+
+ caster_eqp := GetEquipmentByLayer( who, i );
+ victim_eqp := GetEquipmentByLayer( what, i );
+ MoveItemToContainer( caster_eqp, who.backpack);
+ MoveItemToContainer( victim_eqp, what.backpack);
+ //equip1.append(self_eqp);
+ caster_equipment.append(caster_eqp);
+ victim_equipment.append(victim_eqp);
+ 
+endfor
+
+for (i := 1; i <= 0x18; i := i + 1)
+
+/*eqp1 := GetEquipmentByLayer( what, i );
+eqp2 := CreateItemInBackpack( who, eqp1.objtype);
+eqp2.color := eqp1.color;
+equip2.append(eqp2);
+equipitem(who, eqp2);*/
+
+ EquipItem(who, victim_equipment[i]);
+ EquipItem(what, caster_equipment[i]);
+endfor
+/*
+SetBaseStrength(who, GetStrength(what));
+SetBaseDexterity(who, GetDexterity(what));
+SetBaseIntelligence(who, GetIntelliegence(what));
+*/
+DoTempMod(who, "str", GetStrength(what) - GetStrength(who), 30);
+DoTempMod(who, "dex", GetDexterity(what) - GetStrength(who), 30);
+DoTempMod(who, "int", GetIntelligence(what) - GetStrength(who), 30);
+
+SetHP(who, victimHP);
+SetMana(who, victimMana);
+SetStamina(who, victimStam);
+
+DoTempMod(what, "str", casterSTR - GetStrength(what), 30);
+DoTempMod(what, "dex", casterDEX - GetStrength(what), 30);
+DoTempMod(what, "int", casterINT - GetStrength(what), 30);
+
+SetHP(what, casterHP);
+SetMana(what, casterMana);
+SetStamina(what, casterStam);
+
+
+detach();
+
+sleep(30);
+
+////////////////////////////////////////////
+//////////////RETURN////////////////////////
+////////////////////////////////////////////
+
+ChangeCharGraphic(who, what.graphic);
+
+who.color := what.color;
+SetName(who, what.name);
+SetName(what, victim_name);
+CopyCharacterAlignment(who, what);
+whox := who.x;
+whoy := who.y;
+whoz := who.z;
+
+MoveCharacterToLocation( who, what.x, what.y, what.z, MOVECHAR_FORCELOCATION);
+MoveCharacterToLocation( what, whox, whoy, whoz, MOVECHAR_FORCELOCATION);
+
+/*for (i := 1; i <= 0x18; i := i + 1)
+
+ caster_eqp := GetEquipmentByLayer( who, i );
+ victim_eqp := GetEquipmentByLayer( what, i );
+ MoveItemToContainer( caster_eqp, who.backpack);
+ MoveItemToContainer( victim_eqp, what.backpack);
+ //equip1.append(self_eqp);
+ caster_equipment.append(caster_eqp);
+ victim_equipment.append(victim_eqp);
+ 
+endfor*/
+
+for (i := 1; i <= 0x18; i := i + 1)
+
+ caster_eqp := GetEquipmentByLayer( who, i );
+ victim_eqp := GetEquipmentByLayer( what, i );
+ MoveItemToContainer( caster_eqp, who.backpack);
+ MoveItemToContainer( victim_eqp, what.backpack);
+
+ 
+endfor
+
+for (i := 1; i <= 0x18; i := i + 1)
+
+/*eqp1 := GetEquipmentByLayer( what, i );
+eqp2 := CreateItemInBackpack( who, eqp1.objtype);
+eqp2.color := eqp1.color;
+equip2.append(eqp2);
+equipitem(who, eqp2);*/
+
+ EquipItem(who, caster_equipment[i]);
+ EquipItem(what, victim_equipment[i]);
+endfor
+/*
+SetBaseStrength(who, GetStrength(what));
+SetBaseDexterity(who, GetDexterity(what));
+SetBaseIntelligence(who, GetIntelliegence(what));
+
+DoTempMod(who, "str", GetStrength(what) - GetStrength(who), 30);
+DoTempMod(who, "dex", GetDexterity(what) - GetStrength(who), 30);
+DoTempMod(who, "int", GetIntelligence(what) - GetStrength(who), 30);
+*/
+
+SetHP(who, GetHP(what));
+SetMana(who, GetMana(what));
+SetStamina(who, GetStamina(what));
+/*
+DoTempMod(what, "str", casterSTR - GetStrength(what), 30);
+DoTempMod(what, "dex", casterDEX - GetStrength(what), 30);
+DoTempMod(what, "int", casterINT - GetStrength(what), 30);
+*/
+SetHP(what, GetHP(who));
+SetMana(what, GetMana(who));
+SetStamina(what, GetStamina(who));
+
+endprogram

@@ -1,0 +1,73 @@
+//
+// Fertilize Script for Farming Package
+//
+// Uses horses' dung adn fertile dirt to fertilize terrain of the plant
+//
+// Creator: Artix
+// Contact: artix@artix.f2s.com
+//
+// Created: 25-Sept-2001
+// Updated: 
+//
+use uo;
+use os;
+use cfgfile;
+
+ //include "include/moreskillssystem";
+ include "include/attributes";
+ 
+ program fertilize (who, fertilizzante);
+
+ SendSysMessage( who, "Select the plant you want to fertilize", 0x03, 0x005a );
+ var plant := Target(who);
+ if (!plant)
+  SendSysMessage( who, "Cancelled!", 0x03, 0x0028 );
+  return;
+ elseif ((plant.npctemplate) || (plant.cmdlevel))
+  SendSysMessage( who, "Are you fool? you cannot fertilize persons and animals!!", 0x003, 0x0028 );
+  return;
+ endif
+
+ if (!Accessible( who, plant ))
+  SendSysMessage(who, "You are too far away", 0x03, 0x0028);
+  return;
+ endif
+
+ var cfg := ReadConfigFile("plants");
+ if (!cfg[plant.objtype])
+  SendSysMessage( who, "You can only fertilize plants", 0x03, 0x0028 );
+  return;
+ endif
+ var amount;
+ if (fertilizzante.graphic == 0x1045)
+  amount := GetObjProperty(fertilizzante, "dungamt");
+  if (!amount)
+   SendSysMessage(who, "The sack is empty, you have to fill it with dung", 0x03, 0x0054);
+   return;
+  endif
+ endif
+ var myskill := GetEffectiveSkill(who, 52);
+
+ myskill := CInt(myskill);
+ var dmg := GetObjProperty(plant, "tempdam");
+ if (!dmg)
+  SendSysMessage( who, "This Plant doesn't need fertilizer" );
+  return;
+ endif
+
+ var skillbonus := CInt(myskill / 10);
+ var fertilaction := 10 + skillbonus;
+ SetObjProperty(plant, "tempdam", dmg - fertilaction);
+ SendSysMessage( who, "You fertilized the plant", 0x003, 0x005a );
+ if (fertilizzante.graphic == 0x1045)
+  var amt := GetObjProperty(fertilizzante, "dungamt");
+  var value;
+   if (amt <= 0)
+     value := 0;
+   else
+     value := 1;
+   endif
+  SetObjProperty(fertilizzante, "dungamt", amt - value);
+ endif
+  
+endprogram

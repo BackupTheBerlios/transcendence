@@ -1,0 +1,84 @@
+use uo;
+use os;
+use polsys;
+
+//include "include/packets";
+include "include/particles";
+include "include/animations";
+
+program rescorpse(parms)
+
+var who := parms[1];
+var corpse;
+
+if(who.npctemplate)
+  corpse := parms[2];
+else
+  corpse := target(who);
+endif  
+
+if(!corpse.isA(POLCLASS_CORPSE))
+ SendSysMessage(who, "That's not a corpse");
+ return;
+endif 
+
+
+if((corpse.corpsetype != 400) && (corpse.corpsetype != 401) && (corpse.corpsetype != 0xcc) && (corpse.corpsetype != 0xc8) && (corpse.corpsetype != 0xe4) && (corpse.corpsetype != 0xe2))
+ //SendSysMessage(who, cstr(corpse.corpsetype));
+ SendSysMessage(who, "That's not an human or equine corpse");
+ return;
+endif 
+
+PlaySoundEffect( who, 0x47E );
+ParticleOnCharEffect(who, 5028, 2);
+PlayCharAnim( who, 260);
+
+sleep(3);
+
+PlaySoundEffect( corpse, 0xFC );
+ParticleStationaryEffect(corpse.x, corpse.y, corpse.z, 9537, corpse.realm);
+sleep(3);
+var zombie;
+if((corpse.corpsetype == 400) || (corpse.corpsetype == 401))
+zombie := CreateNpcFromTemplate( "necrozombie", corpse.x, corpse.y, corpse.z, 0, corpse.realm);
+
+zombie.graphic := corpse.corpsetype;
+zombie.color:=0;
+
+//PlayCharAnim( zombie, 21, 0, 1 );
+
+var eqitems := getobjproperty(corpse, "equipment");
+
+var eqp;
+
+foreach it in eqitems
+eqp := CreateItemInBackpack( who, it[1], 1 );
+eqp.color := it[2];
+equipitem (zombie, eqp);
+endforeach
+
+var backpack := CreateItemInBackpack( who, 0x0e75 );
+
+foreach itm in enumerateitemsincontainer(corpse)
+MoveItemToContainer( itm, backpack);
+endforeach
+
+equipitem(zombie, backpack);
+else   
+ zombie := CreateNpcFromTemplate( "skeletalsteed", corpse.x, corpse.y, corpse.z, 0, corpse.realm);
+endif
+setobjproperty (zombie, "master", who.serial);
+zombie.script := "tamed";
+restartscript (zombie);
+destroyitem(corpse);
+
+SetObjProperty(zombie, "Undead", 1);
+
+
+detach();
+
+sleep(60);
+
+
+
+endprogram

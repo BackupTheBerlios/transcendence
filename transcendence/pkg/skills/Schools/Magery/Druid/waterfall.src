@@ -1,0 +1,164 @@
+use uo;
+use os;
+use util;
+use polsys;
+
+include "include/particles";
+include "include/animations";
+include "include/audio";
+include "include/pgfacing";
+include "include/attributes";
+include "include/eventID";
+include "include/client3d";
+include "include/statMod";
+include ":Localization:localization";
+include "include/client";
+
+
+//this the the non-saveonext bloodstain
+Const UOBJ_TEMP_ITEM := 0x122d;
+
+program tidal_wave ( parms )
+var i;
+var caster := parms[1];
+var cast_on := target(caster);
+
+//xyface(caster, what.x, what.y);
+ParticleOnCharEffect(caster, 5011, 2);
+
+ PlaySoundEffect( caster, 0x212 );
+
+
+
+PlayCharAnim( caster, 266);
+
+sleep(3);
+	
+	if (!caster)
+		
+		return 0;
+	endif
+	
+	if (!cast_on)
+		
+		return 0;
+	endif
+
+	//allow them to cast another spell now
+	SetScriptController( caster );
+	
+	detach ();
+
+	//calculate spell damage
+	
+	
+	var dmg := RandomDiceRoll ("14d3");
+	
+
+
+
+
+	
+
+	//set the controler and play a sound effect
+	SetScriptController (caster);
+	PlaySoundEffect (caster, SFX_SPELL_SUMMON_ELEMENTAL);
+
+	//save the target's location so that the wave doesn't go wacky if they move
+	var targettedx := cast_on.x;
+	var targettedy := cast_on.y;
+	var targettedz := cast_on.z;
+
+	//create the curved wave top
+	var wavetop1 := CreateItemAtLocation (targettedx, targettedy, targettedz+110, 0x122d, 1, cast_on.realm);
+	wavetop1.graphic := 0x350b;
+	wavetop1.movable := 0;
+	var wavetop2 := CreateItemAtLocation (targettedx, targettedy, targettedz+110, 0x122d, 1, cast_on.realm);
+	wavetop2.graphic := 0x34ed;
+	wavetop2.movable := 0;
+
+	//var i;
+	var waterfall_array := {};
+	var waterfall_tile;
+
+	//create all of the waterfall effect and store them in waterfall_array
+	for(i := 10; i >= 0; i := i - 1)
+		waterfall_tile := CreateItemAtLocation (targettedx, targettedy, targettedz+i*10, 0x122d, 1, cast_on.realm);
+		waterfall_tile.graphic := 0x3517;
+		waterfall_tile.movable := 0;
+		waterfall_array.append (waterfall_tile);
+		waterfall_tile := CreateItemAtLocation (targettedx, targettedy, targettedz+i*10, 0x122d, 1, cast_on.realm);
+		waterfall_tile.graphic := 0x34f9;
+		waterfall_tile.movable := 0;
+		waterfall_array.append (waterfall_tile);
+		sleepms (50);
+	endfor
+
+	//make the round puddle at the bottom
+	var waterfall_base1 := CreateItemAtLocation (targettedx,   targettedy+1, targettedz, 0x122d, 1, cast_on.realm);
+	waterfall_base1.graphic := 0x17a1;
+	waterfall_base1.movable := 0;
+	var waterfall_base2 := CreateItemAtLocation (targettedx+1, targettedy,   targettedz, 0x122d, 1, cast_on.realm);
+	waterfall_base2.graphic := 0x179d;
+	waterfall_base2.movable := 0;
+	var waterfall_base3 := CreateItemAtLocation (targettedx,   targettedy-1, targettedz, 0x122d, 1, cast_on.realm);
+	waterfall_base3.graphic := 0x179f;
+	waterfall_base3.movable := 0;
+	var waterfall_base4 := CreateItemAtLocation (targettedx-1, targettedy,   targettedz, 0x122d, 1, cast_on.realm);
+	waterfall_base4.graphic := 0x17a3;
+	waterfall_base4.movable := 0;
+	var waterfall_base5 := CreateItemAtLocation (targettedx+1, targettedy+1, targettedz, 0x122d, 1, cast_on.realm);
+	waterfall_base5.graphic := 0x17a7;
+	waterfall_base5.movable := 0;
+	var waterfall_base6 := CreateItemAtLocation (targettedx-1, targettedy+1, targettedz, 0x122d, 1, cast_on.realm);
+	waterfall_base6.graphic := 0x17a8;
+	waterfall_base6.movable := 0;
+	var waterfall_base7 := CreateItemAtLocation (targettedx+1, targettedy-1, targettedz, 0x122d, 1, cast_on.realm);
+	waterfall_base7.graphic := 0x17a5;
+	waterfall_base7.movable := 0;
+	var waterfall_base8 := CreateItemAtLocation (targettedx-1, targettedy-1, targettedz, 0x122d, 1, cast_on.realm);
+	waterfall_base8.graphic := 0x17a6;
+	waterfall_base8.movable := 0;
+	var waterfall_base9 := CreateItemAtLocation (targettedx,   targettedy,   targettedz, 0x122d, 1, cast_on.realm);
+	waterfall_base9.graphic := 0x1797;
+	waterfall_base9.movable := 0;
+
+	
+	if(cast_on.npctemplate == "fireelemental")
+	 ApplyRawDamage( cast_on, GetHp(cast_on) + 10 );
+	endif
+         var burning := GetObjProperty(cast_on, "DruidBurning");
+         if(burning)
+         SendSysMessage(caster, "Spegni il fuoco");
+         var scp := getprocess(burning); 
+         var ev := struct;
+         ev.+type;
+         ev.type := "waterhit";
+         scp.sendEvent(ev);
+         endif
+
+	//water sound effect and short sleep
+	PlaySoundEffect(cast_on, 0x11);
+	sleep (5);
+
+	//destroy the waterfall
+	DestroyItem (wavetop1);
+	DestroyItem (wavetop2);
+	foreach waterfall_tile in waterfall_array
+		DestroyItem (waterfall_tile);
+		sleepms(25);
+	endforeach
+
+	//sleep longer before destroying the puddle
+	sleep(45);
+	DestroyItem (waterfall_base1);
+	DestroyItem (waterfall_base2);
+	DestroyItem (waterfall_base3);
+	DestroyItem (waterfall_base4);
+	DestroyItem (waterfall_base5);
+	DestroyItem (waterfall_base6);
+	DestroyItem (waterfall_base7);
+	DestroyItem (waterfall_base8);
+	DestroyItem (waterfall_base9);
+	return 1;
+endprogram

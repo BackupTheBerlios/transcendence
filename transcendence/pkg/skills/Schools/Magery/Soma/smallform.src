@@ -1,0 +1,91 @@
+use uo;
+use os;
+use util;
+use polsys;
+
+//include "include/packets";
+include "include/particles";
+include "include/animations";
+include "include/audio";
+include "include/pgfacing";
+include "include/attributes";
+include "include/eventID";
+include ":Localization:localization";
+include "include/client3d";
+include "include/statMod";
+
+
+program giantform(parms)
+
+//var i;
+var who := parms[1];
+var what := target(who);
+
+xyface(who, what.x, what.y);
+
+ParticleOnCharEffect(who, 5011, 2);
+
+ PlaySoundEffect( who, 0x212 );
+
+
+
+PlayCharAnim( who, 266);
+
+sleep(3);
+
+var exgraph := what.graphic;
+var excolor := what.color;
+
+if(what.graphic == 400)
+ ChangeCharGraphic(what, 183);
+elseif(what.graphic == 401)
+ ChangeCharGraphic(what, 184);
+elseif(what.graphic == 744)
+ ChangeCharGraphic(what, 400);
+elseif(what.graphic == 745)
+ ChangeCharGraphic(what, 401);
+elseif(what.graphic == 176)
+ ChangeCharGraphic(what, 128);
+elseif(what.graphic == 755)
+ ChangeCharGraphic(what, 754);
+elseif(what.graphic == 401)
+ ChangeCharGraphic(what, 184);
+elseif(what.graphic == 189)
+ ChangeCharGraphic(what, 138);
+elseif(what.graphic == 83)
+ ChangeCharGraphic(what, 84);
+elseif(what.graphic == 145)
+ ChangeCharGraphic(what, 150); 
+elseif((what.graphic == 21) || (what.graphic == 89) || (what.graphic == 91))
+ ChangeCharGraphic(what, 0x34);
+elseif(what.graphic == 11)
+ ChangeCharGraphic(what, 19); 
+elseif(what.graphic == 214)
+ ChangeCharGraphic(what, 0xc9);  
+elseif(what.graphic == 63)
+ ChangeCharGraphic(what, 0xc9); 
+ what.color := 50;
+elseif(what.graphic == 0xc)
+ ChangeCharGraphic(what, 0x3c); 
+elseif(what.graphic == 796)
+ ChangeCharGraphic(what, 795); 
+elseif(what.graphic == 795)
+ ChangeCharGraphic(what, 776); 
+elseif(what.graphic == 174)
+ ChangeCharGraphic(what, 149); 
+elseif(what.graphic == 175)
+ ChangeCharGraphic(what, 123);
+elseif(what.graphic == 5)
+ ChangeCharGraphic(what, 6); 
+ what.color := 2470;
+endif
+
+Detach();
+DoTempMod(what, "str", 0 - (GetStrength(who) / 2), 30);
+sleep(30);
+
+
+ChangeCharGraphic(what, exgraph);
+what.color := excolor;
+
+endprogram

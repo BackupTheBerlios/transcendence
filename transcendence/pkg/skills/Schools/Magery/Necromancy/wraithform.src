@@ -1,0 +1,67 @@
+use uo;
+use os;
+use util;
+use polsys;
+
+//include "include/packets";
+include "include/particles";
+include "include/animations";
+include "include/audio";
+include "include/pgfacing";
+include "include/attributes";
+include "include/eventID";
+include "include/client3d";
+include "necroUtils";
+
+
+program wraithform(parms)
+
+var i;
+var who := parms[1];
+//var what := target(who);
+
+//xyface(who, what.x, what.y);
+ParticleOnCharEffect(who, 5028, 2);
+if(who.graphic == 400)
+ PlaySoundEffect( who, 0x47E );
+elseif (who.graphic == 401)
+PlaySoundEffect( who, 0x4B5 );
+endif
+	
+
+PlayCharAnim( who, 266);
+
+sleep(3);
+
+var exgraph := who.graphic;
+var excolor := who.color;
+var exname := who.name;
+
+ChangeCharGraphic(who, 748);
+who.color := 0x4631;
+SetName( who, "a wraith" );
+SetStamina(who, GetMaxStamina(who));
+
+Detach();
+    GrantPrivilege(who, "hearghosts");
+    who.enable("hearghosts");
+    GrantPrivilege(who, "seeghosts");
+    who.enable("seeghosts");
+    GrantPrivilege(who, "ignoredoors");
+    who.enable("ignoredoors");
+     GrantPrivilege(who, "freemove");
+    who.enable("freemove");
+    
+    SetObjProperty (who, "NecroWraith", 1);
+    
+    sleep(30);
+    RevokePrivilege(who, "hearghosts");
+    RevokePrivilege(who, "seeghosts");
+    RevokePrivilege(who, "ignoredoors");
+    RevokePrivilege(who, "freemove");
+    ChangeCharGraphic(who, exgraph);
+    who.color := excolor;
+    SetName( who, exname );
+    
+endprogram    
+

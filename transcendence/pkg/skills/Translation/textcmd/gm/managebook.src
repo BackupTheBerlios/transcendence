@@ -1,0 +1,10 @@
+use uo;
+use os;
+
+
+program createcontentbook (who);
+
+var writebook := CreateItemInBackpack(who, 0x0ff2, 1);
+SendSysMessage(who, "Created a blue book into your backpack, double-click on it to write it..", 0x03, 0x005a);
+
+endprogram

@@ -1,0 +1,43 @@
+use uo;
+use os;
+
+include "include/eventid";
+include "include/effects";
+
+
+program toxiccloud (who)
+
+    var luogo := TargetCoordinates(who);
+
+    who.hidden := 0;
+
+  
+
+  
+
+    sleep(2);
+    var poz := CreateItemAtLocation( luogo.x, luogo.y, luogo.z, 0x0e29, 1, who.realm );
+    poz.movable := 0;
+
+    PrintTextAbove( poz, "2");
+    sleep(1);
+    PrintTextAbove( poz, "1");
+    sleep(1);
+
+        effetto(luogo.x, luogo.y, luogo.z, who.realm, 0x36bd, 1169, 10);
+
+
+  
+
+
+    foreach critter in ListMobilesNearLocation( luogo.x, luogo.y, luogo.z, 4, who.realm  );
+        effetto(critter.x, critter.y, critter.z, critter.realm, 0x36bd, 1169, 10);
+        critter.poisoned := 1;
+        Detach();
+        sleep(30);
+        critter.poisoned := 0;
+    endforeach
+
+    DestroyItem( poz );
+
+endprogram

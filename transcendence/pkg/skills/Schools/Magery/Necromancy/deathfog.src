@@ -1,0 +1,48 @@
+use uo;
+use os;
+use util;
+use polsys;
+
+//include "include/packets";
+include "include/particles";
+include "include/animations";
+include "include/audio";
+include "include/pgfacing";
+include "include/attributes";
+
+include "include/AOSPackets";
+include ":Localization:localization";
+include "necroUtils";
+
+
+program death_fog(parms)
+
+var i;
+var who := parms[1];
+var what := targetcoordinates(who);
+
+xyface(who, what.x, what.y);
+ParticleOnCharEffect(who, 5028, 2);
+if(who.graphic == 400)
+ PlaySoundEffect( who, 0x47E );
+elseif (who.graphic == 401)
+ PlaySoundEffect( who, 0x4B5 );
+endif
+	
+
+PlayCharAnim( who, 266);
+
+sleep(3);
+
+ParticleStationaryEffect(what.x, what.y, what.z, 9914, what.realm);
+sleep(3);
+var dmg;
+
+foreach mob in ListMobilesNearLocation( what.x, what.y, what.z, 3, what.realm )
+dmg := randomdiceroll ("1d20+80");
+ApplyRawDamage(mob, dmg);
+SendVisualHPloss(who, mob, dmg);
+endforeach
+
+endprogram
+

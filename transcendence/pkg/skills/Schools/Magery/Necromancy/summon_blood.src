@@ -1,0 +1,84 @@
+use uo;
+use os;
+use util;
+use polsys;
+
+//include "include/packets";
+include "include/particles";
+include "include/animations";
+include "include/audio";
+include "include/pgfacing";
+include "include/attributes";
+include "include/eventID";
+include "include/client3d";
+include "include/statMod";
+include ":Localization:localization";
+include "necroUtils";
+
+
+program daemonform(parms)
+
+var i;
+var who := parms[1];
+//var what := target(who);
+
+//xyface(who, what.x, what.y);
+ParticleOnCharEffect(who, 5028, 2);
+if(who.graphic == 400)
+ PlaySoundEffect( who, 0x47E );
+elseif (who.graphic == 401)
+PlaySoundEffect( who, 0x4B5 );
+endif
+	
+
+PlayCharAnim( who, 266);
+
+sleep(3);
+
+var numbloods, blood, critt, bloods;
+bloods := {};
+numbloods := 0;
+
+while(numbloods < 5)
+SendLocalizedSysMessage(who, 9, GetUSerPreferredLanguage(who), {{"some blood"},{"del sangue"}});
+blood := target(who);
+
+if(!blood)
+SendLocalizedSysMessage(who, 1, GetUSerPreferredLanguage(who));
+return;
+endif
+
+if((blood.graphic != 0x122b) && (blood.graphic != 0x122c) && (blood.graphic !=  0x1cff))
+ return;
+endif
+
+numbloods := numbloods + 1;
+bloods.append(blood);
+
+endwhile
+
+if(numbloods >= 5)
+ 
+ var where := targetcoordinates(who);
+ critt := CreateNpcFromTemplate( "bloodelemental", where.x, where.y, where.z, 0, who.realm);
+
+endif
+foreach bl in bloods
+ destroyitem(bl);
+endforeach
+SetObjProperty(critt, "master", who.serial);
+critt.script := "tamed";
+RestartScript(critt);
+
+var ev := struct;
+ev.+type;
+ev.+text;
+ev.+source;
+
+ev.type := 0x0001;
+ev.source := who;
+ev.text := "all come";
+
+SendEvent( critt, ev );
+ 
+endprogram

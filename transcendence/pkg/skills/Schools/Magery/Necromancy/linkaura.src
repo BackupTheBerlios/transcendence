@@ -1,0 +1,60 @@
+use uo;
+use os;
+use polsys;
+
+//include "include/packets";
+include "include/particles";
+include "include/animations";
+include "include/client3d";
+include ":Localization:localization";
+program linkaura(parms)
+
+var who := parms[1];
+var victim;
+
+if(who.npctemplate)
+  victim := parms[2];
+else
+  victim := target(who);
+endif  
+
+if(!victim)
+SendLocalizedSysMessage(who, 1, GetUSerPreferredLanguage(who));
+return;
+endif
+
+if(!victim.isA(POLCLASS_MOBILE))
+return;
+endif
+
+var source := target(who);
+
+if(!source)
+SendLocalizedSysMessage(who, 1, GetUSerPreferredLanguage(who));
+return;
+endif
+
+if(!source.isA(POLCLASS_MOBILE))
+return;
+endif
+
+PlaySoundEffect( who, 0x47E );
+ParticleOnCharEffect(who, 5028, 2);
+PlayCharAnim( who, 260);
+
+sleep(3);
+
+ParticleOnCharEffect(victim, 8111, 2);
+
+SetObjProperty(source, "LinkedAura", victim.serial);
+
+detach();
+sleep(120);
+
+
+EraseObjProperty(victim, "LinkedAura");
+var gr := victim.graphic;
+ChangeCharGraphic(victim, 0);
+ChangeCharGraphic(victim, gr);
+
+endprogram

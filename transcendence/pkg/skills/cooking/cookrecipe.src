@@ -1,0 +1,303 @@
+//
+// Cook Recipes Script
+//
+// It cooks recipes of the book using pans, pots, pans, cauldrons etc.
+//
+// Creator: Artix
+// Contact: artix@artix.f2s.com
+//
+// Created: 03-Nov-2001
+// Updated: 
+//
+
+
+use uo;
+use os;
+use cfgfile;
+
+include "pages";
+include "include/attributes";
+include "include/quality";
+
+program do_recipe (parms)
+
+var who := parms[1];
+var recipe := parms[2];
+var cfg := ReadConfigFile("recipes");
+var elem := cfg[recipe];
+var name := GetConfigString(elem, "name");
+//print (name);
+var id := GetConfigInt(elem, "id");
+//print (cstr (id));
+var ingredients := GetConfigString(elem, "ingredients");
+ingredients := SplitWords(ingredients);
+//print (cstr (ingredients));
+var amounts := GetConfigString(elem, "amounts");
+amounts := SplitWords(amounts);
+//print (cstr (amounts));
+var requires := GetConfigString(elem, "requires");
+requires := SplitWords(requires);
+var need_container := GetConfigString(elem, "needcontainer");
+var contenitore;
+var time := GetConfigInt(elem, "time");
+var skill := GetConfigInt(elem, "skill");
+var points := GetConfigInt(elem, "points");
+var product := GetConfigInt(elem, "product");
+var kindlamt := CInt(time / 6);
+
+var gmp := getgumpdata(id);
+var layout := gmp[1];
+var data := gmp[2];
+var quality;
+var select := SendDialogGump(who, layout, data);
+
+if (select[0] == 101)
+
+ SendSysMessage(who, "Select the container where you want to cook recipe", 0x003, 0x005a);
+
+ var pan := Target(who);
+ if (Distance(who, pan) > 3 )
+  SendSysMessage(who, "That's too far away!");
+  return;
+ endif
+
+ if (pan.container)
+  SendSysMessage(who, "You must put it on the ground!", 3, 38);
+  return;
+ endif
+
+ var checkpan := 0;
+
+ var r;
+ for (r := 1; r <= len(requires); r := r + 1)
+  if (pan.objtype == CInt(requires[r]))
+  checkpan := checkpan + 1;
+  endif 
+ endfor
+ //print ("checkpan : " + cstr (checkpan));
+ if (checkpan == 0)
+  SendSysMessage(who, "Sorry, wrong item to cook the recipe!", 0x003, 38);
+  return;
+ endif
+
+ SendSysMessage(who, "Select " + CStr(kindlamt) + " kindlings to make fire", 0x003, 0x005a);
+ var kindlings := Target(who);
+
+ if (!kindlings)
+  SendSysMessage(who, "Cancelled");
+  return;
+ endif
+
+ if ((kindlings.objtype != 0x0de1) && (kindlings.objtype != 0x0de2))
+  SendSysMessage(who, "Those are not kindlings", 0x003, 0x0028);
+  return;
+ elseif (kindlings.amount < kindlamt)
+  SendSysMessage(who, "Not enough kindlings", 0x003, 0x0028);
+  return;
+ endif
+ 
+
+ var amt;
+ //local check := 0;
+ var ingredientitems := {};
+ //print ("length : " + cstr(len(ingredients)));
+ //print ("ingr 1 : " + cstr (ingredients[1]));
+  //print ("ingr 2 : " + cstr (ingredients[2]));
+ var i;
+ var mediaqual;
+ //local qual1;
+ //local qual2;
+ foreach it in EnumerateItemsInContainer( pan )
+  //print (cstr (it.objtype));
+  for (i := 1; i <= len(ingredients); i := i + 1)
+   //print (cstr(cint (ingredients[i])));
+   if (it.objtype == CInt(ingredients[i])) //and (it.amount >= cint(amounts[i])))
+    
+     if (!ingredientitems[i])
+      ingredientitems[i] := it;
+     elseif (ingredientitems[i].objtype == it.objtype)
+      if (ingredientitems[i].amount < CInt(amounts[i]))
+       //qual1 := ;
+       //qual2 :=  getobjproperty (ingredientitems[i], "quality");
+       mediaqual := getmedia({GetObjProperty(it, "quality"),GetObjProperty(ingredientitems[i], "quality")});
+       amt := CInt(amounts[i]) - ingredientitems[i].amount;
+       SubtractAmount(it, amt);
+       AddAmount(ingredientitems[i], amt);
+       SetObjProperty(ingredientitems[i], "quality", mediaqual);
+       MoveItemToContainer( it, who.backpack, -1, -1 );
+       SendSysMessage(who, "You don't need more of that ingredient!", 0x0003, 0x005a);
+      elseif (ingredientitems[i].amount >= CInt(amounts[i]))
+      	MoveItemToContainer( it, who.backpack, -1, -1 );
+        SendSysMessage(who, "You don't need more of that ingredient!", 0x0003, 0x005a);
+      endif
+     endif
+   //else
+    //SendSysMessage (who, "Take out non-useful ingredients!", 0x003, 0x0028);
+    //return;
+   
+   endif
+  endfor
+ endforeach
+//print (cstr(ingredientitems));
+
+ var checkingredients := 1;
+ var checkamount := 1;
+ var k;
+ for (k := 1; k <= len(ingredientitems); k := k + 1)
+   //print ("amount1 : " + cstr (ingredientitems[k].amount));
+   //print ("amount2 : " + cstr (amounts[k]));
+  
+   print("ingredient: " + CStr(ingredients[k]));
+   print("");
+   print("ingredientlist: " + CStr(ingredientitems[k]));
+   if (ingredientitems[k].objtype == CInt(ingredients[k]))
+    var debugging := 1;
+   else
+    checkingredients := 0;
+   endif
+   if (ingredientitems[k].amount == CInt(amounts[k]))
+    var errore := 1;
+   else
+    checkamount := 0;
+   endif
+ endfor
+
+ if ((checkingredients == 0) || (len(ingredientitems) != len(ingredients)))
+  SendSysMessage(who, "Sorry, wrong ingredients!", 0x003, 0x0028);
+  return;
+ endif
+
+ if (checkamount ==  0)
+  SendSysMessage(who, "Sorry, wrong doses!", 0x003, 0x0028);
+  return;
+ endif
+if (need_container != "none")
+ var contobjtypes := getcontainertype(need_container);
+ SendSysMessage(who, "Now select a " + need_container + " to put the product in", 0x003, 0x005a);
+ var thecontainer := Target(who); 
+
+ if (!thecontainer)
+  SendSysMessage(who, "Target Cancelled");
+  return;
+ endif
+
+ var checkcont := 0;
+ foreach cnt in contobjtypes
+  if (thecontainer.objtype == cnt)
+   checkcont := 1;
+  endif
+ endforeach
+if (checkcont == 0) 
+ SendSysMessage(who, "Sorry, wrong container", 0x003, 0x005a);
+ return;
+else
+ contenitore := thecontainer;
+ SubtractAmount(thecontainer, 1);
+endif
+endif 
+
+
+var qualities := {};
+var checkqual;
+var q;
+/*foreach ing in ingredientitems
+if ((ing.objtype = 0x0ff8) or (ing.objtype = 0x1f9e) or (ing.graphic = 0x09ad) or (ing.graphic = 0x1f9c) or (ing.graphic = 0x1f96)) 
+ ing.graphic := 0x0001;
+ sendsysmessage (who, "You take off the empty pitcher", 0x003, 0x005a);
+ CreateItemAtLocation( pan.x + 1, pan.y, pan.z, 0x0ff7, ing.amount );
+endif 
+endforeach*/
+SendSysMessage(who, "You start to cook the recipe, it will take " + CStr(time) + " seconds", 0x003, 0x005a);
+
+
+SubtractAmount(kindlings, kindlamt);
+MoveItemToLocation( pan, pan.x, pan.y, pan.z + 1, MOVEITEM_FORCELOCATION );           
+var fire := CreateItemAtLocation( pan.x, pan.y, pan.z - 1, 0x0de3, 1, pan.realm );
+var smoke;
+if (pan.graphic == 2541)
+ smoke := CreateItemAtLocation( pan.x, pan.y, pan.z + 4, 0x3735, 1, pan.realm );
+ smoke.color := 1154;
+endif
+Detach();
+sleep(time);
+
+ for (q := 1; q <= len(ingredientitems); q := q + 1)
+   checkqual := GetObjProperty(ingredientitems[q], "quality");
+    if (checkqual)
+      qualities[q] := CInt(checkqual);
+    endif
+   SubtractAmount(ingredientitems[q], CInt(amounts[q]));
+endfor
+DestroyItem(fire);
+DestroyItem(smoke);
+MoveItemToLocation( pan, pan.x, pan.y, pan.z - 1, MOVEITEM_FORCELOCATION ); 
+
+var success := CheckSkill(who, 13, skill, points);
+ if (success)
+  print(CStr(qualities));
+  quality := getmedia(qualities);
+  var myskill := CInt(GetEffectiveSkill(who, 13));
+  var food;
+  if (need_container == "none")
+   food :=  CreateItemInContainer( pan, product, 1 );  
+  else
+   food := CreateItemAtLocation(pan.x, pan.y + 1, pan.z, product, 1, pan.realm);
+  endif
+  /*if (myskill < skill)
+   quality := cdbl (myskill / cdbl(skill));
+   quality := cint (quality * 100);
+  endif*/
+  var qualitypercent := GetQuality(skill, myskill);
+  quality := CInt((qualitypercent * quality) / 100);
+  SetObjProperty(food, "quality", quality); 
+ else
+  SendSysMessage(who, "You burned it!", 0x003, 0x005a);
+  CreateItemInBackpack(who, contenitore.graphic, 1);
+  return;
+ endif
+endif
+
+endprogram
+
+
+function getmedia(thearray)
+
+var i;
+var sum;
+for (i := 1; i < len(thearray); i := i + 1)
+ if (i == 1)
+  sum := thearray[1];
+ endif
+ sum := sum + thearray[i + 1];
+endfor
+var result := CInt(sum / len(thearray));
+
+
+
+
+/*local  somma := thearray[1] + thearray[2] + thearray[3] + thearray[4] + thearray[5] + thearray [6] + thearray[7] + thearray[8] + thearray[9] + thearray[10];
+local result := cint (somma / 10);*/
+return result;
+endfunction 
+
+function getcontainertype(containerclass)
+
+var objecttypes := {};
+
+case (containerclass)
+
+"woodenbowl":
+       objecttypes := {0x15f8};
+"pewterbowl":
+       objecttypes := {0x15fd};   
+"bowls":
+       objecttypes := {0x15f8, 0x15fd};     
+"pitcher":
+       objecttypes := {0x0ff7};        
+"largewoodenbowl":
+       objecttypes := {0x1605}; 
+endcase
+
+return objecttypes;
+endfunction
+                      

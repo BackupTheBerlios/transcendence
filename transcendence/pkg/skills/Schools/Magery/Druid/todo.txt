@@ -1,0 +1,9 @@
+- effetti 2d
+- diverse animazioni per spell
+- TempMod regolati per ogni trasformazione
+- durata degli spells
+- toggle?
+- Fire resistance e ice resistance
+- reagenti
+- spells modifiers
+- avanzamento livello

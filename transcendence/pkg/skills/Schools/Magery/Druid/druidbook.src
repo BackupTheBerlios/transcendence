@@ -1,0 +1,147 @@
+use uo;
+use os;
+use cfgfile;
+
+var layout := {
+    "page 0",
+    "gumppic 60 30 2200",
+    "tilepic 50 30 3312", 
+    "tilepic 50 105 3312",
+    "tilepic 50 155 3312",
+    
+    "tilepic 398 30 3312", 
+    "tilepic 398 105 3312",
+    "tilepic 398 155 3312",
+    
+    "button 95 208 2225 2225 0 1 0",
+    "button 145 208 2226 2226 0 1 0",
+    "button 195 208 2227 2227 0 2 0",
+    "button 255 208 2228 2228 0 2 0",
+    "button 305 208 2229 2229 0 3 0",
+    "button 355 208 2230 2230 0 3 0"
+  
+    //"text 70 40 28 0",
+    //"text 230 40 28 1"
+};
+
+var page1 := 
+{
+"page 1",
+//"button 95 130 2225 2225 0 1 0",
+"text 115 50 56 0",
+"text 275 50 56 1"
+};
+var page2 := 
+{
+"page 2",
+//"button 95 130 2225 2225 0 1 0",
+"text 115 50 56 2",
+"text 275 50 56 3"
+};
+var page3 :=
+{
+"page 3",
+//"button 95 130 2225 2225 0 1 0",
+"text 115 50 56 4",
+"text 275 50 56 5"
+};
+
+var data :=
+{
+"First Circle",
+"Second Circle",
+"Third Circle",
+"Fourth Circle",
+"Fifth Circle",
+"Sixth Circle"
+};
+
+var buttons := {
+ "button 95 90 2104 2103 1 0 101",
+ "button 95 110 2104 2103 1 0 102",
+ "button 95 130 2104 2103 1 0 103",
+ "button 95 150 2104 2103 1 0 104",
+ "button 255 90 2104 2103 1 0 105",
+ "button 255 110 2104 2103 1 0 106",
+ "button 255 130 2104 2103 1 0 107",
+ "button 255 150 2104 2103 1 0 108",
+
+
+
+ "button 95 90 2104 2103 1 0 109",
+ "button 95 110 2104 2103 1 0 110",
+ "button 95 130 2104 2103 1 0 111",
+ "button 95 150 2104 2103 1 0 112",
+ "button 255 90 2104 2103 1 0 113",
+ "button 255 110 2104 2103 1 0 114",
+ "button 255 130 2104 2103 1 0 115",
+ "button 255 150 2104 2103 1 0 116",
+
+
+
+ "button 95 90 2104 2103 1 0 117",
+ "button 95 110 2104 2103 1 0 118",
+ "button 95 130 2104 2103 1 0 119",
+ "button 95 150 2104 2103 1 0 120",
+ "button 255 90 2104 2103 1 0 121",
+ "button 255 110 2104 2103 1 0 122",
+ "button 255 130 2104 2103 1 0 123",
+ "button 255 150 2104 2103 1 0 124"
+};
+
+var texts := {
+ "text 109 85 0 ",
+ "text 109 105 0 ",
+ "text 109 125 0 ",
+ "text 109 145 0 ",
+ "text 269 85 0 ",
+ "text 269 105 0 ",
+ "text 269 125 0 ",
+ "text 269 145 0 "
+};
+
+var spellnames := {};
+
+var spellscfg := readconfigfile(":Druid:druidspells");
+
+program necrobook(who, book)
+
+ var spells, i, circle, relpos;
+ spells := GetObjProperty(book, "spells");
+ 
+ if(!spells)
+  SendSysMessage(who, "Book broken! please contact staff!!");
+  return;
+ endif
+ 
+ 
+ 
+ for (i := 1; i <= 24; i := i + 1)
+  spellnames.append(spellscfg[i].Name);
+ //print (spellscfg[i].Name);
+ endfor
+
+ data := data + spellnames;
+
+ for(i := 1; i <= 24; i := i + 1)
+  
+  if(spells[i] == 1)
+   circle := cint(spellscfg[i].Circle);
+   if((circle == 1) || (circle == 2)) 
+    page1.append(buttons[i]);
+    page1.append(texts[i] + cstr(5 + i));
+   elseif((circle == 3) || (circle == 4))
+    page2.append(buttons[i]);
+    page2.append(texts[i - 8] + cstr(5 + i));
+   elseif((circle == 5) || (circle == 6))
+    page3.append(buttons[i]);
+    page3.append(texts[i - 16] + cstr(5 + i));
+   endif
+  endif 
+ endfor
+
+ var result := SendDialogGump(who, layout + page1 + page2 + page3, data);
+ var res := result[0];
+ start_script(":Druid:CastDruidSpells",{who, res - 100, "book"});
+ //start_script(":Necromancy:bookicon" , {who, book.serial});
+endprogram

@@ -1,0 +1,15 @@
+use uo;
+use os;
+
+program floursack (who, sack)
+var x := sack.x;
+var y := sack.y;
+var z := sack.z;
+var amt := GetObjProperty(sack, "amt");
+var quality := GetObjProperty(sack, "quality");
+DestroyItem(sack);
+
+var newsack := CreateItemAtLocation(x, y, z, 0x1046, 1, who.realm);
+SetObjProperty(newsack, "amt", amt);
+SetObjProperty(newsack, "quality", quality);
+endprogram

@@ -1,0 +1,69 @@
+use uo;
+use os;
+use util;
+use polsys;
+
+//include "include/packets";
+include "include/particles";
+include "include/animations";
+include "include/audio";
+include "include/pgfacing";
+include "include/attributes";
+include "include/eventID";
+include ":Localization:localization";
+include "necroUtils";
+
+
+program control_undead(parms)
+
+var i;
+var who := parms[1];
+var what := target(who);
+
+xyface(who, what.x, what.y);
+ParticleOnCharEffect(who, 5028, 2);
+if(who.graphic == 400)
+ PlaySoundEffect( who, 0x47E );
+elseif (who.graphic == 401)
+PlaySoundEffect( who, 0x4B5 );
+endif
+	
+
+PlayCharAnim( who, 266);
+
+sleep(3);
+
+if(!what)
+SendsysMessage(who, "Cancelled");
+return;
+endif
+
+if(!GetObjProperty( what, "Undead" ))
+SendSysMessage(who, "You must select an undead creature!");
+return;
+endif
+
+var prevscript := what.script;
+var ev := struct;
+
+ev.type := 0x0001;
+ev.source := who;
+ev.text := "all come";
+
+
+
+SetObjProperty(what, "master", who.serial);
+what.script := "tamed";
+RestartScript(what);
+SendEvent( what, ev );
+sleep(3);
+PrintLocalizedTextAbovePrivate( what, who,  100, "ITA");
+detach();
+sleep(30);
+
+EraseObjProperty(what, "master");
+what.script := prevscript;
+RestartScript(what); 
+
+endprogram
+

@@ -1,0 +1,17 @@
+use uo;
+use os;
+
+program breakeggs (who, eggs)
+
+SendSysMessage(who, "Select a container to break the eggs", 0x003, 0x005a);
+var con := Target(who);
+if (!con.isa(POLCLASS_CONTAINER))
+ SendSysMessage(who, "That's not a container");
+ return;
+else
+ CreateItemInContainer(con, 0x3da3, 1);
+ CreateItemAtLocation( eggs.x, eggs.y, eggs.z, 0x09b4, 1, who.realm );
+ SubtractAmount(eggs, 1);
+
+endif
+endprogram

@@ -1,0 +1,17 @@
+use uo;
+use os;
+
+
+program setbookdifficulty (who);
+
+SendSysMessage(who, "Select the coded book", 0x003, 0x005a);
+var book := Target(who);
+var difficulty := SendTextEntryGump( who, "Please, insert the difficulty of the book (0 100)" );
+SetObjProperty(book, "diffi", CInt(difficulty));
+if (GetObjProperty(book, "diffi") == CInt(difficulty))
+ SendSysMessage(who, "Done!");
+else
+ SendSysMessage(who, "Error");
+ endif
+ 	 
+endprogram

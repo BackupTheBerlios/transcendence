@@ -1,0 +1,116 @@
+//
+// throwboomerang script 
+//
+// 
+//
+// Creator: Artix
+// Contact: 
+// Created: 30-Sept-2001
+// Updated: 
+//
+
+use os;
+use uo;
+use util;
+use cfgfile;
+
+//include "include/moreskillssystem";
+include "include/attributes";
+include "include/dist2";
+//include "include/pgfacing";
+
+program boomerang (who, boom);
+
+const speed := 10;
+var myskill := CInt(GetEffectiveSkill(who, 55));
+var mydex := GetDexterity(who);
+var enemy := Target(who, TGTOPT_CHECK_LOS + TGTOPT_HARMFUL);
+var cfg := ReadConfigFile("itemdesc");
+if (!enemy)
+ SendSysMessage(who, "Target Cancelled", 0x003, 0x0028);
+ return;
+endif
+
+var enemydex := GetDexterity(enemy);
+if (!enemydex)
+ return;
+endif
+var cx := who.x;
+var cy := who.y;
+var tx := enemy.x;
+var ty := enemy.y;
+//pgface(caster, cast_on);
+
+PerformAction(who, 0x0d);
+sleepms(150);
+PlayMovingEffect( who, enemy, 0x376a, speed, 1 );
+var objtyp := boom.objtype;
+DestroyItem(boom);
+Detach();
+gofortarget(cx, cy, tx, ty, enemy, speed);
+var bonus := CInt((mydex/10) * 2);
+var distpenalty := Distance(who, enemy) * 2;
+bonus := CInt((bonus * enemydex) / 100);
+var diffi := enemydex + distpenalty;
+diffi := diffi - bonus;
+if (enemy.isA(POLCLASS_NPC))
+ diffi := enemydex / 2;
+  if (diffi > 100)
+   diffi := 100;
+  endif
+ bonus := CInt(bonus / 2);
+ diffi := diffi - bonus;
+endif
+var success := CheckSkill(who, 55, diffi, 50);
+var dmg := cfg[objtyp].dmg;
+dmg := RandomDiceRoll(dmg);
+var anatomy := GetEffectiveSkill(who, 1);
+var tactics := GetEffectiveSkill(who, 27);
+anatomy := CInt(anatomy / 10);
+anatomy := anatomy * 2;
+anatomy := CInt((anatomy * dmg) / 100);
+tactics :=CInt((tactics * dmg) /100);
+//sleep (2);
+
+if (success)
+ ApplyDamage(enemy, (dmg + anatomy + tactics));
+ SendSysMessage(who, "You hit your opponent!", 0x03, 0x005a);
+else
+ SendSysMessage( who, "You failed to hit the opponent!", 0x003, 0x005a );	
+endif
+
+// ritorno boomerang
+var skillpoints := CInt(myskill / 10);
+var distcheck;
+var distanza := Distance( who, enemy );
+if (skillpoints < distanza)
+distcheck := CDbl(skillpoints / CDbl(distanza));
+distcheck := CInt(distcheck * 100);
+else
+distcheck := 100;
+endif
+
+var rnd := RandomInt(100);
+
+if (rnd < distcheck)
+ //sleep (4);
+ 	
+ PlayMovingEffect( enemy, who, 0x376a, 5, 1 );
+ var dexbonus := CInt((mydex * myskill) / 100);
+ if (rnd > (myskill + dexbonus))
+  var csl := RandomInt(100);
+  if (csl < 35)
+   ApplyDamage( who, 10 );
+   SendSysMessage(who, "The boomerang hit you and fell on your feet!", 0x03, 0x005a);
+   CreateItemAtLocation( who.x, who.y, who.z, objtyp, 1, who.realm );
+   return;
+  endif
+ endif
+ CreateItemInBackpack(who, objtyp, 1);
+ SendSysMessage( who, "You take back your boomerang", 0x003, 0x005a);
+else
+ SendSysMessage(who, "You lost your boomerang!", 0x003, 0x005a);
+ return;
+endif
+endprogram
+ 

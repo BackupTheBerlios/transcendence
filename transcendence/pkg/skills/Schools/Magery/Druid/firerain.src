@@ -1,0 +1,68 @@
+use uo;
+use os;
+use util;
+use polsys;
+
+//include "include/packets";
+include "include/particles";
+include "include/animations";
+include "include/audio";
+include "include/pgfacing";
+include "include/attributes";
+include "include/eventID";
+include ":Localization:localization";
+include "include/npcs";
+include "include/AOSPackets";
+//include "necroUtils";
+
+
+program freeze(parms)
+
+var i;
+var who := parms[1];
+//var what := target(who);
+
+//xyface(who, what.x, what.y);
+
+ParticleOnCharEffect(who, 5011, 2);
+
+ PlaySoundEffect( who, 0x212 );
+
+
+
+PlayCharAnim( who, 266);
+
+sleep(3);
+/*
+if(!what)
+SendsysMessage(who, "Cancelled");
+return;
+endif*/
+var ev := struct;
+ev.+type;
+ev.type := "firehit";
+ev.power := 8;
+var pid, process;
+
+foreach mob in ListMobilesNearLocation( who.x, who.y, who.z, 15, who.realm )
+if(mob.serial != who.serial)
+PlaySoundEffect( mob, 0x44c);
+ParticleMovingEffectXYZ(mob.x, mob.y, mob.z + 70, mob.x - 1, mob.y, mob.z, 3821,  5029, mob.realm);
+sleepms(250);
+ParticleOnCharEffect(mob, 9515, 2 );
+if(GetObjProperty(mob, "DruidFrozen"))
+pid := GetObjProperty(mob, "DruidFrozen");
+process := getprocess(pid);
+process.sendEvent(ev); 
+ApplyDamage(mob, 15);
+SendVisualHPloss(who, mob, 15);
+else
+ApplyRawDamage(mob, 70);
+SendVisualHPloss(who, mob, 70);
+endif
+endif
+endforeach
+
+
+endprogram
+

@@ -1,0 +1,60 @@
+use uo;
+use os;
+use util;
+use polsys;
+
+//include "include/packets";
+include "include/particles";
+include "include/animations";
+include "include/audio";
+include "include/pgfacing";
+include "include/attributes";
+include "include/eventID";
+include ":Localization:localization";
+
+
+
+
+program corpsertrap(parms)
+
+//var i;
+var who := parms[1];
+var what := target(who);
+
+xyface(who, what.x, what.y);
+
+ParticleOnCharEffect(who, 5011, 2);
+
+ PlaySoundEffect( who, 0x212 );
+
+
+
+PlayCharAnim( who, 266);
+
+sleep(3);
+what.frozen := 1;
+
+var corpser := CreateNpcFromTemplate( "corpser", what.x, what.y, what.z, 0, what.realm);
+PlayCharAnim( corpser, 12);
+sleep(3);
+ var ev := array;
+  ev.+ type;
+  ev.+ source;
+  ev.type := EVID_PEACEMADE;
+  ev.source := what;
+  SendEvent(corpser, ev);
+  ev.source := corpser;
+  SendEvent(what, ev);
+  ev.type := EVID_ENGAGED;
+  ev.source := what;
+  SendEvent(corpser, ev);
+  ev.source := corpser;
+  SendEvent(what, ev);
+while((GetHp(what) > 0) && (GetHp(corpser) > 0))
+sleep(1);
+endwhile
+
+what.frozen := 0;
+
+
+endprogram

@@ -1,0 +1,48 @@
+use uo;
+use os;
+use polsys;
+
+
+include "include/AOSPackets";
+
+program forzen(parms)
+
+
+var who := parms[1];
+var what := parms[2];
+var prevcolor := parms[3];
+var eqpcolors := parms[4];
+var duration := parms[5];
+var i;
+
+var pid := getpid();
+SetObjProperty(what, "DruidFrozen", pid); 
+
+//sleep(duration);
+
+var ev; 
+ 
+for (i := 1; i <= duration; i := i + 1)
+ev := wait_for_event(1);
+if (ev.type == "firehit")
+break;
+endif
+if((i == duration / 2) || (i == duration / 4)  || (i == (duration / 2) + (duration / 4)))
+ApplyRawDamage(what, 15);
+SendVisualHPloss(who, what, 15);
+endif
+
+endfor
+
+what.color := prevcolor;
+i := 1;
+
+foreach eqp in ListEquippedItems(what) 
+
+eqp.color := eqpcolors[i];
+i := i + 1;
+
+endforeach
+what.frozen := 0;
+EraseObjProperty(what, "DruidFrozen"); 
+endprogram

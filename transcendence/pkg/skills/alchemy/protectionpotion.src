@@ -1,0 +1,42 @@
+use os;
+use uo;
+use util;
+use cfgfile;
+
+include "drinkpotion";
+include "include/statmod";
+
+
+program protectionpotion (character, potion)
+
+if (!checkifcandrink(character))
+        return;
+endif
+
+    var potion_strength := get_potion_strength(potion);
+
+
+    if (is_poison(potion))
+        do_poison(character, potion);
+    else
+         empty_bottle(character, potion); 
+           PlaySoundEffect(character, 0x01ee);
+    	PlayObjectCenteredEffect( character, 0x373a, 7,7);
+
+	if (!CanMod(character, "ar"))
+		SendSysMessage(character,"Already under the influence!");
+		return;
+	endif
+
+
+
+	DoTempMod(character, "ar", 20, 120);
+
+
+
+    endif
+
+
+
+
+endprogram

@@ -1,0 +1,16 @@
+use uo;
+use os;
+
+program on_create_book (book)
+
+var recipelist;
+var recipeobjlist;
+
+
+recipelist := {"The Recipe Book", "", "", "", "", "", "", "", "", "", "", "", ""};
+recipeobjlist := { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+SetObjProperty(book, "recipelist", recipelist);
+SetObjProperty(book, "recipeobjlist", recipeobjlist);
+
+endprogram

@@ -1,0 +1,32 @@
+use uo;
+use os;
+
+program rollingpin (who, pin)
+
+var food := Target(who);
+
+
+if (!food)
+ SendSysMessage(who, "Target Cancelled", 0x003, 0x005a);
+ return;
+endif
+
+
+if (Distance(who, food) > 2)
+ SendSysMessage(who, "you're too fare away");
+ return;
+endif              
+
+if (food.objtype == 0x103d)
+ var quality := GetObjProperty(food, "quality");
+ DestroyItem(food);
+ var prodotto := CreateItemInBackpack(who, 0xfff3, 1);
+ SetObjProperty(prodotto, "quality", quality);
+else
+  SendSysMessage(who, "you can't use it on that", 0x003, 0x0028);
+  return;
+  
+endif
+
+endprogram
+

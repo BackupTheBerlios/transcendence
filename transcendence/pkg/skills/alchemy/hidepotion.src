@@ -1,0 +1,41 @@
+use os;
+use uo;
+use util;
+use cfgfile;
+
+include "drinkpotion";
+include "include/statmod";
+
+
+program hidingpotion (character, potion)
+
+if (!checkifcandrink(character))
+        return;
+endif
+
+    var potion_strength := get_potion_strength(potion);
+
+
+    if (is_poison(potion))
+        do_poison(character, potion);
+    else
+          empty_bottle(character, potion);
+           PlaySoundEffect(character, 0x01ee);
+    	PlayObjectCenteredEffect( character, 0x373a, 7,7);
+        if (character.hidden == 0)
+	character.concealed :=1;
+	Detach();
+	sleep(120);
+	character.concealed := 0;
+        endif
+
+
+
+
+
+    endif
+
+
+
+
+endprogram

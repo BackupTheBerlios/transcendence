@@ -1,0 +1,74 @@
+use uo;
+use os;
+
+program keg (who, keg)
+
+var content := GetObjProperty(keg, "content");
+var quality := GetObjProperty(keg, "quality");
+var litres := GetObjProperty(keg, "litres");
+var woodquality := GetObjProperty(keg, "woodquality");
+if (!woodquality)
+ woodquality := 40;
+endif
+var what := Target(who);
+if (Distance(what, keg) > 2)
+ SendSysMessage(who, "You must put it under the tap", 3, 38);
+ return;
+endif
+
+if (!what)
+ SendSysMessage(who, "Target Cancelled", 0x003, 38);
+ return;
+endif
+
+var product;
+case (what.graphic)
+ 0x0ff7:
+   case (content)
+    "wine":
+       if (litres > 0)
+        PlaySoundEffect(keg, 0x0021);
+        sleep(3);
+       
+        what.graphic := 0x1f9c;
+        SetName(what, "pitcher of wine");
+        woodquality := CInt(woodquality / 10);
+        woodquality := CInt(woodquality * 2);
+        woodquality := CInt((woodquality * quality) / 100);
+        quality := quality + woodquality;
+        if (quality > 100)
+         quality := 100;
+        endif
+        SetObjProperty(what, "quality", quality);
+        SetObjProperty(keg, "litres", litres - 1);
+       else
+       	SendSysMessage(who, "It's Empty!", 3, 58);
+       	return;
+       endif
+    endcase
+ 0x1f81:
+      case (content)
+    "wine":
+       if (litres > 0)
+        PlaySoundEffect(keg, 0x0021);
+        sleep(3);
+       
+        what.graphic := 0x1f8d;
+        SetName(what, "glass of wine");
+        woodquality := CInt(woodquality / 10);
+        woodquality := CInt(woodquality * 2);
+        woodquality := CInt((woodquality * quality) / 100);
+        quality := quality + woodquality;
+        if (quality > 100)
+         quality := 100;
+        endif
+        SetObjProperty(what, "quality", quality);
+        SetObjProperty(keg, "litres", CDbl(litres - 0.2));
+       else
+       	SendSysMessage(who, "It's Empty!", 3, 58);
+       	return;
+       endif
+    endcase
+endcase
+endprogram
+       	 

@@ -1,0 +1,90 @@
+////////////////////////////////////
+// BEGGING
+// Author: Pcrest
+// Email : pascal.crest@wanadoo.fr
+////////////////////////////////////
+
+use uo;
+use os;
+use util;
+
+include "include/client";
+include "include/skillpoints";
+
+program begging( character )
+
+    var strdesc;
+    var dexdesc;
+    var thepoints := get_default_points(SKILLID_BEGGING);
+
+    SendSysMessage( character, "Scegli una persona." );
+    var subject := Target(character);
+
+    if (!subject)
+      SendSysMessage(character,"Cancelled.");
+      return;  
+    endif
+    if (((subject.graphic != 400) && (subject.graphic != 401)))
+      SendSysMessage(character,"Non puoi mendicare su quella persona !!!");
+      return;  
+    endif
+    if (subject == character)
+      SendSysMessage(character,"Non puoi mendicare su te stesso!!!");
+      return;  
+    endif
+    if (!subject.isA(POLCLASS_NPC))
+      SendSysMessage(character,"Puoi usare la skill solo su NPC!!!");
+      return;  
+    endif
+    if (Distance(character,subject) > 2)
+      SendSysMessage(character,"Quella persona è troppo lontana!!!");
+      return;  
+    endif
+   
+    var i := RandomInt(4)+1;
+    while (i > 0)
+      case RandomInt(10)
+        0: PrintTextAbove(character,"Aiutatemi brava gente ...");
+        1: PrintTextAbove(character,"Devo sfamare i miei figli, aiutatemi, per favore ...");
+        2: PrintTextAbove(character,"Mi dareste un po' di pane per favore...");
+        3: PrintTextAbove(character,"Hai una moneta per me?");
+        4: PrintTextAbove(character,"Una buona azione per un povero affamato...");
+        5: PrintTextAbove(character,"Grazie per il vostro gesto...");
+        6: PrintTextAbove(character,"Non ho un tetto ed ho fame, vi prego...");
+        7: PrintTextAbove(character,"Sono invalido di guerra...");
+        8: PrintTextAbove(character,"Avete delle monete per me, per favore...");
+        9: PrintTextAbove(character,"La mia famiglia e' senza un tetto e senza cibo ...");
+      endcase
+      sleep(1);
+      i := i - 1;
+    endwhile
+    if (CheckSkill(character,SKILLID_BEGGING, -1, thepoints))
+      var somme := RandomInt(20)+1;
+      case RandomInt(10)
+        0: PrintTextAbove(subject,"Tenete, questo e' per voi...");
+        1: PrintTextAbove(subject,"Mi spiace, ma non posso darvi altro...");
+        2: PrintTextAbove(subject,"Questo e' tutto quel che ho...");
+        3: PrintTextAbove(subject,"Vi bastera'?");
+        4: PrintTextAbove(subject,"Ecco ...");
+        5: PrintTextAbove(subject,"Tenete, e non fatevi piu' vedere...");
+        6: PrintTextAbove(subject,"Non spendeteli tutti a bere...");
+        7: PrintTextAbove(subject,"Fatene buon uso ...");
+        8: PrintTextAbove(subject,"Ho solo questo...");
+        9: PrintTextAbove(subject,"Spiacente non posso darvi altro...");
+      endcase
+      CreateItemInBackpack(character, 0xeed, somme);
+    else
+      case RandomInt(10)
+        0: PrintTextAbove(subject,"ehh? ...");
+        1: PrintTextAbove(subject,"Mi spiace non ho nulla con me...");
+        2: PrintTextAbove(subject,"Non avete migliori scuse? ...");
+        3: PrintTextAbove(subject,"Non ho nulla...");
+        4: PrintTextAbove(subject,"Vai a lavorare sporco barbone!!");
+        5: PrintTextAbove(subject,"Vatti a lavare!!!");
+        6: PrintTextAbove(subject,"Perche', per andare a bere??? ah no!!");
+        7: PrintTextAbove(subject,"Anch'io ho una famiglia da sfamare...");
+        8: PrintTextAbove(subject,"Vi ho detto che non ho nulla...");
+        9: PrintTextAbove(subject,"Mi spiace ma ho speso tutto dal panettiere...");
+      endcase
+    endif
+endprogram;

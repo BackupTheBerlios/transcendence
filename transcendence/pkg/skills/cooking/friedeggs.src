@@ -1,0 +1,81 @@
+use uo;
+use os;
+
+program do_friedeggs (parms)
+
+var who := parms[1];
+
+var layout := {
+                 "nodispose",
+                 "page 0",
+                 "gumppic 0 0 500",
+                 "tilepic 80 50 2486",
+                 "text 50 20 300 0",   
+                 "text 40 135 0 1",
+                 "text 40 160 0 2",
+                 "text 40 165 0 3",
+                
+                 "text 230 60 0 4",
+                 //"text 230 85 0 5",
+                 //"text 230 110 0 6",
+                 //"text 230 135 0 7",
+                 //"text 230 160 0 8",
+                 //"text 230 185 0 9",
+                 "button 230 190 4020 4022 1 0 101"
+                 };
+                
+var data := {"Fried Eggs",
+               "Put a piece of butter",
+               "and the eggs",
+               "into a FryPan",
+               "Then cook it"
+               };
+
+var select := SendDialogGump(who, layout, data);
+
+if (select[0] == 101)
+ var frypan := Target(who);
+
+ var check := 0;
+ foreach it in EnumerateItemsInContainer( frypan )
+ if ( it.objtype == 0xa170)
+  check := check + 1;
+  SubtractAmount(it, 1);
+ endif
+ if (it.objtype == 0x3da3)
+  check := check + 1;
+  SubtractAmount(it, 1);
+ endif
+endforeach
+print("check : " + CStr(check));
+if (check >= 2)
+ SendSysMessage(who, "Now select 10 kindlings", 0x003, 0x005a);
+ var kindlings := Target(who);
+ if ((kindlings.objtype != 0x0de1) && (kindlings.objtype != 0x0de2))
+  SendSysMessage(who, "Wrong object!", 0x003, 0x0028);
+  return;
+ endif
+ if (kindlings.amount < 10)
+   SendSysMessage(who, "Not enough kindlings!", 0x003, 0x0028);
+   return;
+ endif 
+
+ SubtractAmount(kindlings, 10);
+ SendSysMessage(who, "You start to frie the eggs", 0x003, 0x005a);
+ MoveItemToLocation( frypan, frypan.x, frypan.y, frypan.z + 1, MOVEITEM_FORCELOCATION );
+ var fire := CreateItemAtLocation( frypan.x, frypan.y, frypan.z - 1, 0x0de3, 1, frypan.realm );
+ sleep(25);
+ CreateItemInContainer( frypan, 0x09b6, 1 );  
+ DestroyItem(fire);
+  MoveItemToLocation( frypan, frypan.x, frypan.y, frypan.z - 1, MOVEITEM_FORCELOCATION );           
+   SendSysMessage(who, "Your fried eggs are ready!", 0x003, 0x005a);
+ else
+  SendSysMessage(who, "You have not enough ingredients", 0x003, 0x0028);
+  return;
+ endif
+endif
+
+endprogram
+
+
+                               

@@ -1,0 +1,31 @@
+// treedeed script made by Artix
+
+use uo;
+use os;
+use util;
+use cfgfile;
+
+//include "include/moreskillssystem";
+include "include/attributes";
+include "include/skillPoints";
+
+program createtree (who, deed)
+
+
+var myskill := GetEffectiveSkill(who, 52);
+var treetype := GetObjProperty(deed, "treetype");
+SendSysMessage(who, "Where do you want to plant the tree?", 0x003, 90);
+
+var trg := TargetCoordinates(who);
+
+var tree := CreateItemAtLocation(trg.x, trg.y, trg.z, treetype, 1, who.realm);
+SetObjProperty(tree, "quality", CInt(myskill));
+
+DestroyItem(deed);
+var parms := {};
+parms[1] := who;
+parms[2] := tree;
+if (tree.graphic != 3240)
+start_script("leaves", parms);
+endif
+endprogram

@@ -1,0 +1,54 @@
+use uo;
+use os;
+use cfgfile;
+include "include/attributes";
+
+var bookobject := 0xc100;
+
+program writerecipe (who, recipe)
+
+var cfg := ReadConfigFile("recipes");
+var elem := cfg[recipe.objtype];
+var id := elem.id;
+var name := GetConfigString(elem, "name");
+SendSysMessage(who, "Please, select a Recipe Book to write the recipe in", 0x003, 0x005a);
+
+var book := Target(who);
+
+if (Distance(recipe, book) > 3)
+ SendSysMessage(who, "That's too far away");
+ return;
+endif
+
+if (!book)
+ SendSysMessage(who, "Cancelled", 0x003, 0x005a);
+ return;
+endif
+
+if ((book.objtype != bookobject) || (book.dexterity))
+ SendSysMessage(who, "That's not a recipe book!", 0x003, 0x0028);
+ return;
+endif
+
+var recipelist := GetObjProperty(book, "recipelist");
+var recipeobjlist := GetObjProperty(book, "recipeobjlist");
+if ((!recipelist) || (!recipeobjlist))
+ SendSysMessage(who, "ERROR : book not configurated, call a GM!", 0x003, 0x005a);
+ return;
+endif
+
+recipelist[id + 1] := name;
+recipeobjlist[id] := recipe.objtype;
+print(name);
+SetObjProperty(book, "recipelist", recipelist);
+SetObjProperty(book, "recipeobjlist", recipeobjlist);
+SubtractAmount(recipe, 1);
+endprogram
+
+
+
+
+
+
+
+ 

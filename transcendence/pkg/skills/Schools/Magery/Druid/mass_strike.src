@@ -1,0 +1,50 @@
+use uo;
+use os;
+use util;
+use polsys;
+
+//include "include/packets";
+include "include/particles";
+include "include/animations";
+include "include/audio";
+include "include/pgfacing";
+include "include/attributes";
+include "include/eventID";
+include "include/client3d";
+include "include/statMod";
+include ":Localization:localization";
+//include "necroUtils";
+
+
+program massstrike(parms)
+
+var i;
+var who := parms[1];
+var what := target(who);
+
+//xyface(who, what.x, what.y);
+ParticleOnCharEffect(who, 5011, 2);
+
+ PlaySoundEffect( who, 0x212 );
+
+
+
+PlayCharAnim( who, 266);
+
+sleep(3);
+
+ PlaySoundEffect(what, 0x231);
+    PlayMovingEffectXYZ(what.x, what.y, what.z+100, what.x, what.y, what.z, 6002, 10,  0,  0, what.realm );
+    sleepms(1300);
+    PlaySoundEffect(what, 0x146);
+    sleepms(180);
+//	PlayObjectCenteredEffect(what , FX_SPARK_EFFECT , 7 , 0x10 );
+    PlaySoundEffect(what,0x15b);
+    PerformAction(what, 22);
+    sleepms(1200);
+    //what.concealed := 1;
+    sleepms(200);
+    //PlaySoundEffect(what, 0x246);
+    ApplyDamage( what, RandomdiceRoll("1d20+65") );
+    
+endprogram    

@@ -1,0 +1,31 @@
+// vat script by Artix
+
+use uo;
+use os;
+
+program create_vat (who, deed)
+
+var where := TargetCoordinates(who);
+
+var startpoint := CreateItemAtLocation( where.x, where.y, where.z, 0x14da, 1, who.realm );
+var middleinf := CreateItemAtLocation( where.x - 1, where.y + 1, where.z, 0x14d7, 1, who.realm);
+var leftinf := CreateItemAtLocation( where.x - 2, where.y + 2, where.z, 0x14d8, 1, who.realm);
+var rightmiddle := CreateItemAtLocation( where.x - 2, where.y - 1, where.z, 0x14dd, 1, who.realm);
+var middlemiddle := CreateItemAtLocation( where.x - 2, where.y, where.z, 0x14d9, 1, who.realm);
+var leftmiddle := CreateItemAtLocation( where.x - 3, where.y, where.z, 0x14dc, 1, who.realm);
+var rightsup := CreateItemAtLocation( where.x - 2, where.y - 2, where.z, 0x14df, 1, who.realm);
+var middlesup := CreateItemAtLocation( where.x - 3, where.y - 1, where.z, 0x14db, 1, who.realm);
+var leftsup := CreateItemAtLocation( where.x - 4, where.y, where.z, 0x14de, 1, who.realm);
+
+var serialnumb := startpoint.serial;
+SetObjProperty(startpoint, "Vat", "sp");
+SetObjProperty(leftinf, "Vat", "li");
+SetObjProperty(rightmiddle, "Vat", "rm");
+SetObjProperty(middlemiddle,  "Vat", "mm");
+SetObjProperty(leftmiddle, "Vat", "lm");
+SetObjProperty(middlesup, "Vat", "ms");
+DestroyItem(deed);
+
+endprogram
+
+

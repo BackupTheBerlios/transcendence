@@ -1,0 +1,50 @@
+use uo;
+use os;
+use util;
+use cfgfile;
+use polsys;
+
+include "include/spellRestrictions";
+include "include/attributes";
+include "include/particles";
+include "include/effects2D";
+include "checkeffects";
+
+var spellscfg := ReadConfigFile(":spells:spells"); 
+
+program cast_bless( parms )
+  
+  var circle := 3;
+  var delivery := "direct";
+  var noto := "helpful";
+  var id := 17;
+  var result := maincast(parms, delivery, circle, noto, id);
+  if(result == 0)
+    return;
+  endif
+  var caster := result[1];
+  var cast_on := result[2];
+  //var spellscfg := ReadConfigFile(":spells:spells"); 
+  
+  PlaySoundEffect(cast_on, SFX_SPELL_BLESS);
+  /*if(GetObjProperty (caster, "SessionClientType") == "3D")
+  CheckForSpell3DEffects(spellscfg, caster, cast_on, id);
+  else
+  PlayObjectCenteredEffect( cast_on, FX_BLESS_EFFECT, 10,10);
+  endif*/
+   CheckForSpell3DEffects(spellscfg, caster, cast_on, id);
+   Play2DObjectCenteredEffectHuefx( cast_on, FX_BLESS_EFFECT, 10,10);
+  
+  var magery := GetEffectiveSkill(caster, SKILLID_MAGERY);
+  var mod_amount := GetModAmount(magery);
+  var duration := GetModDuration(magery);
+  if(CanMod(cast_on, "str"))
+	DoTempMod(cast_on, "str", mod_amount, duration);
+  endif
+  if(CanMod(cast_on, "dex"))
+	DoTempMod(cast_on, "dex", mod_amount, duration);
+  endif
+  if(CanMod(cast_on, "int"))
+	DoTempMod(cast_on, "int", mod_amount, duration);
+  endif
+endprogram

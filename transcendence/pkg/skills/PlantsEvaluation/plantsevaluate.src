@@ -1,0 +1,94 @@
+//
+// Plants Evaluation Script
+//
+//
+//
+// Creator: Artix
+// Contact: 
+//
+// Created: 1-Oct-2001
+// Updated: 
+//
+
+
+use uo;
+use os;
+use cfgfile;
+
+//include "moreskillssystem";
+include "include/attributes";
+
+program plantsevaluate (who)
+
+var cfg := ReadConfigFile("plants");
+SendSysMessage(who, "Select a plant", 0x003, 0x005a);
+var plant := Target(who, TGTOPT_NOCHECK_LOS);
+if (!plant)
+ SendSysMessage(who, "Target Cancelled", 0x003, 0x005a);
+ return;
+endif
+
+if (!cfg[plant.objtype])
+ SendSysMessage(who, "You must select a plant!", 0x003, 0x0028);
+ return;
+endif
+
+var maxdam := cfg[plant.objtype].maxdamage;
+var quality := GetObjProperty(plant, "quality");
+var tempdam := GetObjProperty(plant, "tempdam");
+ 
+var dmg := CDbl(tempdam / CDbl(maxdam));
+dmg := CInt(dmg * 100);
+
+var damtxt := "";
+var qualtxt := "";
+if (dmg == 0)
+ damtxt := "in excellent conditions";
+elseif ((dmg >= 1) &&  (dmg <= 20))
+ damtxt := "in exceptional conditions";
+elseif ((dmg >= 20) &&  (dmg <= 39))
+ damtxt := "in good conditions";
+elseif ((dmg >= 40) && (dmg <= 59))
+ damtxt := "a bit damaged, but still healty";
+elseif ((dmg >= 60) &&  (dmg <= 69))
+ damtxt := "damaged";  
+elseif ((dmg >= 70) &&  (dmg <= 79))
+ damtxt := "strongly damaged"; 
+elseif ((dmg >= 80) &&  (dmg <= 89))
+ damtxt := "extremely damaged";
+elseif ((dmg >= 80) &&  (dmg <= 100))
+ damtxt := "close to death!"; 
+endif
+
+if (quality <= 19)
+ qualtxt := "a very bad quality";
+elseif ((quality >= 20) && (quality <= 29))
+ qualtxt := "a bad quality";
+elseif ((quality >= 30) && (quality <= 39))
+ qualtxt := "a not very good quality";  
+elseif ((quality >= 40) && (quality <= 49))
+ qualtxt := "a medium quality";
+elseif ((quality >= 50) && (quality <= 59))
+ qualtxt := "a good quality";
+elseif ((quality >= 60) && (quality <= 69))
+ qualtxt := "a very good quality";
+elseif ((quality >= 70) && (quality <= 79))
+ qualtxt := "a high quality";
+elseif ((quality >= 80) && (quality <= 89))
+ qualtxt := "a superior quality";  
+elseif ((quality >= 90) && (quality <= 99))
+ qualtxt := "an exceptional quality";
+elseif (quality >= 100)
+ qualtxt := "an excellent quality"; 
+endif
+
+var success := CheckSkill(who, 53, -1, 30);
+if (success)
+ SendSysMessage(who, "The Plant is " + damtxt + ", and has " + qualtxt, 0x003, 0x005a);
+else
+ SendSysMessage(who, "You failed!!", 0x003, 0x005a);
+
+endif
+
+endprogram
+ 	

@@ -1,0 +1,108 @@
+//by ArT-iX
+use uo;
+use os;
+use util;
+
+include "notes";
+include ":Localization:localization";
+//include "include/dictionaries";
+
+program playscore(parms)
+
+ var who := parms[1];
+ var item := parms[2];
+ var noselect := parms[3];
+ var score;
+ 
+ if(!noselect)
+ 
+   SendCustomSysMessageByLanguage( who,  GetUserPreferredLanguage(who), "Select a musical score", "Scegli uno spartito", 90, 3);
+   score := target(who);
+ 
+  
+  if(!score)
+   SendLocalizedSysMessage(who, 1, GetUserPreferredLanguage(who), 0, 38, 3);
+   return;
+  endif
+  
+  if(!((score.graphic >= 0x0ebd) && (score.graphic <= 0x0ec0)))
+   SendLocalizedSysMessage(who, 5, GetUserPreferredLanguage(who), {{"a score"}, {"uno spartito"}}, 38, 3);
+   return 0;
+  endif
+  
+ else
+   score := noselect;	
+ endif	
+
+ var music := GetObjProperty(score, "Music");
+ var author := GetObjProperty(score, "Author");
+ var mname := GetObjProperty(score, "Name");
+ 
+ SendCustomSysMessageByLanguage( who,  GetUserPreferredLanguage(who), who.name + " is playing " + mname + " composed by " + author, who.name + " sta suonando " + mname + " composta da " + author, 90, 3);
+ 
+ foreach note in music
+  PlayNote(who, item, score, note[1], note[2], note[3]);
+ endforeach
+ 
+endprogram
+
+function PlayNote(who, instrument, score, note, oct, pause)
+ 
+ var noteidx := GetNoteIndex(note);
+ var tuned := GetObjProperty(instrument, "Tuned");
+ var notearray := GetNotesArray();
+ var fail_note;
+if(note != "Poly")
+ if(tuned < 70)
+  if(tuned > RandomInt(70))
+   fail_note := noteidx - randomint(noteidx - 1);
+    if (fail_note < 1)
+     fail_note := 1;
+    endif
+   note := notearray[fail_note];
+  endif
+ endif
+
+ case(instrument.graphic)
+  0x0eb1: PlaysoundEffect(who, GetStandHarpNote(note, oct));
+  0x0eb2: PlaysoundEffect(who, GetLapHarpNote(note, oct));
+  0x0eb3: PlaysoundEffect(who, GetLuteNote(note, oct));
+ endcase 
+ 
+ if(GetObjProperty(score, "LiveComposition"))
+  if(pause < 1)
+   sleepms(250);
+  else
+   sleep(pause);	
+  endif
+ else
+  sleepms(pause * 2);
+ endif	
+else
+ PlayPolyphonicSound(who, instrument, oct);
+ sleepms(pause * 2);
+endif 
+ var detune_prob := RandomInt(100);
+  //if(RandomInt(100) > 5)
+  if(detune_prob  < 10)
+  print("PROB: " + cstr(detune_prob));
+  var detune := tuned - randomint(3);
+  if(detune < 0)
+   detune := 0;
+  endif 
+  print("Scorda: " + cstr(detune));
+  SetObjProperty(instrument, "Tuned", detune);
+ endif
+ 
+ 
+endfunction
+
+function PlayPolyphonicSound(who, instrument, chord)
+ foreach note in chord
+   case(instrument.graphic)
+    0x0eb1: PlaysoundEffect(who, GetStandHarpNote(note[1], note[2]));
+    0x0eb2: PlaysoundEffect(who, GetLapHarpNote(note[1], note[2]));
+    0x0eb3: PlaysoundEffect(who, GetLuteNote(note[1], note[2]));
+   endcase 
+ endforeach
+endfunction

@@ -1,0 +1,119 @@
+use uo;
+use os;
+
+include "include/client";
+include "include/yesno";
+
+program do_must (parms)
+
+var who := parms[1];
+var mortar := parms[2];
+var grapes := parms[3];
+var productquality;
+var quality := GetObjProperty(grapes, "quality");
+//local myskill := getskill (who, SKILLID_COOKING);
+var loops;
+
+case (yesno(who, "Auto-Loop?"))
+1:
+  loops := grapes.amount;
+0:
+  loops := 1;
+endcase
+
+SendSysMessage(who, "Select a Barrel to store the must", 0x003, 86);
+var keg := Target(who);
+if (!keg)
+ SendSysMessage(who, "Cancelled!", 0x003, 38);
+ return;
+endif
+
+if ((keg.graphic >= 0x1ad6) && (keg.graphic <= 0x1ad7))
+
+ var maxlitres := GetObjProperty(keg, "maxlitres");
+  if (!maxlitres)
+    maxlitres := 10;
+  endif
+ var litres := GetObjProperty(keg, "litres");
+ if (!litres)
+  litres := 0;
+  productquality := quality;
+  SetObjProperty(keg, "content", "must");
+ else
+  var content := GetObjProperty(keg, "content");
+  if (content != "must")
+   SendSysMessage(who, "You cannot mix must and " + content, 0x003, 38);
+   return;
+  endif
+  productquality := GetObjProperty(keg, "quality");
+ endif
+var i;
+for (i := 1; i <= loops; i := i + 1)
+  if (CInt(GetObjProperty(keg, "litres")) <= maxlitres)
+   SendSysMessage(who, "You do the must and put it in the keg", 0x003, 85);
+   PlaySoundEffect(who, 0x243);
+		PerformAction( who, ANIM_SALUTE );
+   sleep(1);
+   SetObjProperty(keg, "litres", CDbl(GetObjProperty(keg, "litres")) + CDbl(0.2));
+   SubtractAmount(grapes, 1);   
+   SetObjProperty(keg, "quality", CInt((quality + productquality) / 2));
+  else
+   SendSysMessage(who, "That keg is full", 0x003, 38);
+   var parameters := {who, keg};
+  
+   start_script("fermentation", parameters);
+   break;
+  endif
+endfor 
+else
+  SendSysMessage(who, "That's not a keg!", 0x003, 38);
+  return;
+endif
+endprogram
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

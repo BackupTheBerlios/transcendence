@@ -1,0 +1,27 @@
+use uo;
+include "include/attributes";
+
+program unequipweapon(who,item)
+
+// skill adjustment
+	EraseObjProperty(item,"w_equipped");
+	var skill_adj := GetObjProperty(item,"skill_adj");
+	if(!skill_adj) return 1; endif
+
+	var skillid := item.skillid;
+
+	skill_adj := CInt(skill_adj) * 10;
+
+	var currskill := BaseSkillToRawSkill( GetAttributeBaseValue(who,skillid) );
+	currskill := RawSkillToBaseSkill(currskill);
+
+	var newskill := currskill - skill_adj;
+	newskill := BaseSkillToRawSkill( newskill );
+	
+	//SetRawSkill(who,skillid,newskill);
+	SetAttributeBaseValue( who, skillid, RawSkillToBaseSkill(newskill) );
+//	
+
+	return 1;
+
+endprogram

@@ -1,0 +1,24 @@
+1. Control Undead              *
+2. Evoke Undead                   
+3. Undead Sacrifice            *
+4. WraithForm                  *
+5. LicheForm               
+6. VampireForm                 *
+7. DaemonForm                  *
+9. LinkAura                    *
+10. DarkAura                   *
+11. Necromantic Curse          *
+12. Dark Fog                   *
+13. Skeleton Army              *
+14. Undead Army                *
+15. Spectral Horse
+16. Inferna Transmutation      *
+17. Raise Corpse               *
+18. Raise Undead               *
+19. Blood Elemental            *
+20. Necromantic Poison         *
+21. Evoke Daemon             
+22. Evoke Hell's Critters      *
+23. Evoke From Tomb            *
+24. SpiritSpeak                *
+25. Ghost Dimension

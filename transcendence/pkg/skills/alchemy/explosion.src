@@ -1,0 +1,55 @@
+use uo;
+use os;
+use util;
+use cfgfile;
+include "include/eventid";
+
+const MOVING_EFFECT_PURPLE_POTION  := 0x0f0d;
+const SOUND_EFFECT_EXPLOSION	   := 0x208;
+const EFFECT_EXPLOSION             := 0x36b0;
+
+program use_explosion( parms )
+
+    var mob := parms[1];
+	var ttarget := parms[2];
+
+    mob.hidden := 0;
+
+    if (!CheckLosAt( mob, ttarget.x, ttarget.y, ttarget.z ))
+        return;
+    endif
+
+    PlayMovingEffectXYZ( mob.x, mob.y, mob.z+15,
+                         ttarget.x, ttarget.y, ttarget.z,
+                         MOVING_EFFECT_PURPLE_POTION, 8, 0, 0, mob.realm );
+
+    sleep(2);
+    var lookout := CreateItemAtLocation( ttarget.x, ttarget.y, ttarget.z, 0x0f0d, 1, mob.realm );
+    lookout.movable := 0;
+
+    PrintTextAbove( lookout, "2");
+    sleep(1);
+    PrintTextAbove( lookout, "1");
+    sleep(1);
+
+        PlayObjectCenteredEffect( lookout, EFFECT_EXPLOSION, 7, 0x10 );
+
+    var ev := array;
+    ev.+type;
+    ev.+source;
+    ev.source := mob;
+
+    ev.type := EVID_ENGAGED;
+    foreach critter in ListMobilesNearLocationEx( lookout.x, lookout.y, lookout.z, 4, LISTEX_FLAG_NORMAL + LISTEX_FLAG_HIDDEN, lookout.realm );
+        PlayObjectCenteredEffect( critter, EFFECT_EXPLOSION, 7, 0x10 );
+        if ( (!critter.npctemplate) || (critter.script == "tamed") )
+	        var dmg := ( RandomInt(19) + 1 ) * 4;
+        	dmg := dmg + 2;
+		SendEvent( critter, ev );
+        	ApplyDamage(critter, dmg ); // note this is raw damage
+	endif
+    endforeach
+
+    DestroyItem( lookout );
+
+endprogram

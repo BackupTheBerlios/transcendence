@@ -1,0 +1,64 @@
+use uo;
+use os;
+use util;
+use polsys;
+
+//include "include/packets";
+include "include/particles";
+include "include/animations";
+include "include/audio";
+include "include/pgfacing";
+include ":Necromancy:necroUtils";
+include "summon";
+
+program skeletonarmy(parms)
+
+var i;
+var who := parms[1];
+var where := targetcoordinates(who);
+
+if(!where)
+SendsysMessage(who, "Cancelled");
+return;
+endif
+
+xyface(who, where.x, where.y);
+ParticleOnCharEffect(who, 5028, 2);
+if(who.graphic == 400)
+ PlaySoundEffect( who, 0x47E );
+elseif (who.graphic == 401)
+PlaySoundEffect( who, 0x4B5 );
+endif
+	
+
+PlayCharAnim( who, 266);
+
+sleep(3);
+
+//PlaySoundEffect( character, effect );
+summon_creature( who,  GetRandomUndead(), where );
+PlayXYZSoundEffect(where.x, where.y, where.z, 0x1c6, who.realm);
+
+for (i := 1; i <= 4; i := i + 1)
+
+ where.x := RandomCoordModifier(where.x, 2);
+ where.y := RandomCoordModifier(where.y, 2);
+ summon_creature( who,  GetRandomUndead(), where );
+ PlayXYZSoundEffect(where.x, where.y, where.z, 0x1c6, who.realm);
+ 
+endfor
+
+for (i := 1; i <= 8; i := i + 1)
+
+ where.x := RandomCoordModifier(where.x, 3);
+ where.y := RandomCoordModifier(where.y, 3);
+ summon_creature( who,  GetRandomUndead(), where );
+ PlayXYZSoundEffect(where.x, where.y, where.z, 0x1c6, who.realm);
+ 
+endfor
+
+
+
+
+endprogram
+

@@ -1,0 +1,48 @@
+use uo;
+use os;
+
+include "include/client";
+include "include/attributes";
+
+program makebutter (who, milk)
+var quality := GetObjProperty(milk, "milkquality");
+var difficulty := 30;
+
+if (!quality)
+ quality := 0;
+endif
+
+
+if (CheckSkill(who, SKILLID_COOKING, difficulty, 10))
+ milk.graphic := 0x3a84;
+ SetName(milk, "empty tub");
+ EraseObjProperty(milk, "milkquality");
+ SendSysMessage(who, "You made two piece of butter and put it in your backpack", 3, 0x005a);
+ var butter := CreateItemInBackpack(who, 0xa170, 2);
+ var rawquality;
+ if (GetEffectiveSkill(who, SKILLID_COOKING) < difficulty)
+  rawquality := difficulty - CInt(GetEffectiveSkill(who, SKILLID_COOKING));
+  rawquality := CInt(50 - (rawquality * 2.5));
+ else 
+  rawquality :=  CInt(GetEffectiveSkill(who, SKILLID_COOKING)) - difficulty;
+  rawquality := CInt(50 + (rawquality * 2.5));
+ endif
+
+ if (rawquality > 100)
+  rawquality := 100;
+ elseif (rawquality < 0)
+  rawquality := 1;
+ endif
+
+ quality := CInt((rawquality * quality) / 100);
+ SetObjProperty(butter, "quality", quality);
+else
+ SendSysMessage(who, "You failed to make butter", 0x03, 38);
+ milk.graphic := 0x3a84;
+ SetName(milk, "empty tub");
+ EraseObjProperty(milk, "milkquality");
+ return;
+endif
+endprogram
+   
+ 

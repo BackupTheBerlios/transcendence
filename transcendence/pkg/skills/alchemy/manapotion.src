@@ -1,0 +1,33 @@
+use os;
+use uo;
+use util;
+use cfgfile;
+include "drinkpotion";
+include "include/attributes";
+
+program drink_blue (character, potion)
+if (!checkifcandrink(character))
+        return;
+endif
+    var potion_strength := get_potion_strength(potion);
+
+
+    if (is_poison(potion))
+        do_poison(character, potion);
+    else
+        empty_bottle(character, potion);
+        var old_mana := GetMana(character);
+
+        var thestring := CStr(potion_strength) + "d6";
+        var increase :=  RandomDiceRoll(thestring);
+        SetMana(character, GetMana(character) + increase);
+        Detach();
+
+        sleep(50 * potion_strength);
+        if (GetMana(character) > GetIntelligence(character))
+                SetMana(character, character.intelligence);
+        endif
+
+    endif
+
+endprogram

@@ -1,0 +1,97 @@
+use uo;
+use os;
+
+program fillvat (who, vat)
+
+SendSysMessage(who, "What do you want to store into the vat?", 3, 0x005a);
+
+var what := Target(who);
+if (Distance(what, who) > 3)
+ SendSysMessage(who, "That's too far", 3, 38);
+ return;
+endif
+
+if (!what)
+ SendSysMessage(who, "Target Cancelled", 0x003, 38);
+ return;
+endif
+if (vat.graphic == 0x1521)
+ addcontent(who, vat, what);
+ return;
+endif
+
+case (what.graphic)
+
+0x0d1a:
+ if (what.amount < 50)
+  SendSysMessage(who, "Sorry, but you can store at least 50 grapes", 3, 38);
+  return;
+ endif
+
+ var quality;
+ var x;
+ var y;
+ var z;
+ var fullvat;
+ foreach it in ListItemsNearLocation( vat.x, vat.y, vat.z, 5 , vat.realm)
+  
+   var serialnumb := CStr(vat.serial);
+   var checkserial := GetObjProperty(it, "Vat");
+   //print (checkserial);
+   if (checkserial)
+    x := it.x;
+    y := it.y;
+    z := it.z;
+   
+    case (checkserial)
+     "rm":
+      DestroyItem(it);
+      fullvat := CreateItemAtLocation(x, y, z, 0x1523, 1, who.realm);
+      fullvat.movable := 0;
+     "mm":
+      DestroyItem(it);
+      fullvat := CreateItemAtLocation(x, y, z, 0x1521, 1, who.realm);
+      SetObjProperty(fullvat, "content", what.graphic);
+       SetObjProperty(fullvat, "amt", what.amount);
+       quality := GetObjProperty(what, "quality");
+       SetObjProperty(fullvat, "quality", quality);
+       fullvat.movable := 0;
+     "lm":
+       DestroyItem(it);
+       fullvat := CreateItemAtLocation(x, y, z, 0x1522, 1, who.realm);
+       fullvat.movable := 0;
+     "sp":
+       DestroyItem(it);
+       fullvat := CreateItemAtLocation(x, y, z, 0x1524, 1, who.realm);
+       fullvat.movable := 0;
+       SetObjProperty(fullvat, "Vat" + serialnumb, "sp");
+      "li":
+       DestroyItem(it);
+       fullvat := CreateItemAtLocation(x, y, z, 0x1520, 1, who.realm);
+       fullvat.movable := 0;
+      "ms":
+       DestroyItem(it);
+       fullvat := CreateItemAtLocation(x, y, z, 0x151e, 1, who.realm);
+       fullvat.movable := 0;
+     endcase
+   endif
+ endforeach
+endcase
+ DestroyItem(what);
+endprogram
+
+
+function addcontent(who, vat, what)
+
+if (what.graphic != 0x0d1a)
+ SendSysMessage(who, "Bad mixture", 3, 38);
+ return;
+endif
+
+var grapesquality := GetObjProperty(what, "quality");
+var vatquality := GetObjProperty(vat, "quality");
+var mixquality := CInt((grapesquality + vatquality) / 2);
+SetObjProperty(vat, "quality", mixquality);
+SetObjProperty(vat, "amt", GetObjProperty(vat, "amt") + what.amount);
+DestroyItem(what);
+endfunction

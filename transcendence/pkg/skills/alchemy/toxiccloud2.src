@@ -1,0 +1,40 @@
+use uo;
+use os;
+use util;
+use cfgfile;
+
+include "include/eventid";
+include "include/effects";
+include "drinkpotion";
+
+program toxiccloud (who, potion)
+
+    var luogo := TargetCoordinates(who);
+
+    who.hidden := 0;
+
+  
+
+  
+
+    sleep(2);
+    var poz := CreateItemAtLocation( luogo.x, luogo.y, luogo.z, 0x0e29, 1, who.realm );
+    PrintTextAbove(poz, "2");
+    sleep(1);
+    PrintTextAbove(poz, "1");
+    sleep(1);
+    effetto(poz.x, poz.y, poz.z, poz.realm, 0x36bd, 1169, 3);
+   
+    foreach creep in ListMobilesNearLocation(luogo.x, luogo.y, luogo.z, 4, who.realm)
+     effetto(creep.x, creep.y, creep.z, creep.realm,0x36bd, 1169, 3);
+ 
+     do_poison(creep, potion);
+   
+    
+ 
+     endforeach
+   
+
+  
+
+endprogram

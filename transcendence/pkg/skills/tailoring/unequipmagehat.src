@@ -1,0 +1,23 @@
+use uo;
+use cfgfile;
+include "include/attributes";
+
+var itemdesc := ReadConfigFile("itemdesc");
+
+program unequiphat(who,item)
+
+// str penalty / int add adjustment
+	EraseObjProperty(item,"equipped");
+	var inte := GetIntelligence(who);
+	var str := GetStrength(who);
+
+	var strpenalty := CInt(itemdesc[item.objtype].StrPenalty);
+	var intadd := CInt(itemdesc[item.objtype].IntAdd);
+
+	SetBaseStrength(who, str+strpenalty );
+	SetBaseIntelligence(who, inte-intadd );
+//	
+
+	return 1;
+
+endprogram

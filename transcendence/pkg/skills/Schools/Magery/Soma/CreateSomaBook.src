@@ -1,0 +1,9 @@
+use uo;
+use os;
+
+program createsomabook(book)
+
+var spells := {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+SetObjProperty(book, "spells", spells);
+
+endprogram

@@ -1,0 +1,67 @@
+use uo;
+use os;
+use util;
+use polsys;
+
+//include "include/packets";
+include "include/particles";
+include "include/animations";
+//include "include/audio";
+include "include/pgfacing";
+include "include/attributes";
+include "include/eventID";
+include "include/client3d";
+include "include/effects2D";
+include "include/client";
+
+
+
+
+
+program fogform(parms)
+
+var i;
+var caster := parms[1];
+//var what := target(caster);
+
+//xyface(caster, what.x, what.y);
+ParticleOnCharEffect(caster, 5011, 2);
+
+ PlaySoundEffect( caster, 0x212 );
+
+
+
+PlayCharAnim( caster, 266);
+
+sleep(3);
+
+detach();
+
+//caster.concealed := 1;
+GrantPrivilege(caster, "ignoredoors");
+    caster.enable("ignoredoors");
+     GrantPrivilege(caster, "freemove");
+    caster.enable("freemove");
+
+var oldgraphic := caster.graphic;
+	//DoPersistedMod(caster, "graphic", 11, caster.graphic, 60);
+	if(GetObjProperty(caster, "SessionClientType") == "3D")
+         //ChangeCharGraphic(caster, 2100);
+        else
+	 ChangeCharGraphic(caster, 0x12b);
+	endif
+for (i := 0; i <=  6; i := i + 1)
+ParticleOnCharEffect(caster, 9522, 3);
+sleep(5);
+endfor	
+
+ RevokePrivilege(caster, "ignoredoors");
+ RevokePrivilege(caster, "freemove");
+ caster.concealed := 0;
+ ChangeCharGraphic(caster, oldgraphic);
+ 
+endprogram
+
+
+
+	

@@ -1,0 +1,142 @@
+use uo;
+use os;
+
+program fillwine (who, tap)
+
+var vat;
+
+foreach itm in ListItemsAtLocation( tap.x - 2, tap.y, tap.z, tap.realm )
+ if (itm.graphic == 0x1521)
+  vat := itm;
+ endif
+endforeach 
+
+var amt := GetObjProperty(vat, "amt");
+var poundedamt := GetObjProperty(vat, "poundedamt");
+
+if (poundedamt < amt)
+ SendSysMessage(who, "Not all grapes in the vat are pounded, pound it", 3, 0x005a);
+ return;
+endif
+
+
+SendSysMessage(who, "What do you want to fill?", 3, 0x005a);
+
+var what := Target(who, TGTOPT_CHECK_LOS);
+
+if (!what)
+ SendSysMessage(who, "Target Cancelled", 0x003, 38);
+ return;
+endif
+
+var quality := GetObjProperty(vat, "quality");
+var productquality;
+var maxlitres;
+var litres;
+
+if ((what.graphic >= 0x1ad6) && (what.graphic <= 0x1ad7))
+
+  maxlitres := GetObjProperty(what, "maxlitres");
+  if (!maxlitres)
+    maxlitres := 10;
+  endif
+  litres := GetObjProperty(what, "litres");
+  if (!litres)
+   litres := 0;
+   productquality := quality;
+   SetObjProperty(what, "content", "must");
+  else
+   var content := GetObjProperty(what, "content");
+   if (content != "must")
+     SendSysMessage(who, "You cannot mix must and " + content, 0x003, 38);
+     return;
+   endif
+   productquality := GetObjProperty(what, "quality");
+  endif
+  var quantita := maxlitres - litres;
+  if (quantita <= amt)
+   PlaySoundEffect(vat, 0x0021);
+   sleep(3);
+  
+   SetObjProperty(what, "litres", litres + quantita);
+   SetObjProperty(vat, "amt", amt - quantita);
+   SetObjProperty(vat, "poundedamt", poundedamt - quantita);
+  
+   if (GetObjProperty(vat, "amt") <= 0)
+    SendSysMessage(who, "no more must", 3, 38);
+    restorevat(vat, tap);
+   
+   endif
+  elseif (quantita > amt)
+   PlaySoundEffect(vat, 0x0021);
+   sleep(3);
+   SetObjProperty(what, "litres", litres + amt);
+   SetObjProperty(vat, "amt", 0);
+   SetObjProperty(vat, "poundedamt", poundedamt - amt);
+   restorevat(vat, tap);  
+  endif
+
+ SetObjProperty(what, "quality", CInt((quality + productquality) / 2));
+ if (GetObjProperty(what, "litres") >= maxlitres)
+  SendSysMessage(who, "That keg is full", 0x003, 38);
+   what.weight := what.weight + 30;
+   var parameters := {who, what};
+  
+   start_script("fermentation", parameters);
+   return;
+ endif
+endif
+endprogram
+
+
+
+
+
+
+
+function restorevat(vat, tap)
+
+ var x;
+ var y;
+ var z;
+ var fullvat;
+ foreach it in ListItemsNearLocation( vat.x, vat.y, vat.z, 5 , vat.realm)
+   //local checkserial := getobjproperty (it, "Vat" + cstr (vat.serial));
+   //if (checkserial)
+    x := it.x;
+    y := it.y;
+    z := it.z;
+    var serialnumb := CStr(tap.serial);
+    case (it.graphic)
+     0x1523:
+      DestroyItem(it);
+      fullvat := CreateItemAtLocation(x, y, z, 0x14dd, 1, vat.realm);
+      SetObjProperty(fullvat, "Vat", "rm");
+     0x1521:
+      DestroyItem(it);
+      fullvat := CreateItemAtLocation(x, y, z, 0x14d9, 1, vat.realm);
+      SetObjProperty(fullvat, "Vat", "mm");
+     0x1522:
+       DestroyItem(it);
+       fullvat := CreateItemAtLocation(x, y, z, 0x14dc, 1, vat.realm);
+       SetObjProperty(fullvat, "Vat", "lm");
+     0x1524:
+       DestroyItem(it);
+       fullvat := CreateItemAtLocation(x, y, z, 0x14da, 1, vat.realm);
+       SetObjProperty(fullvat, "Vat", "sp");
+      0x1520:
+       DestroyItem(it);
+       fullvat := CreateItemAtLocation(x, y, z, 0x14d8, 1, vat.realm);
+       SetObjProperty(fullvat, "Vat", "li");
+      0x151e:
+       DestroyItem(it);
+       fullvat := CreateItemAtLocation(x, y, z, 0x14db, 1, vat.realm);
+       SetObjProperty(fullvat, "Vat", "ms");
+     endcase
+   //endif
+ endforeach
+//endcase 
+endfunction
+
+
+

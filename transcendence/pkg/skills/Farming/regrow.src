@@ -1,0 +1,12 @@
+use os;
+use uo;
+
+program regrow(parms)
+var plant := parms[1];
+var wait := CInt(parms[2]);
+//sleep(wait);
+sleep(30);
+var amt := GetObjProperty(plant, "#amt");
+amt := amt + 1;
+SetObjProperty(plant, "#amt", amt);
+endprogram

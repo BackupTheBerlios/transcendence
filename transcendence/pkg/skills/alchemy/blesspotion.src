@@ -1,0 +1,50 @@
+use os;
+use uo;
+use util;
+use cfgfile;
+
+include "drinkpotion";
+include "include/attributes";
+include "include/statmod";
+
+
+program protectionpotion (character, potion)
+
+if (!checkifcandrink(character))
+        return;
+endif
+
+    var potion_strength := get_potion_strength(potion);
+
+
+    if (is_poison(potion))
+        do_poison(character, potion);
+    else
+           empty_bottle(character, potion);
+           PlaySoundEffect(character, 0x01ee);
+	PlayObjectCenteredEffect( character, 0x373a, 10,10);
+
+
+
+	if (CanMod(character, "str"))
+		DoTempMod(character, "str", 20, 120);
+	      var healam := GetMaxHp(character) - GetHp(character);
+            HealDamage(character, healam);
+      endif
+
+	if (CanMod(character, "dex"))
+		DoTempMod(character, "dex", 20, 120);
+	      SetStamina(character, character.maxstamina);
+      endif
+
+	if (CanMod(character, "int"))
+		DoTempMod(character, "int", 20, 120);
+	      SetMana(character, character.maxmana);
+      endif
+
+endif
+
+
+
+
+endprogram

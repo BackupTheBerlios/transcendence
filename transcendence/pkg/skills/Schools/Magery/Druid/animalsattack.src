@@ -1,0 +1,55 @@
+use uo;
+use os;
+use util;
+use polsys;
+
+//include "include/packets";
+include "include/particles";
+include "include/animations";
+include "include/audio";
+include "include/pgfacing";
+include "include/attributes";
+include "include/eventID";
+include ":Localization:localization";
+include "include/npcs";
+//include "necroUtils";
+
+
+program animalsattack(parms)
+
+var i;
+var who := parms[1];
+var what := target(who);
+
+xyface(who, what.x, what.y);
+
+ParticleOnCharEffect(who, 5011, 2);
+
+ PlaySoundEffect( who, 0x212 );
+
+
+
+PlayCharAnim( who, 266);
+
+sleep(3);
+foreach critt in ListMobilesNearLocation( who.x, who.y, who.z, 10, who.realm )  
+print(critt.npctemplate);
+if((critt.npctemplate) && (IsAnimal(critt.npctemplate)) || (critt.npctemplate == "ent" ) || (critt.npctemplate == "carnivoreplant" )) 
+print("ok!!!!!!!!");
+  var ev := array;
+  ev.+ type;
+  ev.+ source;
+  ev.type := EVID_PEACEMADE;
+  ev.source := what;
+  SendEvent(critt, ev);
+  ev.source := critt;
+  SendEvent(what, ev);
+  ev.type := EVID_ENGAGED;
+  ev.source := what;
+  SendEvent(critt, ev);
+  ev.source := critt;
+  SendEvent(what, ev);
+endif  
+endforeach
+
+endprogram  

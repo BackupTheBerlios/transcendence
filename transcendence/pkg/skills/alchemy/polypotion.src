@@ -1,0 +1,52 @@
+use os;
+use uo;
+use util;
+use cfgfile;
+
+include "drinkpotion";
+include "include/attributes";
+include "include/statmod";
+
+
+program polypotion (character, potion)
+
+if (!checkifcandrink(character))
+        return;
+endif
+
+    var potion_strength := get_potion_strength(potion);
+
+
+    if (is_poison(potion))
+        do_poison(character, potion);
+    else
+          empty_bottle(character, potion);
+           var origform := character.graphic;
+           var origstr := GetStrength(character);
+          
+           if (!GetObjProperty(character, "origform"))
+             SetObjProperty(character, "origform", origform);
+	   endif
+	   if (!GetObjProperty(character, "origstr"))
+	     SetObjProperty(character, "origstr", origstr);
+	   endif
+	  
+	   character.graphic := 9;
+	   SetBaseStrength(character,150);
+	   SetHp(character, character.maxhp);
+	   Detach();
+	   sleep(120);
+	   character.graphic := origform;
+	   SetBaseStrength(character,origstr);
+	   EraseObjProperty(character, "origform");
+	   EraseObjProperty(character, "origstr");
+
+
+
+
+    endif
+
+
+
+
+endprogram

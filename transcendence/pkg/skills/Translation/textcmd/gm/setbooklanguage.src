@@ -1,0 +1,63 @@
+use uo;
+use os;
+
+program setlanguage (who)
+
+var lingua;
+
+var layout := {
+"page 0",
+"nodispose",
+"gumppic 25 0 6794",
+
+
+"text 240 55 995 0",
+//top bar
+"text 190 80 995 1",
+"button 370 78 6786 6787 1 0 17",//Britannian
+"text 190 110 995 2",
+"button 370 108 6786 6787 1 0 18",//Tribal
+"text 190 140 995 3",
+"button 370 138 6786 6787 1 0 19",//Northern
+"text 190 170 995 4",
+"button 370 168 6786 6787 1 0 20",//Desertic
+"text 190 200 995 5",
+"button 370 198 6786 6787 1 0 21",//Elfic
+"text 190 230 995 6",
+"button 370 228 6786 6787 1 0 22",//Tritionian
+
+"page 1"
+};
+
+var data := array ("Language Selection",
+                     "Britannian",
+                     "Tribal",
+                     "Northern",
+                     "Desertic",
+                     "Elfic",
+                     "Tritonian"
+                     );
+var select := SendDialogGump(who, layout, data);
+case (select[0])
+   17:
+      lingua := "britannian";
+   18:
+      lingua := "tribal"; 
+   19:
+      lingua := "northern";
+   20:
+      lingua := "desertic";
+   21:
+      lingua := "elf";
+   22:
+      lingua := "triton";
+endcase 
+var book := Target(who);
+if (!book)
+ SendSysMessage(who, "Cancelled");
+ return;
+endif
+SendSysMessage(who, "Select the book to set the language", 3, 0x005a);
+SetObjProperty(book, "language", lingua);   
+
+endprogram

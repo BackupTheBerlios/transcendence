@@ -1,0 +1,59 @@
+use uo;
+use os;
+use util;
+use polsys;
+
+//include "include/packets";
+include "include/particles";
+include "include/animations";
+include "include/audio";
+include "include/pgfacing";
+include "include/attributes";
+include "include/eventID";
+include "include/client3d";
+include "include/statMod";
+include ":Localization:localization";
+//include "necroUtils";
+
+
+program pantherform(parms)
+
+var i;
+var who := parms[1];
+//var what := target(who);
+
+//xyface(who, what.x, what.y);
+ParticleOnCharEffect(who, 5011, 2);
+
+ PlaySoundEffect( who, 0x212 );
+
+
+
+PlayCharAnim( who, 266);
+
+sleep(3);
+
+var exgraph := who.graphic;
+var excolor := who.color;
+var exname := who.name;
+
+ChangeCharGraphic(who, 0xd6);
+who.color := 0x4631;
+//SetObjProperty(who, "NecroVampire", 1);
+SetName( who, "a panther" );
+Detach();
+//DoTempMod(who, "str", 120, 30);
+var dexmod := 160 - GetDexterity(who);
+DoTempMod(who, "dex", dexmod, 30);
+
+
+sleep(30);
+
+ChangeCharGraphic(who, exgraph);
+    who.color := excolor;
+    SetName( who, exname );
+//EraseObjProperty(who, "NecroVampire");
+endprogram    
+
+
+

@@ -1,0 +1,9 @@
+- effetti 2d
+- diverse animazioni per spell
+- TempMod regolati per ogni trasformazione
+- durata degli spells
+- toggle?
+- reagenti
+- spells modifiers
+- avanzamento livello
+-repsys

@@ -1,0 +1,75 @@
+use uo;
+use os;
+use util;
+use polsys;
+
+//include "include/packets";
+include "include/particles";
+include "include/animations";
+include "include/audio";
+include "include/pgfacing";
+include "include/attributes";
+include "include/eventID";
+include ":Localization:localization";
+include "include/npcs";
+//include "necroUtils";
+
+
+program freeze(parms)
+
+var i;
+var who := parms[1];
+var what := target(who);
+
+xyface(who, what.x, what.y);
+
+ParticleOnCharEffect(who, 5011, 2);
+
+ PlaySoundEffect( who, 0x212 );
+
+
+
+PlayCharAnim( who, 266);
+
+sleep(3);
+
+if(!what)
+SendsysMessage(who, "Cancelled");
+return;
+endif
+
+
+/*
+var prevcolor := what.color;
+var eqpcolors := {};
+
+what.color := 2913;
+
+foreach eqp in ListEquippedItems(what) 
+eqpcolors.append(eqp.color);
+eqp.color := 2913;
+endforeach
+*/
+//what.frozen := 1;
+
+//sleep(30);
+
+start_script(":Druid:burning", {who, what, 30 });
+/*what.color := prevcolor;
+i := 1;
+
+foreach eqp in ListEquippedItems(what) 
+
+eqp.color := eqpcolors[i];
+i := i + 1;
+
+endforeach
+what.frozen := 0;*/
+for(i := 1; i <= 6; i :=i + 1)
+ParticleOnCharEffect(what, 9515, 2 );
+PlaySoundEffect( what, 0x1de );
+sleep(5);
+endfor
+
+endprogram
+

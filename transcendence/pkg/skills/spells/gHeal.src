@@ -1,0 +1,37 @@
+use uo;
+use os;
+use util;
+use cfgfile;
+use polsys;
+
+include "include/spellRestrictions";
+include "include/attributes";
+include "include/particles";
+include "include/effects2D";
+include "checkeffects";
+
+var spellscfg := ReadConfigFile(":spells:spells"); 
+
+program cast_heal( parms )
+  var circle := 4;
+  var delivery := "direct";
+  var noto := "helpful";
+  var result := maincast(parms, delivery, circle, noto, 29);
+  if(result == 0)
+    print("SPELLERROR");
+    return;
+  endif
+  var caster := result[1];
+  var cast_on := result[2];
+  var healed := RandomDiceRoll("1d3");
+  healed := CInt(GetEffectiveSkill(caster, SKILLID_MAGERY)/2) + healed;
+  SendSysMessage(caster, "You healed " + healed + " damage.");
+  if(cast_on.isA(POLCLASS_NPC))
+    healed := healed * 2;
+  endif
+  HealDamage(cast_on, healed);
+  CheckForSpell3DEffects(spellscfg, caster, cast_on, 29);
+  Play2DObjectCenteredEffectHuefx( cast_on, FX_SPARK_EFFECT, 7, 0x10);
+  //PlayObjectCenteredEffect( cast_on, FX_SPARK_EFFECT, 7, 0x10 );
+  PlaySoundEffect( cast_on, SFX_SPELL_GREATER_HEAL );
+endprogram

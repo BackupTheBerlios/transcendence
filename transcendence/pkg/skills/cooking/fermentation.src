@@ -1,0 +1,36 @@
+use uo;
+use os;
+
+include "include/quality";
+include "include/attributes";
+
+program ferment (parms)
+
+var who := parms[1];
+var keg := parms[2];
+
+var myskill := GetEffectiveSkill(who, 13);
+var content := GetObjProperty(keg, "content");
+var quality := GetObjProperty(keg, "quality");
+var litres := CInt(GetObjProperty(keg, "litres"));
+var i;
+var product;
+
+case (content)
+"must":
+      product := "wine";
+endcase
+//local i;
+for (i := 1; i <= 30; i := i + 1)
+sleep(3600);
+endfor
+SetObjProperty(keg, "content", product);
+
+if (myskill > quality)
+ quality := quality;
+else
+ quality := CDbl(myskill / CDbl(quality));
+ quality := CInt(quality * 100);
+endif
+SetObjProperty(keg, "quality", quality);
+endprogram

@@ -1,0 +1,32 @@
+use uo;
+include "include/attributes";
+
+program destroyweapon(item)
+
+//skill adjustment
+	var whoserial := GetObjProperty(item,"w_equipped");
+	if( whoserial != error );
+		var who := SystemFindObjectBySerial( whoserial );
+	
+		var skill_adj := GetObjProperty(item,"skill_adj");
+		if(!skill_adj) return; endif
+
+		var skillid := item.skillid;
+
+		skill_adj := CInt(skill_adj) * 10;
+
+		//var currskill := GetRawSkill(who,skillid);
+		var currskill := GetAttributeBaseValue(who, skillid);
+		currskill := RawSkillToBaseSkill(currskill);
+
+		var newskill := currskill - skill_adj;
+		newskill := BaseSkillToRawSkill( newskill );
+	
+		//SetRawSkill(who,skillid,newskill);
+		SetAttributeBaseValue( who, skillid, RawSkillToBaseSkill(newskill) );
+
+	endif
+//
+	return 1;
+
+endprogram

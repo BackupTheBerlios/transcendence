@@ -1,0 +1,51 @@
+use uo;
+use os;
+use util;
+use polsys;
+
+//include "include/packets";
+include "include/particles";
+include "include/animations";
+include "include/audio";
+include "include/pgfacing";
+include "include/attributes";
+include "include/eventID";
+include ":Localization:localization";
+include "include/client3d";
+include "include/statMod";
+
+
+program giantform(parms)
+
+//var i;
+var who := parms[1];
+//var what := target(who);
+
+//xyface(who, what.x, what.y);
+
+ParticleOnCharEffect(who, 5011, 2);
+
+ PlaySoundEffect( who, 0x212 );
+
+
+
+PlayCharAnim( who, 266);
+
+sleep(3);
+
+var exgraph := who.graphic;
+if(who.graphic == 400)
+ ChangeCharGraphic(who, 744);
+elseif(who.graphic == 401)
+ ChangeCharGraphic(who, 745);
+endif
+
+Detach();
+DoTempMod(who, "str", 120, 30);
+
+sleep(30);
+
+
+ChangeCharGraphic(who, exgraph);
+
+endprogram

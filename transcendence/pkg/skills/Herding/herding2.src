@@ -1,0 +1,216 @@
+// Herding Script Made by Artix
+
+use uo;
+use os;
+use npc;
+use util;
+use cfgfile;
+
+include "herding";
+include "herdingmapcheck";
+include "include/client";
+include "versi";
+include "include/skilladv";
+
+program use_crook (who, crook)
+
+
+var eqp :=  GetEquipmentByLayer(who, LAYER_HAND2);
+if (eqp.graphic != 0x0e81)
+SendSysMessage(who, "You must equip that to use it!", FONT_NORMAL, 38);
+return;
+endif
+
+SendSysMessage(who, "Select an animal to herd", FONT_NORMAL, 0x005a);
+var critt := Target(who, TGTOPT_CHECK_LOS);
+var cfg := ReadConfigFile("::npcdesc");
+var elm := FindConfigElem(cfg, critt.npctemplate);
+var hrd := GetConfigInt(elm, "herding");
+var herdprob := GetConfigInt(elm, "tameskill");
+var is_herb := GetConfigString(elm, "food");
+
+// CONTROLLI
+
+if (!critt)
+SendSysMessage(who, "Target Cancelled!", FONT_NORMAL, 38);
+return;
+endif
+
+if (critt.script == "herdtamed")
+   SendSysMessage(who, "The animal is already moving!", FONT_NORMAL, 38);
+   return;
+endif
+
+if (!critt.isA(POLCLASS_NPC))
+SendSysMessage(who, "That's not an animal!", FONT_NORMAL, 38);
+return;
+endif
+
+//if ((hrd != 1) or (!hrd))
+//SendSysMessage (who, "You have no chance to herd that kind of creature!", FONT_NORMAL, 0X005A);
+//return;
+//endif
+
+if ((critt.graphic == 0x190) || (critt.graphic == 0x191))
+SendSysMessage(who, "You can't do it with humans!", FONT_NORMAL, 38);
+return;
+
+endif
+
+// X ANIMALI TAMATI
+var prevvalue := getoldskill(who, SKILLID_HERDING);
+
+
+if (critt.script == "tamed")
+ if (critt.master != who)
+  SendSysMessage(who, "You can herd only your own animals!", FONT_NORMAL, 38);
+  return;
+ 
+ endif
+
+ if ((critt.graphic == 0xd8) || (critt.graphic == 0xe7) || (critt.graphic == 0xcf))
+   SendSysMessage(who, "Where do you want the animal to go and eat?", FONT_NORMAL, 0x005a);
+   var where := TargetCoordinates(who);
+     if (!where)
+       SendSysMessage(who, "Target Cancelled!", FONT_NORMAL, 38);
+       return;
+     endif
+   var origscript := critt.script;
+   SetObjProperty(critt, "prevscript", critt.script);
+   SetObjProperty(critt, "locx", where.x);
+   SetObjProperty(critt, "locy", where.y);
+   PerformAction(who, 0x0011);
+   critt.script := "herdtamed";
+   RestartScript(critt);
+
+   while (critt.script == "herdtamed")
+     sleep(1);
+
+   endwhile
+   if (critt.script == origscript)
+     if (!is_grass(critt))
+       SendSysMessage(who, "That Creature won't eat anything, because there's no grass!", FONT_NORMAL, 38);
+       return;
+     else
+       EatGrass(critt, who);
+     endif
+   endif
+ else
+   if (is_herb == "veggie")
+    SendSysMessage(who, "Where do you want the animal to go and eat?", FONT_NORMAL, 0x005a);
+    var where := TargetCoordinates(who);
+     if (!where)
+       SendSysMessage(who, "Target Cancelled!", FONT_NORMAL, 38);
+       return;
+     endif
+   var origscript := critt.script;
+   SetObjProperty(critt, "prevscript", critt.script);
+   SetObjProperty(critt, "locx", where.x);
+   SetObjProperty(critt, "locy", where.y);
+   PerformAction(who, 0x0011);
+   critt.script := "herdtamed";
+   RestartScript(critt);
+
+     while (critt.script == "herdtamed")
+       sleep(1);
+
+     endwhile
+     if (critt.script == origscript)
+       if (!is_grass(critt))
+         SendSysMessage(who, "That Creature won't eat anything, because there's no grass!", FONT_NORMAL, 38);
+         return;
+       else
+         EatGrass(critt, who);
+       endif
+     endif
+
+   endif
+
+   if (is_herb != "veggie")
+     SendSysMessage(who, "Where do you want the animal to go?", FONT_NORMAL, 0x005a);
+    var where := TargetCoordinates(who);
+     if (!where)
+       SendSysMessage(who, "Target Cancelled!", FONT_NORMAL, 38);
+       return;
+     endif
+   var origscript := critt.script;
+   SetObjProperty(critt, "prevscript", critt.script);
+   SetObjProperty(critt, "locx", where.x);
+   SetObjProperty(critt, "locy", where.y);
+   PerformAction(who, 0x0011);
+   critt.script := "herdtamed";
+   RestartScript(critt);
+
+     while (critt.script == "herdtamed")
+       sleep(1);
+
+     endwhile
+  
+
+  endif
+ endif
+
+endif
+
+if (critt.script != "tamed")
+var probability := CheckSkill(who, SKILLID_HERDING, herdprob, 10);
+if (probability)
+var advvalue := getincreasevalue(who, SKILLID_HERDING, prevvalue);
+if (advvalue > 0.0)                                                                                                                                                                             
+         SendSysMessage( who, "Herding Skill changed and increased by " + CStr(advvalue) + ". Now it's " + CStr(prevvalue + advvalue), 0x003, 0x0028);                                             
+         endif
+SendSysMessage(who, "Where do you want the animal to go?", FONT_NORMAL, 0x005a);
+    var where := TargetCoordinates(who);
+     if (!where)
+       SendSysMessage(who, "Target Cancelled!", FONT_NORMAL, 38);
+       return;
+     endif
+   var origscript := critt.script;
+   SetObjProperty(critt, "prevscript", critt.script);
+   SetObjProperty(critt, "locx", where.x);
+   SetObjProperty(critt, "locy", where.y);
+   PerformAction(who, 0x0011);
+   critt.script := "herdtamed";
+   RestartScript(critt);
+
+     while (critt.script == "herdtamed")
+       sleep(1);
+
+     endwhile
+else
+  SendSysMessage(who, "You Failed!", FONT_NORMAL, 38);
+  return;
+endif
+endif   
+
+endprogram
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

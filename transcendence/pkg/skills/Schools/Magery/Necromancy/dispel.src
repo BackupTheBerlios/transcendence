@@ -1,0 +1,25 @@
+use uo;
+use os;
+use polsys;
+
+include "include/client";
+include "include/attributes";
+include "include/particles";
+include "include/effects2D";
+
+program dispelme(parms)
+
+var thecritter := parms[1];
+var duration := parms[2];
+sleep(duration);
+ParticleStationaryEffect(thecritter.x, thecritter.y, thecritter.z, 9521, thecritter.realm);
+PlaySoundEffect( thecritter, SFX_SPELL_MANA_VAMPIRE );
+  
+  
+  
+  Play2DStationaryEffectHuefx( thecritter.x, thecritter.y, thecritter.z, FX_SMOKE, 0xa, thecritter.realm);
+  //PlayStationaryEffect( thecritter.x, thecritter.y, thecritter.z, FX_SMOKE, 0xa, 0xa );
+  MoveCharacterToLocation(thecritter,0,0,0,MOVECHAR_FORCELOCATION);
+  Damage(thecritter, GetHp(thecritter) + 3);
+
+endprogram

@@ -1,0 +1,147 @@
+use uo;
+use os;
+use cfgfile;
+
+program opencookbook (who, book)
+
+
+var recipelist := GetObjProperty(book, "recipelist");
+var recipeobjlist := GetObjProperty(book, "recipeobjlist");
+if (!recipelist)
+ recipelist := {"The Recipe Book", "", "", "", "", "", "", "", "", "", "", "", ""};
+ SetObjProperty(book, "recipelist", recipelist);
+endif
+if (!recipeobjlist)
+ recipeobjlist := { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+ SetObjProperty(book, "recipeobjlist", recipeobjlist);
+endif
+var buttons := {"", "", "", "", "", "", "", "", "", "", "", ""};
+var buttonslist := {"button 32 60 4020 4022 1 0 101",
+                      "button 32 85 4020 4022 1 0 102",
+                      "button 32 110 4020 4022 1 0 103",
+                      "button 32 135 4020 4022 1 0 104",
+                      "button 32 160 4020 4022 1 0 105",
+                      "button 32 185 4020 4022 1 0 106",
+                      "button 230 60 4020 4022 1 0 201",
+                      "button 230 85 4020 4022 1 0 202",
+                      "button 230 110 4020 4022 1 0 203",
+                      "button 230 135 4020 4022 1 0 204",
+                      "button 230 160 4020 4022 1 0 205",
+                      "button 230 185 4020 4022 1 0 206"};
+                     
+var i;
+for (i := 2; i <= len(recipelist); i := i + 1)
+ if (recipelist[i] != "")
+   buttons[i - 1] := buttonslist[i - 1];
+ endif
+endfor
+
+var layout := {
+                 "nodispose",
+                 "page 0",
+                 "gumppic 0 0 500",
+                 "text 50 20 300 0",   
+                 "text 70 60 0 1",
+                 "text 70 85 0 2",
+                 "text 70 110 0 3",
+                 "text 70 135 0 4",
+                 "text 70 160 0 5",
+                 "text 70 185 0 6",
+                 "text 268 60 0 7",
+                 "text 268 85 0 8",
+                 "text 268 110 0 9",
+                 "text 268 135 0 10",
+                 "text 268 160 0 11",
+                 "text 268 185 0 12",
+                 buttons[1],
+                 buttons[2],
+                 buttons[3],
+                 buttons[4],
+                 buttons[5],
+                 buttons[6],
+                 buttons[7],
+                 buttons[8],
+                 buttons[9],
+                 buttons[10],
+                 buttons[11],
+                 buttons[12]
+                 };
+                
+var data := recipelist;
+
+var parms := {};
+var select := SendDialogGump(who, layout, data);
+case (select[0])
+101:
+    parms[1] := who;
+    parms[2] := recipeobjlist[1];
+   
+    start_script("cookrecipe", parms);
+102:
+    parms[1] := who;
+    parms[2] := recipeobjlist[2];
+   
+    start_script("cookrecipe", parms);
+103:
+    parms[1] := who;
+    parms[2] := recipeobjlist[3];
+   
+    start_script("cookrecipe", parms);
+104:
+    parms[1] := who;
+    parms[2] := recipeobjlist[4];
+   
+    start_script("cookrecipe", parms);
+105:
+    parms[1] := who;
+    parms[2] := recipeobjlist[5];
+   
+    start_script("cookrecipe", parms);
+106:
+    parms[1] := who;
+    parms[2] := recipeobjlist[6];
+   
+    start_script("cookrecipe", parms);
+201:
+    parms[1] := who;
+    parms[2] := recipeobjlist[7];
+   
+    start_script("cookrecipe", parms);
+202:
+    parms[1] := who;
+    parms[2] := recipeobjlist[8];
+   
+    start_script("cookrecipe", parms);
+203:
+    parms[1] := who;
+    parms[2] := recipeobjlist[9];
+   
+    start_script("cookrecipe", parms);
+204:
+    parms[1] := who;
+    parms[2] := recipeobjlist[10];
+   
+    start_script("cookrecipe", parms);
+205:
+    parms[1] := who;
+    parms[2] := recipeobjlist[11];
+   
+    start_script("cookrecipe", parms);
+
+206:
+    parms[1] := who;
+    parms[2] := recipeobjlist[12];
+   
+    start_script("cookrecipe", parms);
+
+endcase
+   
+endprogram
+
+                                 
+                
+                             
+                     
+                     
+                     
+                     

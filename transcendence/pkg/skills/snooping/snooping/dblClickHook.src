@@ -1,0 +1,42 @@
+//////////////////////////////////////////////////////////////////
+// double click handling for snooping other mobile's backpacks. //
+// this is setup to work with the pre-existing functionality    //
+// added to the pol94 distro. If you use this with scripts that //
+// do not include the distro's ownership checking, bad things   //
+// WILL happen. this is a PROOF OF CONCEPT, and should not be   //
+// used on a production shard without extensive testing.        //
+//                                                              //
+// your uopacket.cfg should have the following entry:           //
+// Packet 0x06                                                  //
+// {                                                            //
+//   Length 5                                                   //
+//   ReceiveFunction dblClickHook:ProcessDblClick               //
+// }                                                            //
+//                                                              //
+//////////////////////////////////////////////////////////////////
+
+use uo;
+use os;
+
+exported function ProcessDblClick(who, byref packet)
+  var serial := packet.GetInt32(1);
+  var item := SystemFindObjectBySerial(serial);
+  if(!item)
+    return 0;
+  endif
+  var owner := GetObjProperty(item, "Owner");
+  if((owner) and (owner != who.serial)) // they're peeking a pack that belongs to someone else
+    var parms := struct;
+    parms.+who  := who;
+    parms.+item := item;
+    start_script(":snooping:snooping", parms);
+    return 1;
+  else
+    return 0;
+  endif
+endfunction
+
+program dblClickHook()
+  Print( "SystemHook: Doubleclick Processor 0.1 Enabled.");
+  return 1;
+endprogram

@@ -1,0 +1,73 @@
+use uo;
+use os;
+use util;
+use polsys;
+
+//include "include/packets";
+include "include/particles";
+include "include/animations";
+include "include/audio";
+include "include/pgfacing";
+include "include/attributes";
+include "necroUtils";
+
+
+program skeletonarmy(parms)
+
+var i, ev;
+var who := parms[1];
+var realm := who.realm;
+var where := targetcoordinates(who);
+
+xyface(who, where.x, where.y);
+ParticleOnCharEffect(who, 5028, 2);
+if(who.graphic == 400)
+ PlaySoundEffect( who, 0x47E );
+elseif (who.graphic == 401)
+PlaySoundEffect( who, 0x4B5 );
+endif
+	
+
+PlayCharAnim( who, 266);
+
+sleep(3);
+
+if(!where)
+SendsysMessage(who, "Cancelled");
+return;
+endif
+
+if(!where.objtype)
+SendsysMessage(who, "You must select a tomb!");
+return;
+endif
+
+if((where.objtype < 0xed7) && (where.objtype > 0xedc))
+SendsysMessage(who, "That's not a tomb!");
+return;
+endif
+
+var npctemplate := GetRandomUndead();
+sendsysmessage(who, "NPC: " + npctemplate);
+
+var critt := ExitFromTomb(who, where, npctemplate, realm);
+critt.script := "tamed";
+
+ev := struct;
+
+ev.type := 0x0001;
+ev.source := who;
+ev.text := "all come";
+
+SetObjProperty(critt, "master", who.serial);
+restartscript(critt);
+SetObjProperty(critt, "NecroSummoned", 1);
+SendEvent(critt, ev);
+detach();
+//start_script("short_life", critt);
+sleep(30);
+ApplyRawDamage( critt, GetHp(critt) + 3 );
+
+
+
+endprogram

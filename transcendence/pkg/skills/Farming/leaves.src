@@ -1,0 +1,128 @@
+// nature script made by Artix
+use uo;
+use os;
+use util;
+
+program leaveschanges (parms)
+
+var who := parms[1];
+var tree := parms[2];
+var amt;
+var leaves;
+var wstuff;
+var season;
+var leavestype;
+var harvested;
+var a := 0;
+Detach();
+
+while (1)
+ wstuff := GetGlobalProperty("Weather");
+ season := wstuff[8];
+ leavestype := CheckTreeType(tree);
+ if (harvested)
+  case (tree.graphic)
+   0x0d94:
+   0x0d92:
+                      
+   0x0da4:
+   0x0da8:
+           if (season == 3)
+             a := -3;
+            endif
+   0x0d9c:
+   0x0da0:
+           if (season == 0)
+             a := 3;
+            endif
+  endcase
+ else
+   a := 0;
+ endif	
+ case (season)
+
+   0: leaves := CreateItemAtLocation(tree.x, tree.y, tree.z, leavestype[1 + a], 1, tree.realm); createfallenleaves(tree, season);
+   1: leaves := CreateItemAtLocation(tree.x, tree.y, tree.z, leavestype[2 + a], 1, tree.realm); createfallenleaves(tree, season);
+   2: leaves := CreateItemAtLocation(tree.x, tree.y, tree.z, leavestype[3 + a], 1, tree.realm); createfallenleaves(tree, season);
+   3: leaves := CreateItemAtLocation(tree.x, tree.y, tree.z, leavestype[4 + a], 1, tree.realm); createfallenleaves(tree, season);
+  
+ endcase
+ var quality :=GetObjProperty(tree, "quality");
+
+ SetObjProperty(leaves, "quality", quality);
+ SetObjProperty(leaves, "#amt", amt);
+ if (harvested)
+  SetObjProperty(leaves, "harvested", 1);
+ 
+ endif
+ sleep(20);
+ amt := GetObjProperty(leaves, "#amt");
+ if (!amt)
+  amt := 0;
+ endif
+ harvested := GetObjProperty(leaves, "harvested");
+ DestroyItem(leaves);
+
+endwhile
+endprogram
+
+function CheckTreeType(tree)
+
+var lvstype := {};
+var snow;
+var rnd := RandomInt(100);
+if (rnd < 50)
+snow := 0x3dcb;
+else
+snow := 0x3dcf;
+endif
+
+case (tree.graphic)
+ 
+  0x0cda: lvstype := {0x0cdb, 0x0cdc, 0x0cda, 0x0cdb}; //oak1
+  0x0cdd: lvstype := {0x0cde, 0x0cdf, 0x0cdd, 0x0cde}; //oak2
+  0x0d94: lvstype := {0x0d95, 0x0d97, 0x0d94, 0x0d96}; //apple1
+  0x0d92: lvstype := {0x0d99, 0x0d9b, 0x0d92, 0x0d9a}; //apple2
+  0x0da4: lvstype := {0x0da5, 0x0da7, 0x0da4, 0x0da6}; //pear1
+  0x0da8: lvstype := {0x0da9, 0x0dab, 0xda8, 0x0daa}; //pear2
+  0x0d9c: lvstype := {0x0d9e, 0xd9f, 0xd9c, 0x0d9d}; //peach1
+  0x0da0: lvstype := {0x0da2, 0xda3, 0xda0, 0x0da1}; //peach2
+  0x0ce0: lvstype := {0x0ce1, 0x0ce2, 0x0ce0, 0x0ce1}; //walnut1
+  0x0ce3: lvstype := {0x0ce4, 0x0ce5, 0x0ce3, 0x0ce4}; //walnut2
+  0x0ce6: lvstype := {0x0ce7, 0x0ce8, 0x0ce6, 0x0ce7}; //willow
+  0x0cd3: lvstype := {0x0cd4, 0x0cd5, 0x0cd3, 0x0cd4}; //tree1
+  0x0cd0: lvstype := {0x0cd1, 0x0cd2, 0x0cd0, 0x0cd1}; //tree2
+  0x0ccd: lvstype := {0x0cce, 0x0ccf, 0x0ccd, 0x0cce}; //tree3
+  0x3dca: lvstype := {0x3dca, 0x3dca, snow, 0x3dca}; //SnowCedar
+endcase
+
+return lvstype;
+
+endfunction
+  
+
+function createfallenleaves(tree, season);
+
+var space := ListItemsNearLocation( tree.x, tree.y, tree.z, 5, tree.realm );
+foreach it in space
+if (it.graphic == 0x1b20)
+DestroyItem(it);
+endif
+endforeach
+
+var rndcolor  := RandomInt(100);
+var leavescol;
+if (rndcolor < 50)
+leavescol := 40;
+else
+leavescol := 45;
+endif
+
+if ((season == 1) || (season ==2))
+var fallenleaves := CreateItemAtLocation(tree.x + 1, tree.y + 1, tree.z, 0x1b20, 1, tree.realm); fallenleaves.color := leavescol;
+var fallenleavesii := CreateItemAtLocation(tree.x + 1, tree.y - 1, tree.z, 0x1b20, 1, tree.realm); fallenleavesii.color := leavescol;
+var fallenleavesiii := CreateItemAtLocation(tree.x - 1, tree.y - 1, tree.z, 0x1b20, 1, tree.realm); fallenleavesiii.color := leavescol;
+var fallenleavesiv := CreateItemAtLocation(tree.x - 1, tree.y + 1, tree.z, 0x1b20, 1, tree.realm); fallenleavesiv.color := leavescol;
+endif
+
+endfunction

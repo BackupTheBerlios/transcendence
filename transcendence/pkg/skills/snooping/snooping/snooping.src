@@ -1,0 +1,55 @@
+use uo;
+use os;
+use polsys;
+
+include "include/attributes";
+include "include/client";
+
+program snooping(parms)
+  var who := parms.who;
+  var item := parms.item;
+  var nextsnoop := getobjproperty(who,"#NextSnoop");
+  if(!nextsnoop)
+    nextsnoop := ReadGameClock();
+  endif
+  if(ReadGameClock() >= Nextsnoop)
+    var mob, cont := item;
+    while(cont.container)
+      cont := cont.container;
+    endwhile
+    if(Distance(who, cont)>1)
+      SendSysMessage(who, "That is too far away.", 3, 40);
+      return;
+    endif
+    foreach thing in ListMobilesNearLocation(cont.x, cont.y, cont.z, 0, cont.realm)
+      if(thing == cont)
+        mob := thing;
+        break;
+      endif
+    endforeach
+    if(!mob)
+      return;
+    endif
+    var pts := CInt(GetEffectiveSkill(who, SKILLID_SNOOPING) + 1) * 2;
+    if(pts < 20)
+      pts := 20;
+    endif
+    if(checkskill(who, SKILLID_SNOOPING, -1, pts))
+      SendViewContainer(who,item );
+    else
+      who.hidden := 0;
+      foreach char in  ListMobilesNearLocation(who.x, who.y, who.z, 8, who.realm)
+        if(char.serial == who.serial)
+          SendSysMessage(who, "You failed to peek into the container", 3, 40);
+        elseif(char.serial == mob.serial)
+          SendSysMessage(char, "You notice "+who.name+" snooping your Backpack.", 3, 40);
+        else
+          SendSysMessage(char, "You notice "+who.name+" snooping "+mob.name+"'s Backpack.", 3, 40);
+        endif
+      endforeach
+    endif
+    SetObjProperty(who, "#NextSnoop", ReadGameClock()+5);
+  else
+    SendSysMessage(who, "You must wait to preform another action", 3, 40);
+  endif
+endprogram
