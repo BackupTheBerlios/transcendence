@@ -1,0 +1,11 @@
+use uo;
+use os;
+
+include "include/hallucinations";
+include "include/m2";
+
+program testmem(who)
+ var what := target(who);
+ var mem := MemorizeSceneAroundObject(who);
+ SetObjProperty(what, "mem", mem);
+endprogram

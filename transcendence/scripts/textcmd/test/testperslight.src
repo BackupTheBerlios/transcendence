@@ -1,0 +1,18 @@
+use uo;
+use polsys;
+
+program testperslight(who, light)
+
+if(!light)
+light := "10";
+endif
+
+light := cint(light);
+var targ := target(who);
+if(targ)
+var packet := createpacket(0x4E, 0x06);
+packet.setInt32(1, targ.serial);
+packet.setInt8(5, light); 
+packet.SendPacket(who);
+endif
+endprogram

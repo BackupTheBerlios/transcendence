@@ -1,0 +1,8 @@
+use uo;
+use os;
+
+include "include/particles";
+
+program sendtt(who)
+sendpacket(who, "D6002B0001" + ConvertIntToHex(who.serial, 4) + "000000684283001005BD001220000900580069007400720061000900200000000000");
+endprogram      

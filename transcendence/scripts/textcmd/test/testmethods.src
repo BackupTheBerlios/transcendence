@@ -1,0 +1,8 @@
+use uo;
+use os;
+
+program testmethod(who)
+var what := target(who);
+print(cstr(what.countInsertedSpells()));
+
+endprogram

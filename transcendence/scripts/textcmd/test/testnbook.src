@@ -1,0 +1,10 @@
+use uo;
+use os;
+
+program createnecrobook(who)
+
+var book := target(who);
+var spells := {1,1,1,0,0,1,0,0,0,1,0,1,1,0,0,0,1,0,0,1,0,0,0,0};
+SetObjProperty(book, "spells", spells);
+
+endprogram

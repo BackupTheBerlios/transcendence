@@ -1,0 +1,19 @@
+use uo;
+use os;
+use polsys;
+
+include "include/audio";
+
+program testvol(who, text)
+var prof := cint(text);
+var whom := target(who);
+var prevz := whom.z;
+MoveCharacterToLocation( whom, whom.x, whom.y, whom.z - prof, MOVECHAR_FORCELOCATION);
+var i := 1;
+while(whom.z != prevz)
+sendsysmessage(who, cstr(i));
+MoveCharacterToLocation( whom, whom.x, whom.y, whom.z + i, MOVECHAR_FORCELOCATION);
+//i := i + 1;
+sleepms(250);
+endwhile
+endprogram

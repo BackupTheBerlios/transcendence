@@ -1,0 +1,61 @@
+use uo;
+use os;
+
+
+var layout := 
+{ "page 0",
+"resizepic 0 0 5054 400 274",
+"gumppictiled 10 10 380 19 2624",
+"checkertrans 10 10 380 19",
+"gumppictiled 10 32 380 232 2624",
+"checkertrans 10 32 380 232",
+"htmlgump 10 10 380 20 0 0 0",
+"htmlgump 14 36 200 20 1 0 0",
+"htmlgump 70 36 200 20 2 0 0",
+"htmlgump 14 56 200 20 3 0 0",
+"htmlgump 70 56 200 20 4 0 0",
+"htmlgump 14 76 200 20 5 0 0",
+"htmlgump 70 76 200 20 6 0 0",
+"htmlgump 14 96 200 20 7 0 0",
+"htmlgump 70 96 200 20 8 0 0",
+"htmlgump 14 116 200 20 9 0 0",
+"htmlgump 70 116 200 20 10 0 0",
+"htmlgump 14 136 200 20 11 0 0",
+"htmlgump 70 136 200 20 12 0 0",
+"button 13 157 4011 4013 1 0 1",
+"htmlgump 48 158 200 20 13 0 0",
+"gumppictiled 12 182 376 80 2624",
+"gumppictiled 13 183 374 78 3004",
+"textentry 15 183 372 78 1152 0 14",
+"gumppictiled 245 35 142 144 5058",
+"gumppictiled 246 36 140 142 2624",
+"checkertrans 246 36 140 142",
+"button 246 36 4005 4007 1 0 4",
+"htmlgump 280 38 100 20 15 0 0",
+"button 246 56 4005 4007 1 0 7",
+"htmlgump 280 58 100 20 16 0 0" };
+
+var data := 
+{
+"<BASEFONT COLOR=#FFFFFF><CENTER>User Information</CENTER></BASEFONT>",
+"<BASEFONT COLOR=#FFFFFF>Address:</BASEFONT>",
+"<BASEFONT COLOR=#FFFFFF>127.0.0.1</BASEFONT>",
+"<BASEFONT COLOR=#FFFFFF>Client:</BASEFONT>",
+"<BASEFONT COLOR=#FFFFFF>401a UOTD</BASEFONT>",
+"<BASEFONT COLOR=#FFFFFF>Version:</BASEFONT>",
+"<BASEFONT COLOR=#FFFFFF>Age of Shadows</BASEFONT>",
+"<BASEFONT COLOR=#FFFFFF>Account:</BASEFONT>",
+"<BASEFONT COLOR=#FFFFFF>admin</BASEFONT>",
+"<BASEFONT COLOR=#FFFFFF>Mobile:</BASEFONT>",
+"<BASEFONT COLOR=#FFFFFF>artix (0x91D)</BASEFONT>",
+"<BASEFONT COLOR=#FFFFFF>Location:</BASEFONT>",
+"<BASEFONT COLOR=#FFFFFF>(1677, 1491, 0) [Felucca]</BASEFONT>",
+"<BASEFONT COLOR=#FFFFFF>Send Message</BASEFONT>",
+"",
+"<BASEFONT COLOR=#FFFFFF>Properties</BASEFONT>",
+"<BASEFONT COLOR=#FFFFFF>Move to target</BASEFONT>"
+};
+
+program testgump(who)
+SendDialogGump(who, layout, data);
+endprogram

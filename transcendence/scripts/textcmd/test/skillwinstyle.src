@@ -1,0 +1,9 @@
+use uo;
+use os;
+
+include "include/attributes";
+
+program skillwinstyle(who, text)
+//sendsysmessage(who, cstr(GetEffectiveSkill(who, cint(text))));
+SetObjProperty( who, "SkillWinStyle", cint(text));
+endprogram

@@ -1,0 +1,11 @@
+use uo;
+use os;
+
+program upz (who, text)
+
+
+var what := target(who);
+var where := targetcoordinates(who);
+MoveCharacterToLocation( what, where.x, where.y, where.z , MOVECHAR_FORCELOCATION);
+
+endprogram

@@ -1,0 +1,8 @@
+use uo;
+use os;
+program change_time(who, ind, val);
+var wea := GetGlobalProperty("Weather");
+wea [ind] := val;
+SendSysMessage(who, "Weather index "+CStr(ind)+" now is: "+CStr(val));
+SetGlobalProperty("Weather", wea);
+endprogram

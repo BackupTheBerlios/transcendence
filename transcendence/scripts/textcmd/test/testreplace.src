@@ -1,0 +1,7 @@
+use uo;
+use os;
+
+program testreplace(who, text)
+//text["A1"] := "sostituto";
+SendSysMessage( who, text );
+endprogram

@@ -1,0 +1,32 @@
+use uo;
+
+program textcmd_setmovablerad(who, text)
+	if (text)
+		var params  := SplitWords(text);
+		var movable := CInt(params[1]);
+	    var ranget  := CInt(params[2]);
+	    var floors  := 0;
+	    if (params[3])
+	    	floors  := CInt(params[3]);
+	    endif
+	   
+	   
+	    if (ranget > 10)
+	    	ranget := 10;
+	    endif;
+ 
+  		var i;
+  		for(i:=0;i<=floors;i:=i+1)
+    		foreach thingie in ListItemsNearLocation( who.x, who.y, who.z+(20*i), ranget, who.realm );
+        		thingie.movable := movable;
+    		endforeach
+    	endfor
+
+	    if (movable)
+    		SendSysMessage( who, "Every item in a " + ranget + " radius is set movable" );
+    	else
+    		SendSysMessage( who, "Every item in a " + ranget + " radius is set unmovable" );
+    	endif
+    endif
+
+endprogram

@@ -1,0 +1,7 @@
+use uo;
+
+program chname(who, text)
+var what := target(who);
+what.setname(text);
+setname(what, text);
+endprogram

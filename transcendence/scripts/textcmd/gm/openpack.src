@@ -1,0 +1,28 @@
+use uo;
+
+const UOBJ_BACKPACK := 0x0e75;
+program npcpack(who)
+
+var what := Target(who);
+
+if (!what)
+        SendSysMessage(who, "Targetting cancelled");
+        return;
+endif
+
+if (!what.isA(POLCLASS_MOBILE))  //it's not an NPC
+        SendSysMessage(who, "This command only works with NPCs!");
+        return;
+endif
+
+var hispack := what.backpack;
+
+if (!hispack)
+        hispack := CreateItemInBackpack(who, UOBJ_BACKPACK,1);
+        EquipItem(what, hispack);
+endif
+
+SendOpenSpecialContainer(who, hispack);
+
+endprogram
+       

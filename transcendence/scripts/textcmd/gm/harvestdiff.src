@@ -1,0 +1,21 @@
+use uo;
+use os;
+
+program checkresdiff (who, restype)
+
+var trg := TargetCoordinates(who);
+var info := GetMapInfo(trg.x, trg.y, who.realm);
+var place := info.landtile;
+
+var diffi := GetHarvestDifficulty(restype, trg.x, trg.y, place, who.realm);
+
+if (!diffi)
+SendSysMessage(who, "Failed!");
+else
+SendSysMessage(who, CStr(diffi));
+
+endif
+
+endprogram
+
+

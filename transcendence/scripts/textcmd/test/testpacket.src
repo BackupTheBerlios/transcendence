@@ -1,0 +1,13 @@
+use uo;
+use os;
+
+include "include/particles";
+
+program test1(who)
+//sendpacket(who, "C10032FFFFFFFFFFFF0003B20003000F8CA053797374656D0000000000000000000000000000000000000000000000000000");         
+//sendpacket(who, "C10032" + convertinttohex(who.serial, 4) + "01910003B200030007AB685869747261000000000000000000000000000000000000000000000000000000");
+//sendpacket(who, "BF000D00104000ACCA400F81A9");
+//sendpacket(who, "1A0010C000ACCA129D0001060A065817");
+//sendpacket(who, "C003" + convertinttohex(who.serial, 4) + "00000000373505FF06761405FF067614061E000001000000000000000000");
+sendpacket(who,"BF000B002201" + convertinttohex(who.serial, 4) + "04");
+endprogram

@@ -1,0 +1,11 @@
+use uo;
+
+program getcharalign(who)
+ var whom := target(who);
+ if(whom.criminal)
+  sendsysmessage(who, whom.name + " is a Criminal(grey)");
+ endif
+  if(whom.murderer)
+  sendsysmessage(who, whom.name + " is a Murderer(red)");
+ endif
+endprogram

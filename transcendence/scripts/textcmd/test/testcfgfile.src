@@ -1,0 +1,11 @@
+use uo;
+use cfgfile;
+
+program testmultiscfg(who, text)
+if(ReadConfigFile(text))
+SendSysMessage (who, text + " found!!");
+else
+	SendSysMessage (who, text + " NOT found!!");
+endif
+ 
+endprogram

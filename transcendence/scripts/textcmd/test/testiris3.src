@@ -1,0 +1,70 @@
+use uo;
+use os;
+use polsys;
+
+//include ":UltimaIris:IrisClient";
+
+program test_iris_pck(who)
+/*if(!text)
+ return;
+endif */
+//foreach mob in ListMobilesNearLocation( who.x, who.y, who.z, 7 )
+//if(mob.serial != who.serial)
+
+   var i;
+   //if(cint(text) < 255)
+     for(i := 50; i <= 140; i := i + 2)
+     var pck := CreatePacket(0xF3, 6);
+     pck.setInt32(1, who.serial);
+     pck.setInt8(5, i);
+     /*pck.setInt8(6, i);
+     pck.setInt8(7, i);
+     pck.setInt8(8, 0);*/
+     pck.sendPacket(who);
+     sleepms(50);
+    endfor
+     for(i := 140; i >= 50; i := i - 2)
+     var pck := CreatePacket(0xF3, 6);
+     pck.setInt32(1, who.serial);
+     pck.setInt8(5, i);
+     /*pck.setInt8(6, i);
+     pck.setInt8(7, i);
+     pck.setInt8(8, 0);*/
+     pck.sendPacket(who);
+     sleepms(50);
+endfor
+    for(i := 50; i <= 140; i := i + 2)
+     var pck := CreatePacket(0xF3, 6);
+     pck.setInt32(1, who.serial);
+     pck.setInt8(5, i);
+     /*pck.setInt8(6, i);
+     pck.setInt8(7, i);
+     pck.setInt8(8, 0);*/
+     pck.sendPacket(who);
+     sleepms(50);
+    endfor
+     for(i := 140; i >= 50; i := i - 2)
+     var pck := CreatePacket(0xF3, 6);
+     pck.setInt32(1, who.serial);
+     pck.setInt8(5, i);
+     /*pck.setInt8(6, i);testi
+     pck.setInt8(7, i);
+     pck.setInt8(8, 0);*/
+     pck.sendPacket(who);
+     sleepms(50);
+endfor
+
+     var pck := CreatePacket(0xF3, 6);
+     pck.setInt32(1, who.serial);
+     pck.setInt8(5, 255);
+     /*pck.setInt8(6, i);
+     pck.setInt8(7, i);
+     pck.setInt8(8, 0);*/
+     pck.sendPacket(who);
+     sleepms(50);
+   
+
+//endif
+//endforeach
+
+endprogram

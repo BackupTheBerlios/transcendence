@@ -1,0 +1,107 @@
+use uo;
+use os;
+
+
+
+var layout := array(
+
+"page 0",
+"nodispose",
+"gumppic 0 50 2620",
+"gumppic 20 50 2621",
+"gumppic 290 50 2622",
+"gumppic 0 68 2623",
+"gumppic 22 68 2624",
+"gumppic 288 68 2625",
+
+"gumppic 0 272 2626",
+"gumppic 20 272 2627",
+"gumppic 290 272 2628",
+"checkertrans 3 55 304 270",
+"button 133 68 4500 4500 1 0 100",
+"button 183 80 4501 4501 1 0 200",
+"button 205 128 4502 4502 1 0 300",
+"button 181 176 4503 4503 1 0 400",
+"button 133 200 4504 4504 1 0 500",
+"button 77 176 4505 4505 1 0 600",
+"button 57 128 4506 4506 1 0 700",
+"button 77 80 4507 4507 1 0 800",
+"button 145 142 4020 4021 1 0 900",
+"button 270 60 4017 4018 1 0 910",
+"button 7 260 4005 4006 1 0 920",
+"button 145 260 4014 4015 1 0 930",
+"text 20 59 90 0",
+"text 37 260 90 1",
+"text 175 260 90 2"
+
+
+);
+
+var data := array(
+       "Swimming Tool",        
+       "Dive",
+       "Exit"
+);
+
+
+
+
+
+
+
+
+
+
+
+
+program swimtool (who)
+var parms;
+var check := 0;
+while (check == 0)
+if (!who)
+ break;
+endif
+var command := SendDialogGump(who, layout, data);
+case (command[0])
+ 100:
+     print("nw");
+     parms := {who, "nw"};
+     start_script(":boat:cswim", parms);
+ 200:
+    parms := {who, "n"};
+     start_script(":boat:cswim", parms);
+
+ 300:
+     parms := {who, "ne"};
+     start_script(":boat:cswim", parms);
+ 400:
+     parms := {who, "e"};
+     start_script(":boat:cswim", parms);
+ 500:
+     parms := {who, "se"};
+     start_script(":boat:cswim", parms);
+ 600:
+     parms := {who, "s"};
+     start_script(":boat:cswim", parms);
+ 700:
+     parms := {who, "sw"};
+     start_script(":boat:cswim", parms);
+ 800:
+     parms := {who, "w"};
+     start_script(":boat:cswim", parms);
+ 900:
+     parms := who;
+     start_script(":boat:cstop", parms);
+ 910:
+     check := 1;
+ 920:
+     parms := who;
+     start_script(":boat:cdive", parms);
+ 930:
+     parms := who;
+     start_script(":boat:cexit", parms);
+
+endcase
+endwhile
+
+endprogram

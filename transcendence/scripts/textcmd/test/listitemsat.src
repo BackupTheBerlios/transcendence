@@ -1,0 +1,10 @@
+use uo;
+
+program listitemsat(who)
+var where := targetcoordinates(who);
+print(ListItemsAtLocation( where.x, where.y, where.z , who.realm));
+sendsysmessage(who, cstr(ListItemsAtLocation( where.x, where.y, where.z, who.realm )));
+var loc := getmapinfo(where.x, where.y, who.realm);
+print ("Z: " + loc.z);
+print ("Landtile: " + loc.landtile);
+endprogram

@@ -1,0 +1,11 @@
+use uo;
+use os;
+use util;
+
+include "clock";
+
+program rolex (who);
+var the_clock;
+the_clock := gettimeofday();
+SendSysMessage(who, CStr(the_clock));
+endprogram

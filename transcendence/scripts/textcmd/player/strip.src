@@ -1,0 +1,25 @@
+use uo;
+use os;
+
+program strip (who, txt)
+var itm;
+case(txt)
+
+ "breast":
+  if(who.graphic == 401)
+ 
+  itm := CreateItemInBackpack( who, 0x3dc7, 1 );
+  itm.color := who.color;
+  EquipItem(who, itm);
+  endif 
+ "panties":
+  if(who.graphic == 401)
+ 
+  itm := CreateItemInBackpack( who, 0x3ff1, 1 );
+  itm.color := who.color;
+  EquipItem(who, itm);
+  endif 
+endcase
+
+
+endprogram

@@ -1,0 +1,12 @@
+use uo;
+
+program testarrays(who)
+
+var array1 := {"ciao", "cazzo", "ok!!"};
+var array2 := {"ola", "mavaffanculo", "ok!!"};
+
+var array3 := array1 + array2;
+
+SendSysMessage(who, Cstr(array3));
+
+endprogram

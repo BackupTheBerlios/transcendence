@@ -1,0 +1,6 @@
+use uo;
+use os;
+
+program reset_teleporters(who)
+EraseGlobalProperty("SystemTeleportersCreated"); 
+endprogram

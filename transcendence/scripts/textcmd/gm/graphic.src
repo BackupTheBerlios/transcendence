@@ -1,0 +1,12 @@
+use uo;
+use os;
+
+program setgraphic (who, text)
+
+var graphic := CInt(text);
+
+var trg := Target(who);
+
+trg.graphic := graphic;
+
+endprogram

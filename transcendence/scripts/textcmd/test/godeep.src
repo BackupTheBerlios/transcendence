@@ -1,0 +1,6 @@
+use uo;
+use os;
+
+program godeep(who, text)
+MoveCharacterToLocation( who, who.x, who.y, who.z - 5, MOVECHAR_FORCELOCATION );
+endprogram

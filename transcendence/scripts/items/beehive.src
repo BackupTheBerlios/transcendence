@@ -1,0 +1,36 @@
+use uo;
+use os;
+
+include "include/client";
+include "include/attributes";
+program beehive (who, hive)
+
+var myskill := GetEffectiveSkill(who,2);
+ Detach();
+sleep(240);
+var success := CheckSkill(who, 2, -1, 20);
+if (success)
+ CreateItemAtLocation( hive.x, hive.y, hive.z, 0x091b, 1, hive.realm );
+ SetObjProperty(hive, "honey", 5);
+ SetObjProperty(hive, "wax", 5);
+
+ while (1)
+ 
+  sleep(3600);
+  var actwax := GetObjProperty(hive, "wax");
+  var acthoney := GetObjProperty(hive, "honey");
+ 
+  if (actwax < 5)
+   SetObjProperty(hive, "wax", actwax + (5 - actwax));
+  endif
+ 
+  if (acthoney < 5)
+   SetObjProperty(hive, "honey", acthoney + (5 - acthoney));
+  endif
+ endwhile
+
+endif
+endprogram
+ 
+ 
+  

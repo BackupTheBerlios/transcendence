@@ -1,0 +1,76 @@
+
+use uo;
+use util;
+use os;
+include "include/attributes";
+
+const SOUND_EFFECT_EAT1 := 0x3b;     
+const SOUND_EFFECT_EAT2 := 0x3c; 
+const SOUND_EFFECT_EAT3 := 0x3d; 
+const POISON_SOUND := 0x247;
+const EFFECT_SPARKLE  := 0x374a;
+const ACTION_EAT := 0x22;
+
+//fixme : return control to character after poison ingested
+
+program eat_food( character, food )
+
+ var retval;
+ var themsg;
+ var poison := CInt(GetObjProperty(food, "poison_level"));
+
+ SubtractAmount( food, 1);
+ PerformAction(character, ACTION_EAT);
+ if (poison > 0 )
+  SendSysMessage(character, "You have been poisoned!");   
+  var poison_level :=CInt(GetObjProperty(character, "poison_level"));
+  poison_level := poison_level + poison;
+  if (poison_level >= 15) then
+	        poison_level := 15;
+  endif 
+  if ( poison_level > 0)
+ 
+  retval := SetObjProperty(character, "poison_level",CStr(poison_level));
+  else
+ 
+  retval := SetObjProperty(character, "poison_level",CStr(poison_level));
+  start_script( ":spells:poisondamage", character );
+  endif
+      
+  SetObjProperty(character, "poison_level",CStr(poison_level));
+  start_script( ":spells:poisondamage", character );
+
+
+ else
+	//local rand_nbr := RandomInt(3) + 1;
+
+	var downstam := (GetMaxStamina(character) - GetStamina(character));
+	if (downstam > 5 )
+		SetStamina(character, GetStamina(character) + (RandomInt( 5 )+5));
+	else
+		SetStamina(character, character.maxstamina);
+	endif
+
+
+
+		PlaySoundEffect(character,0x0031);
+		themsg := "Delicious!";
+	var objecttype;
+  case (food.graphic)
+    0x01f89 : objecttype := 0x1f81;
+    0x01f8a : objecttype := 0x1f82;
+    0x01f8b : objecttype := 0x1f83;
+    0x01f8c : objecttype := 0x1f84;
+  endcase
+DestroyItem(food);
+CreateItemInBackpack(character, objecttype, 1);
+	SendSysMessage(character, themsg);
+
+	sleep(1);
+
+endif
+
+
+
+endprogram
+

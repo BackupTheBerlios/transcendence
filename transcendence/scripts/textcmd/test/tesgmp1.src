@@ -1,0 +1,15 @@
+use uo;
+
+var layout :=
+{
+"resizepic 100 100 3600 200 250",
+"checkertrans 116 116 174 221",
+"button 120 130 210 210 1 0 1"
+//"gumppic 120 213 9028"
+//"gumppic 280 233 210"
+//"gumppic 95 97 210"
+};
+
+program testcmdgump(who)
+senddialoggump(who, layout, {});
+endprogram

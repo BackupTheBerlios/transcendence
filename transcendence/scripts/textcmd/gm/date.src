@@ -1,0 +1,15 @@
+use uo;
+use os;
+use util;
+
+include "include/clockandcalendar";
+include "include/client";
+program the_date(who, mode);
+var date;
+
+if (mode == "s")
+getdate(who, "s");
+elseif (mode == "c")
+getdate(who, "c");
+endif
+endprogram

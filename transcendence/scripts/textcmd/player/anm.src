@@ -1,0 +1,16 @@
+use uo;
+use os;
+
+include "include/packets";
+
+program anm(who, text)
+
+if (!text)
+sendsysmessage(who, "no param");
+return;
+endif
+
+//PerformAction( who, cint(text) );
+PlayCharAnim(who, cint(text));
+
+endprogram

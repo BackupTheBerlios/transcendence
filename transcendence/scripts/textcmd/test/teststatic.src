@@ -1,0 +1,7 @@
+use uo;
+use os;
+
+program teststatic(who)
+var what := targetcoordinates(who);
+sendsysmessage(who, "objtype: " + cstr(what.objtype));
+endprogram

@@ -1,0 +1,48 @@
+use uo;
+use os;
+
+include "include/Memory";
+
+program drawnpc (who)
+var graphic;
+var whos := Target(who);
+var where := TargetCoordinates(who);
+var equipmentarray := {};
+  foreach item in ListEquippedItems(whos)
+      equipmentarray.append({whos.serial, item.serial, item.graphic, item.layer, item.color});
+    endforeach   
+      var  packethexstringpart1 := "78";
+      var   packethexstringpart2 := ConvertIntToHex(whos.serial, 4) + ConvertIntToHex(whos.graphic, 2);
+        packethexstringpart2 := packethexstringpart2 + ConvertIntToHex(where.x, 2);
+        packethexstringpart2 := packethexstringpart2 + ConvertIntToHex(where.y, 2);
+        packethexstringpart2 := packethexstringpart2 + ConvertIntToHex(where.z, 1);
+        packethexstringpart2 := packethexstringpart2 + ConvertIntToHex(whos.facing, 1);
+        packethexstringpart2 := packethexstringpart2 + ConvertIntToHex(whos.color, 2);
+        packethexstringpart2 := packethexstringpart2 +"0000";
+        foreach item in equipmentarray
+          if (item[1] == whos.serial)
+            packethexstringpart2 := packethexstringpart2 + ConvertIntToHex(item[2], 4);
+            if (item[5] == 0)
+              graphic := item[3];
+
+            else
+              graphic := item[3] + 32768;
+            endif
+            packethexstringpart2 := packethexstringpart2 + ConvertIntToHex(graphic, 2);
+            packethexstringpart2 := packethexstringpart2 + ConvertIntToHex(item[4], 1);
+            if (item[5] != 0)
+              packethexstringpart2 := packethexstringpart2 + ConvertIntToHex(item[5], 2);
+            endif
+          endif
+        endforeach
+        packethexstringpart2 := packethexstringpart2 +"00000000";
+        var fullpackethexstringlength := (len(packethexstringpart1) + len(packethexstringpart2)) / 2 + 2;
+        var fullpackethexstring := packethexstringpart1 + ConvertIntToHex(fullpackethexstringlength, 2) + packethexstringpart2;
+        SendPacket(who, fullpackethexstring);
+     
+  sleep(10);
+  SendSysMessage(who, "animation");
+    PerformAction( whos, 1 );
+   PrintTextAbove( whos, "anim" );
+     endprogram
+   

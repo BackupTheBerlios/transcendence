@@ -1,0 +1,15 @@
+use uo;
+use os;
+
+//include "include/packets";
+include "include/particles";
+
+program testpopupmenu(who)
+var what := target(who);
+//sendpacket(who, "BF001800140001" + fixpacketlength(what.serial, 4) + "02000103e90001000203e90001");
+
+//sendpacket(who, "BF001200140001" + fixpacketlength(hex(what.serial), 4) + "01000017EB0000");
+sendpacket(who, "BF001200140001" + ConvertIntToHex(what.serial, 4) + "01000017EB0000");
+print("BF001200140001" + ConvertIntToHex(what.serial, 4) + "01000017EB0000");
+sendsysmessage(who, "popmenu test");
+endprogram

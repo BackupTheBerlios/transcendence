@@ -1,0 +1,5 @@
+use uo;
+
+program setrain(who)
+sendpacket(who, "65020000");
+endprogram

@@ -1,0 +1,10 @@
+use uo;
+
+program setcolor (who, color)
+
+var trg := Target(who);
+color := CInt(color);
+
+trg.color := color;
+
+endprogram

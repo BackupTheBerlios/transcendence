@@ -1,0 +1,10 @@
+use uo;
+use os;
+include "include/Memory";
+
+program mem (who)
+
+Recall(who);
+
+
+endprogram

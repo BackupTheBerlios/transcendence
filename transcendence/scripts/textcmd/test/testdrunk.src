@@ -1,0 +1,12 @@
+use uo;
+use os;
+include "include/animations";
+include "include/gestures";
+include "include/packetutils";
+
+program testdrunk(who)
+
+var whom := target(who);
+DrunkenAndPuke(whom);
+
+endprogram

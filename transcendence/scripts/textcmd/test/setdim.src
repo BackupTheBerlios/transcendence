@@ -1,0 +1,6 @@
+use uo;
+use os;
+
+program setdim(who, text)
+SetObjProperty( who, "dim", cint(text) );
+endprogram

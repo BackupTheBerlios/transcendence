@@ -1,0 +1,15 @@
+use uo;
+use os;
+
+include "include/packets";
+
+program play (who, music)
+
+music := CInt(music);
+
+
+PlayMidiMusic( who, music );
+
+
+
+endprogram

@@ -1,0 +1,13 @@
+use uo;
+use os;
+
+include "include/particles";
+
+program test(who)
+
+var chair := CreateItemAtLocation( who.x, who.y, who.z, 0xb5c, 1 );
+sendpacket(who, "BF000D0010" + ConvertIntToHex(chair.serial, 4) + "400F9BBC");
+sendsysmessage(who, convertinttohex(chair.serial, 4));
+sendsysmessage(who, "BF000D0010" + ConvertIntToHex(chair.serial, 4) + "400F9BBC");
+//sendsysmessage(who, "ok");
+endprogram

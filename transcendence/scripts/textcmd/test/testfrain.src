@@ -1,0 +1,13 @@
+use uo;
+use os;
+use polsys;
+
+include "include/particles";
+
+program test_movxyz(who, text)
+//var s := TargetCoordinates(who);
+var d := TargetCoordinates(who);
+
+ParticleMovingEffectXYZ(d.x, d.y, d.z + 70, d.x, d.y, d.z, 3821,  cint(text));
+
+endprogram

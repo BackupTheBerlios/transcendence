@@ -1,0 +1,13 @@
+use uo;
+use os;
+
+program levitation (who)
+
+var i;
+var zpos := who.z;
+for (i := 0; i <= 40; i := i + 1)
+ MoveCharacterToLocation(who, who.x, who.y, zpos + i, MOVECHAR_FORCELOCATION);
+ sleepms(120);
+endfor
+
+endprogram

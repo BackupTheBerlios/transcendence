@@ -1,0 +1,18 @@
+use uo;
+use os;
+use polsys;
+
+include "include/particles";
+
+program testsemivis(who, text)
+var what := target(who);
+/*var ser := convertinttohex(who.serial, 4);
+//sendpacket(who, "C4" +  convertinttohex(who.x, 2) + convertinttohex(who.y, 2) + convertinttohex(who.z, 1));
+//sendsysmessage(who, "SemiVisibleTest");
+//sendpacket(who, "C4" + convertinttohex(cint(text), 1) + ser);
+sendpacket(who, "C4"  + ser + convertinttohex(cint(text), 1));*/
+var pck := CreatePacket(0xC4, 6 );
+pck.setInt32(1, what.serial);
+pck.setInt8(5, cint(text));
+pck.sendPacket(who);
+endprogram

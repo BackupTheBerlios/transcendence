@@ -1,0 +1,12 @@
+use uo;
+use os;
+use polsys;
+
+include "include/AOSTooltip";
+
+program testaos(who, text)
+
+var what := target(who);
+SendPropAOSTooltip(who, what, "minkia", {{"durezza","10"}, {"lunghezza", "8"}});
+
+endprogram

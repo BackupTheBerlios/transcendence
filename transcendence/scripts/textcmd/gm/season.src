@@ -1,0 +1,25 @@
+// 2/6/99 Day/Night transitions for one time zone only (britain) -Rac
+// 23/4/00 played around with a little bit -Rax
+
+
+use uo;
+use os;
+
+include "include/client";
+
+program whichseason (char)
+var wstuff := GetGlobalProperty("Weather");
+var season := wstuff[8];
+if (!wstuff)
+SendSysMessage(char, "Weather system doesn't work correctly!", FONT_NORMAL, 0x005a);
+else
+case (season)
+ 0: SendSysMessage(char, "You feel the warmth of the Summer", FONT_NORMAL, 0x005a);
+ 1: SendSysMessage(char, "You see leaves falling down from trees, it's Autumn!", FONT_NORMAL, 0x005a);
+ 2: SendSysMessage(char, "You feel the Winter chill!", FONT_NORMAL, 0x005a);
+ 3: SendSysMessage(char, "Flowers bloom again, here's the Spring!", FONT_NORMAL, 0x005a);
+
+endcase
+endif
+
+endprogram

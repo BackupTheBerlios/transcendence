@@ -1,0 +1,34 @@
+use uo;
+
+program destroyradius( who, text )
+	var params := SplitWords(text);
+  	var ranget := CInt(params[1]);
+  	var floors := 0;
+  	var objtype;
+  	if (params[2])
+  		floors := CInt(params[2]);
+  	endif
+  	if (params[3])
+  		objtype := CInt(params[3]);
+  	endif
+  
+  	//if (ranget > 5)
+  	//	ranget := 5;
+  	//endif;
+   
+    var i;
+    for (i:=0; i<=floors; i:=i+1)
+    	if (params[3])
+	   		foreach thingie in ListItemsNearLocationOfType( who.x, who.y, who.z+(20*i), ranget, objtype, who.realm);
+    	    	DestroyItem( thingie );
+    		endforeach
+    	else
+	   		foreach thingie in ListItemsNearLocation( who.x, who.y, who.z+(20*i), ranget , who.realm);
+    	    	DestroyItem( thingie );
+    		endforeach
+    	endif
+    endfor
+   
+    SendSysMessage(who, "Destroyed everything in a radius of " + ranget);
+	       
+endprogram

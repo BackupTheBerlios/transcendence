@@ -1,0 +1,15 @@
+use uo;
+use os;
+use polsys;
+
+include "include/corpses";
+
+program testcrp(who, text)
+
+text := splitwords(text);
+var w := targetcoordinates(who);
+
+var corps := CreateCorpsePrivate( who, cint(text[1]), cint(text[2]), 33784, w.x, w.y, w.z);
+EquipCorpse(who, ListEquippedItems(who) , corps, w.x, w.y, w.z);
+
+endprogram

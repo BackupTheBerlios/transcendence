@@ -1,0 +1,8 @@
+use uo;
+use os;
+
+program printserial(who)
+var what := target(who);
+print(what.name + " serial: " + cstr(what.serial));
+print(what.name + " Hex serial: " + cstr(hex(what.serial)));
+endprogram

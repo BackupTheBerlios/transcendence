@@ -1,0 +1,7 @@
+use uo;
+use os;
+
+program testobjtype(who)
+var what := target(who);
+sendsysmessage(who, "OBJTYPE " + cstr(what.objtype) );
+endprogram

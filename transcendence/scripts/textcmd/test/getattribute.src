@@ -1,0 +1,6 @@
+use uo;
+use os;
+
+program testattr(who, text)
+sendsysmessage(who, cstr(GetAttribute( who, "Mining" )));
+endprogram

@@ -1,0 +1,8 @@
+use uo;
+use os;
+
+program testchord(who)
+playsoundeffect(who, 1029);
+playsoundeffect(who, 1039);
+playsoundeffect(who, 1045);
+endprogram

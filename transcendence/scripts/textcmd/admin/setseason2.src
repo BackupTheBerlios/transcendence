@@ -1,0 +1,20 @@
+use uo;
+use os;
+program setseason (who, seasontype);
+var wth := GetGlobalProperty("Weather");
+
+if (seasontype == "summer")
+ wth[8] := 0;
+elseif (seasontype == "autumn")
+ wth[8] := 1;
+elseif (seasontype == "winter")
+ wth[8] := 2;
+elseif (seasontype == "spring")
+ wth[8] := 3;
+endif
+
+
+SetGlobalProperty("Weather", wth);
+SendSysMessage(who, "Season is now" + seasontype);
+
+endprogram

@@ -1,0 +1,15 @@
+use uo;
+use os;
+
+program levitation (who)
+
+var i;
+var targ := Target(who);
+
+var zpos := targ.z;
+for (i := 0; i <= 40; i := i + 1)
+ MoveCharacterToLocation(targ, targ.x, targ.y, zpos + i, MOVECHAR_FORCELOCATION);
+ sleepms(120);
+endfor
+
+endprogram

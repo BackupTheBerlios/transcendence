@@ -1,0 +1,13 @@
+use uo;
+use os;
+
+program waterfallsound (who, tile)
+
+while (1)
+PlaySoundEffect(who, 0x0011 );
+sleepms(100);
+if (Distance(tile, who) > 16)
+ break;
+endif
+endwhile
+endprogram

@@ -1,0 +1,30 @@
+use uo;
+use os;
+use polsys;
+
+program testnecro(who, text)
+
+var words := splitwords(text);
+var c1 := cint(words[1]);
+var c2 := cint(words[2]);
+
+var packet := CreatePacket(0xBF, 0x17);
+
+packet.SetInt16(1, 0x17);
+packet.SetInt16(3, 0x1B);
+packet.SetInt16(5, 1);
+packet.SetInt32(7, 1);
+packet.SetInt16(11, 0x2252);
+packet.SetInt16(13, 0x65);
+packet.SetInt8(15, c1);
+packet.SetInt8(16, c2);
+packet.SetInt8(17, 0);
+packet.SetInt8(18, 0);
+packet.SetInt8(19, 0);
+packet.SetInt8(20, 0);
+packet.SetInt8(21, 0);
+packet.SetInt8(22, 0);
+
+packet.SendPacket(who);
+
+endprogram

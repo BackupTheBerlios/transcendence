@@ -1,0 +1,33 @@
+use uo;
+use os;
+use util;
+
+include "include/packets";
+
+program lsd (who, item);
+
+var graphic;
+var graphics := {0x3c, 0x0015, 0x0ca, 0xcc};
+var i;
+i := 0;
+DestroyItem(item);
+while(i <= 25)
+
+foreach char in ListMobilesNearLocation( who.x, who.y, who.z, 20, who.realm )
+graphic := RandomInt(3) + 1;
+UpdatePlayer( char, who, graphics[graphic]);
+endforeach
+
+foreach it in ListItemsNearLocation( who.x, who.y, who.z, 10, who.realm )
+if (it.objtype != 0x2006)
+PlayStationaryEffectHuePriv( who, it.x, it.y, it.z + 1, it.graphic, 0, 
+0, 0, RandomInt(100), 0);
+endif
+endforeach
+
+sleep(2);
+i := i + 1;
+
+endwhile
+
+endprogram

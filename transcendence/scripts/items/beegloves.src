@@ -1,0 +1,101 @@
+// beegloves by Artix
+
+use uo;
+use os;
+
+program usegloves (who, gloves);
+
+var eqglov := GetEquipmentByLayer(who, 7);
+ if (eqglov != gloves)
+ SendSysMessage(who, "You must equip those gloves to do use it!", 0x003, 0x005a);
+ return;
+endif
+
+var hive := Target(who, TGTOPT_NOCHECK_LOS);
+
+if (!hive)
+ SendSysMessage(who, "Target Cancelled", 0x003, 0x0028);
+ return;
+endif
+
+if (hive.graphic != 0x091a)
+ SendSysMessage(who, "Invalid selection!", 0x003, 0x0028);
+ return;
+endif
+var layout := {"PAGE 0",
+                 "GUMPPIC 200 200 6785",
+                 "TEXT 360 250 95 0",
+                 "BUTTON 230 300 2118 2117 1 0 101",
+                 "TEXT 250 300 960 1",
+                 "BUTTON 230 330 2118 2117 1 0 102",
+                 "TEXT 250 330 960 2"
+                 };
+                
+var data := {"What do you want to produce?",
+               "Wax",
+               "Honey"
+               };
+                                    
+var select := SendDialogGump(who, layout, data);
+case (select[0])
+101:
+var waxamt := GetObjProperty(hive, "wax");
+if (!waxamt)
+ SendSysMessage(who, "There's no more wax there", 0x03, 0x005a);
+ return;
+endif
+if (CheckSkill(who, 2, -1, 20))
+ CreateItemInBackpack(who, 0x1422, 1);
+ if (waxamt)
+ SetObjProperty(hive, "wax", waxamt - 1);
+ else
+	 SetObjProperty(hive, "wax", 0);
+ endif
+ SendSysMessage(who, "You took some wax and you put it in your backpack", 0x03, 0x005a);
+else
+ SendSysMessage(who, "you falied!", 0x03, 0x005a);
+endif
+102:
+ var honeyamt := GetObjProperty(hive, "wax");
+if (!honeyamt)
+ SendSysMessage(who, "There's no more honey there", 0x03, 0x005a);
+ return;
+endif
+if (CheckSkill(who, 2, -1, 20))
+ SendSysMessage(who, "Select a jar to fill", 0x003, 0x005a);
+
+ var jar := Target(who);
+ if (!jar)
+  SendSysMessage(who, "Target Cancelled", 0x003, 0x005a);
+  return;
+ endif
+  if (jar.graphic != 0x09ec)
+    SendSysMessage(who, "Invalid object", 0x003, 0x0028);
+    return;
+  endif
+   if (GetObjProperty(jar, "full") == 1)
+    SendSysMessage(who, "That jar is full!", 0x003, 0x0028);
+    return;
+   endif
+   SetObjProperty(jar, "full", 1);
+   
+ if (honeyamt)
+ SetObjProperty(hive, "honey", honeyamt - 1);
+ else
+	 SetObjProperty(hive, "honey", 0);
+ endif
+ SendSysMessage(who, "You took some honey and you fill the jar", 0x03, 0x005a);
+else
+ SendSysMessage(who, "you falied!", 0x03, 0x005a);
+endif
+endcase
+endprogram
+
+ 
+ 
+ 	
+
+ 
+
+
+ 

@@ -1,0 +1,13 @@
+use uo;
+use os;
+use polsys;
+
+include "include/hallucinations";
+
+program testvision(who, text)
+
+ var where := targetcoordinates(who);
+//SetSceneHidden(who, 535,992,0);
+ DrawObject(who, 0x1530, 90, where.x, where.y, where.z, 1);
+endprogram
+

@@ -1,0 +1,151 @@
+use uo;
+use os;
+
+var l := {
+"page 0", 
+"resizepic 10 30 83 500 280",
+"checkertrans 18 38 485 265", 
+"tilepic 165 42 3761", 
+"text 240 48 1153 0", 
+"page 1",
+"button 55 123 11401 11402 1 1 900",
+"text 75 120 1153 1",
+"button 55 143 11401 11402 1 1 901",
+"text 75 140 1153 2",
+"button 55 163 11401 11402 1 1 902",
+"text 75 160 1153 3"
+};
+//"page 2",
+//"text 235 78 1153 4", 
+/*
+"text 55 163 1153 6", 
+"text 80 135 0 7"*/
+// Octave 1
+var l2 := {
+"page 0", 
+"resizepic 10 30 83 500 280",
+"checkertrans 18 38 485 265", 
+"tilepic 165 42 3761", 
+"text 240 48 1153 0", 
+"page 1",
+"button  55 168 11374 11374 1 1 1", //do
+"button  75 168 11374 11374 1 1 3",//re
+"button  70 163 9272 9272 1 1 2",//do#
+"button  70 173 9272 9272 1 1 2",
+
+"button  95 168 11374 11374 1 1 5",//mi
+"button  115 168 11374 11374 1 1 6",//fa
+"button  90 163 9272 9272 1 1 4",//re#
+"button  90 173 9272 9272 1 1 4",
+
+"button  135 168 11374 11374 1 1 8",//sol
+"button  155 168 11374 11374 1 1 10", //la
+"button  130 163 9272 9272 1 1 7",//fa#
+"button  130 173 9272 9272 1 1 7",
+"button  150 163 9272 9272 1 1 9",//sol#
+"button  150 173 9272 9272 1 1 9",
+"button  175 168 11374 11374 1 1 12",//si
+"button  170 163 9272 9272 1 1 11",//la#
+"button  170 173 9272 9272 1 1 11",
+
+// Octave 2
+"button  195 168 11374 11374 1 1 1", //do
+"button  215 168 11374 11374 1 1 3",//re
+"button  210 163 9272 9272 1 1 2",//do#
+"button  210 173 9272 9272 1 1 2",
+
+"button  235 168 11374 11374 1 1 5",//mi
+"button  255 168 11374 11374 1 1 6",//fa
+"button  230 163 9272 9272 1 1 4",//re#
+"button  230 173 9272 9272 1 1 4",
+
+"button  275 168 11374 11374 1 1 8",//sol
+"button  295 168 11374 11374 1 1 10", //la
+"button  270 163 9272 9272 1 1 7",//fa#
+"button  270 173 9272 9272 1 1 7",
+"button  290 163 9272 9272 1 1 9",//sol#
+"button  290 173 9272 9272 1 1 9",
+"button  315 168 11374 11374 1 1 4",//si
+"button  310 163 9272 9272 1 1 5",//la#
+"button  310 173 9272 9272 1 1 5",
+"button  400 220 10850 10850 1 0 1000"
+
+
+};
+var d := {"Stand Harp",
+"Play Standard Music",
+"Play Manually", 
+"Tune Instrument", 
+"Octave 1",
+"Octave 2",
+"Do",
+"Do#",
+"Re",
+"Re#",
+"Mi",
+"Fa",
+"Fa#",
+"Sol",
+"Sol#",
+"La",
+"La#",
+"Si"
+};
+
+program testmusgump(who)
+var res := SendDialogGump( who, l, d );
+print(cstr(res[0]));
+if(res[0] == 901)
+sendsysmessage(who, "OKKKKKKKKK");
+startplaying(who);
+endif
+
+
+endprogram
+
+function StartPlaying(who)
+while(1)
+var r := SendDialogGump( who, l2, d );
+if(r[0] == 1000)
+
+break;
+elseif(r[0] == 1)
+sendsysmessage(who, "do");
+PlaySoundEffect( who, 977 );
+elseif(r[0] == 2)
+sendsysmessage(who, "do#");
+PlaySoundEffect( who, 980 );
+elseif(r[0] == 3)
+sendsysmessage(who, "re");
+PlaySoundEffect( who, 982 );
+elseif(r[0] == 4)
+sendsysmessage(who, "re#");
+PlaySoundEffect( who, 984 );
+elseif(r[0] == 5)
+sendsysmessage(who, "mi");
+PlaySoundEffect( who, 986 );
+elseif(r[0] == 6)
+sendsysmessage(who, "fa");
+PlaySoundEffect( who, 988 );
+elseif(r[0] == 7)
+sendsysmessage(who, "fa#");
+PlaySoundEffect( who, 990 );
+elseif(r[0] == 8)
+sendsysmessage(who, "sol");
+PlaySoundEffect( who, 992 );
+elseif(r[0] == 9)
+sendsysmessage(who, "sol#");
+PlaySoundEffect( who, 994 );
+elseif(r[0] == 10)
+sendsysmessage(who, "la");
+PlaySoundEffect( who, 971 );
+elseif(r[0] == 11)
+sendsysmessage(who, "la#");
+PlaySoundEffect( who, 973 );
+elseif(r[0] == 12)
+sendsysmessage(who, "si");
+PlaySoundEffect( who, 975 );
+endif
+endwhile
+return 0;
+endfunction

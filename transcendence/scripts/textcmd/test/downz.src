@@ -1,0 +1,10 @@
+use uo;
+use os;
+
+program downz (who, text)
+
+var depth := cint(text);
+var what := target(who);
+MoveCharacterToLocation( what, what.x, what.y, what.z - depth, MOVECHAR_FORCELOCATION);
+
+endprogram

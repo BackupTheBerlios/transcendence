@@ -1,0 +1,54 @@
+use uo;
+use os;
+
+include "include/client";
+include "include/attributes";
+
+program use_entrails (who, entrails)
+
+var what := Target(who);
+
+if (what.graphic != 0x3a85)
+ SendSysMessage(who, "You can't use it on that", 3, 38);
+ return;
+endif
+var quality := GetObjProperty(what, "milkquality");
+var rawquality;
+var difficulty := 45;
+SendSysMessage(who, "You put the entrails rennet into the milk", 3, 0x005a);
+Detach();
+sleep(120);
+what.graphic := 0x3a86;
+what.usescript := "";
+var i;
+for (i := 1; i <= 10; i := i + 1)
+sleep(3600);
+endfor
+if (CheckSkill(who, SKILLID_COOKING, difficulty, 20))
+what.graphic := 0x3a87;
+SetName(what, "Tub full of Cheese");
+what.usescript := ":cooking:cheese";
+if (GetEffectiveSkill(who, SKILLID_COOKING) < difficulty)
+  rawquality := difficulty - CInt(GetEffectiveSkill(who, SKILLID_COOKING));
+  rawquality := CInt(50 - (rawquality * 2.5));
+ else 
+  rawquality :=  CInt(GetEffectiveSkill(who, SKILLID_COOKING)) - difficulty;
+  rawquality := CInt(50 + (rawquality * 2.5));
+ endif
+
+ if (rawquality > 100)
+  rawquality := 100;
+ elseif (rawquality < 0)
+  rawquality := 1;
+ endif
+
+ quality := CInt((rawquality * quality) / 100);
+ SetObjProperty(what, "quality", quality);
+else
+ SendSysMessage(who, "You failed to make cheese", 0x03, 38);
+ what.graphic := 0x3a84;
+ SetName(what, "empty tub");
+ EraseObjProperty(what, "milkquality");
+ return;
+endif
+endprogram

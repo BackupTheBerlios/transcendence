@@ -1,0 +1,10 @@
+use uo;
+use os;
+use polsys;
+
+include "include/audio";
+
+program testvol(who, text)
+var vol := cint(text);
+PlayXYZSoundEffect(who.x,who.y,who.z, 0x4b5, who.realm, vol);
+endprogram

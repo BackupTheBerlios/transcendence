@@ -1,0 +1,20 @@
+use uo;
+
+program textcmd_spellbook( who )
+    var book := CreateItemInBackpack(who,0x0efa, 1);
+    var i;
+    /*for (i := 0x1f2d; i <= 0x1f6c; i := i + 1)
+        CreateItemInContainer(book,  i, 1);
+    endfor*/
+    var circles := {};
+var spells := {1,1,1,1,1,1,1,1};
+
+
+for (i := 1; i <= 8; i := i + 1)
+
+circles[i] := spells;
+
+endfor
+
+SetObjProperty( book, "Spells", circles );
+endprogram

@@ -1,0 +1,9 @@
+use uo;
+use os;
+
+program equipfrom (who, text)
+
+
+EquipFromTemplate( who, text );
+
+endprogram

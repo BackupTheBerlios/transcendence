@@ -1,0 +1,12 @@
+use uo;
+use os;
+
+program settooltips(who, text)
+
+Sendsysmessage(who, "AOSTooltips systems was set to: " + GetGlobalProperty("AOSTooltips") );
+if(cint(text) > 0)
+SetGlobalProperty( "AOSTooltips", "auto" );
+else
+SetGlobalProperty( "AOSTooltips", "onclick" );
+endif
+endprogram

@@ -1,0 +1,15 @@
+use uo;
+use os;
+
+program aostooltp(who, text)
+if(!text)
+return;
+endif
+
+if (text == "auto")
+SetGlobalProperty( "AOSTooltips", text );
+elseif (text == "onclick")
+SetGlobalProperty( "AOSTooltips", text );
+endif
+
+endprogram

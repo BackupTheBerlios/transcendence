@@ -1,0 +1,39 @@
+use uo;
+use os;
+use polsys;
+
+include "include/particles";
+
+program testspbook(who)
+
+var spbook := target(who);
+var ser := spbook.serial;
+
+//sendpacket(who, "BF000D0010" + convertinttohex(ser, 4) + "4002BF20");
+sendpacket(who, "24" + convertinttohex(ser, 4) + "FFFF");
+
+
+var packet := CreatePacket(0xBF, MSGLEN_VARIABLE);
+
+
+
+packet.setInt16(1,0);
+packet.setInt16(3, 0x1B);
+packet.setInt16(5,1);
+packet.setInt32(7, ser);
+packet.setInt16(11, 0xEFA);
+packet.setInt16(13,1);
+packet.setInt8(15,0xFF);
+packet.setInt8(17,0);
+packet.setInt8(18,0);
+packet.setInt8(19,0);
+packet.setInt8(20,0);
+packet.setInt8(21,0);
+packet.setInt8(22,0);
+packet.setInt8(23,0);
+
+packet.setInt16(1, packet.getSize());
+packet.sendPacket(who);
+ 
+
+endprogram

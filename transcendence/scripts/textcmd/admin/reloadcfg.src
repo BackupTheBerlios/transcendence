@@ -1,0 +1,7 @@
+use uo;
+use os;
+use polsys;
+
+program reload(who)
+ReloadConfiguration();
+endprogram

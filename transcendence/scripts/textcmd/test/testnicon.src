@@ -1,0 +1,11 @@
+use uo;
+use os;
+
+program necroicon(who)
+var layout :=
+{
+"button 30 30 11011 11011 1 0 1"
+};
+
+SendDialogGump(who, layout, {});
+endprogram

@@ -1,0 +1,10 @@
+use uo;
+use os;
+include "include/attributes";
+program getregenrates (who)
+
+var trg := Target(who);
+SendSysMessage(who, "hp rate : " + CStr(GetHpRegenRate(trg)));
+SendSysMessage(who, "mana rate : " + CStr(GetManaRegenRate(trg)));
+SendSysMessage(who, "stam rate : " + CStr(GetStaminaRegenRate(trg)));
+endprogram

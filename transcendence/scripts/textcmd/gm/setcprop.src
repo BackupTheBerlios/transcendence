@@ -1,0 +1,26 @@
+/////////////////////////////////////////////////////////////
+// SETPROP.SRC                                             //
+//                                                         //
+// Author: Fitzban                                         //
+/////////////////////////////////////////////////////////////
+
+use uo;
+use basic;
+use os;
+
+program getcprop (who, text)
+text := SplitWords(text);
+if (!text[2])
+	SendSysMessage(who, "Usage: .setcprop type[i,s] property_name");
+	return;
+endif
+var property := text[2];
+var trg := Target(who, TGTOPT_NOCHECK_LOS);
+var theprop := GetObjProperty(trg, property);
+var prp := CStr(theprop);
+var newvalue := RequestInput(who, who.backpack, "Nuovo valore (" + property + " : " + prp + "): ");
+if (text[1] == "i")
+	newvalue := CInt(newvalue);
+endif
+SetObjProperty(trg, property, newvalue);
+endprogram

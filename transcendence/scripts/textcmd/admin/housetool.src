@@ -1,0 +1,9 @@
+use uo;
+use os;
+
+include "include/packets";
+
+program housetool(who)
+var hous := target(who);
+sendpacket(who, "bf00110020" + fixPacketLength( hous.serial, 4 ) + "040000FFFFFFFFFF" );
+endprogram

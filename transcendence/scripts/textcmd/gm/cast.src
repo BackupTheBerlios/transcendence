@@ -1,0 +1,7 @@
+use uo;
+
+program text_cast(who, number)
+
+    StartSpellEffect(who,CInt(number));
+
+endprogram

@@ -1,0 +1,17 @@
+use uo;
+use os;
+use util;
+
+include "include/clock";
+
+program get_clock (who, type);
+var the_clock;
+if (type == "game")
+the_clock := ReadGameClock();
+elseif (type == "hour")
+the_clock := gettimeofday();
+elseif (type == "time")
+the_clock := gettime();
+endif
+SendSysMessage(who, CStr(the_clock));
+endprogram

@@ -1,0 +1,10 @@
+use uo;
+
+program getequip(who)
+var whom := target(who);
+var i, itm;
+for(i := 0; i <= 35; i := i + 1)
+itm := GetEquipmentByLayer( whom, i );
+print("LAYER: " + cstr(i) + " OBJ: " + cstr(itm.graphic));
+endfor
+endprogram

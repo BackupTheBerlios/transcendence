@@ -1,0 +1,114 @@
+// Utility per la visualizzazione e modifica di Prop e CProp
+// 
+// Versione 0.1b
+//
+// Autore: Vanyel (Fitzban)
+
+use uo;
+use basic;
+
+
+var layout := array(
+			"nodispose",
+			"page 0",
+			"resizepic 20 50 5120 600 30",		// Intestazione
+			"resizepic 20 85 5120 600 400",		// Corpo
+			"resizepic 20 490 5120 600 30",		// Fondo
+			"resizepic 25 110 5120 590 5",		// separatore
+			"button 550 493 247 248 1 0 0",		// EXIT
+			"button 30 495 2118 2117 1 0 1",	// Add CProp
+			"text 25 55 1500 0",				// Prop & CProp Viewer - by Fitzban
+			"text 25 90 1500 1",				// Del Edit
+			"text 25 495 1500 2"				// Add CProp
+);
+
+var data := array(
+	"CProp Viewer                                                   By Fitzban",
+	"Del Edit PropertyName         Value",
+	"   Add CProp"
+);
+var what, who;
+program PropAndCPropViewer (who1)
+	who := who1;
+	what := Target(who, TGTOPT_NOCHECK_LOS);
+	while (1)
+		FillDataArray();
+		var result := SendDialogGump(who, layout, data);
+		//SendSysMessage(who, "Result: " + result[0]);
+		if (result[0] == 0)
+			return;
+		elseif (result[0] == 1)			// Add a CProp
+			var newproperty := SendTextEntryGump(who, "Nome del nuovo CProp: ");
+			newproperty := SplitWords(newproperty);
+			var newvalue := InputCProp();
+			SetObjProperty(what, newproperty[1], newvalue);
+		elseif ((result[0] < 2000) && (result[0] > 1000))		// Deleting CProp
+			var todelete := data[((result[0] - 1000)*2) + 2];
+//			sendsysmessage(who,"Deleting " + todelete);
+			EraseObjProperty(what, todelete);
+		else						// Editing CProp
+			var toedit := data[((result[0] - 2000)*2) + 2];
+//			sendsysmessage(who,"Editing " + toedit);
+			var newvalue := InputCProp();
+			SetObjProperty(what, toedit, newvalue);
+		endif
+	endwhile
+endprogram
+
+function FillDataArray()
+	var properties := GetObjPropertyNames(what);
+	var y := 120;
+	var i := 1;
+	var pos := 1;
+	var page := 2;
+
+	layout[12] := "page 1";
+	var layoutpos := 13;
+	var datapos := 4;
+	foreach property in properties
+		if (pos == 19)
+			layout[layoutpos] := "button 530 495 5540 5541 0 "+ (page) + " 0";		// pagina successiva
+			layout[layoutpos+1] := "page " + page;
+			layout[layoutpos+2] := "button 510 495 5537 5538 0 "+ (page-1) + " 0";	// pagina precedente
+			page := page+1;	
+			layoutpos := layoutpos + 3;
+			pos := 1;
+			y := 120;
+		endif
+		layout[layoutpos] := "button 30 " + y + " 2118 2117 1 0 " + (1000+i);
+		layout[layoutpos+1] := "button 60 " + y + " 2118 2117 1 0 " + (2000+i);
+		layout[layoutpos+2] := "text 90 " + y + " 1500 " + (datapos-1);
+		data[datapos] := CStr(property);
+		layout[layoutpos+3] := "text 260 " + y + " 1500 " + datapos;
+		data[datapos+1] := CStr(GetObjProperty(what, property));
+		y := y + 20;
+		i := i + 1;
+		pos := pos + 1;
+		layoutpos := layoutpos + 4;
+		datapos := datapos + 2;
+	endforeach
+	layout[layoutpos] := "";
+	layout[layoutpos+1] := "";
+	layout[layoutpos+2] := "";
+	layout[layoutpos+3] := "";
+	data[datapos] := "";
+	data[datapos+1] := "";
+endfunction
+
+function InputCProp()
+	var newvalue := SendTextEntryGump(who, "inserire: [formato] [valore]", TE_CANCEL_ENABLE, TE_STYLE_NORMAL, 255, "i=int s=string");
+	newvalue := SplitWords(newvalue);
+	if (!newvalue[2])
+		return "Inserimento Errato";
+	endif
+	var i;
+	for (i:=3; i<=len(newvalue); i:=i+1)
+		newvalue[2] := newvalue[2] + " " + newvalue[i];
+	endfor
+	SendSysMessage(who, "format: ", newvalue[1]);
+	if (newvalue[1] == "i")
+		return CInt(newvalue[2]);
+	else
+		return CStr(newvalue[2]);
+	endif
+endfunction

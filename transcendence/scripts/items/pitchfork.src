@@ -1,0 +1,36 @@
+use uo;
+use os;
+
+include "include/client";
+
+ program pitchfork (who, fork)
+
+ var eqp :=  GetEquipmentByLayer(who, LAYER_HAND2);
+if (eqp.graphic != fork.graphic)
+SendSysMessage(who, "You must equip that to use it!", FONT_NORMAL, 0x005a);
+return;
+endif
+
+var wheat := Target(who);
+
+if (!wheat)
+ SendSysMessage(who, "Cancelled");
+ return;
+endif
+
+if (wheat.graphic == 0x0c55)
+ var quality := GetObjProperty(wheat, "quality");
+ var amt;
+ amt := quality * 50;
+ amt := CInt(amt / 100);
+
+ var wheatseed := CreateItemInBackpack(who, 0xda04, amt);
+ DestroyItem(wheat);
+ CreateItemAtLocation(who.x, who.y, who.z, 0x0f36, 1, who.realm);
+else
+   SendSysMessage(who, "you cannot use it on that!", 0x003, 0x0028);
+   return;
+endif
+endprogram
+      	
+ 

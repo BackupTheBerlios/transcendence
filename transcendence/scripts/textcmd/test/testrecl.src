@@ -1,0 +1,20 @@
+use uo;
+use os;
+use polsys;
+
+include "include/Hallucinations";
+include "include/m2";
+include "include/UO";
+
+program testmem(who)
+ var what := target(who);
+// var where := targetcoordinates(who);
+ var mem := GetObjProperty(what, "mem");
+ if(mem)
+  RecallScene(who, mem);
+ else
+	 sendsysmessage(who, "NO MEM!!");
+	 return;
+ endif	 
+ //SetObjProperty(what, "mem", mem);
+endprogram

@@ -1,0 +1,36 @@
+use uo;
+use os;
+use util;
+
+include "include/packets";
+
+program vision (who);
+
+var graphic;
+var graphics := {0x3c, 0x0015, 0x0ca, 0xcc};
+var i;
+i := 0;
+var char := CreateNpcFromTemplate( "nowalk", who.x - 5, who.y, who.z, 0, who.realm);
+SetName(char, "");
+char.facing := who.facing;
+
+var itm := CreateItemInBackpack( who, 0x203c, 1 );
+itm.color := 1024;
+EquipItem(char, itm );
+char.color := 33784;
+//char.frozen := 1;
+//while(i <= 25)
+
+
+print("vision");
+UpdatePlayer( char, who, 401);
+
+
+
+
+//sleep(2);
+//i := i + 1;
+
+//endwhile
+
+endprogram

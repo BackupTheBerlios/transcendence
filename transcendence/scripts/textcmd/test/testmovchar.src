@@ -1,0 +1,12 @@
+use uo;
+use polsys;
+
+program testpathfind(who)
+
+//var where := targetcoordinates(who);
+
+var pck := CreatePacket(0x97, 2);
+pck.setInt8(1, who.facing);
+
+pck.sendPacket(who);
+endprogram

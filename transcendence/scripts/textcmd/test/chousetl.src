@@ -1,0 +1,7 @@
+use uo;
+use os;
+include "include/particles";
+program testhousetool(who)
+var haus := Target( who);
+sendpacket(who, "BF001100206ae4c4b4040000FFFFFFFFFF");
+endprogram

@@ -1,0 +1,75 @@
+use uo;
+use os;
+use polsys;
+
+include "include/particles";
+
+program sendtt(who, txt)
+
+/*if(!txt)
+txt := "0 104 66 131 18 OK";
+endif
+if (txt == "NO")
+txt := "0 104 66 131 18 NO";
+endif*/
+txt := splitwords(txt);
+var text := splitwords(txt);
+
+var whom := target(who);
+var packet := CreatePacket(0xD6, MSGLEN_VARIABLE);
+packet.setInt16(1, 0);
+print (cstr(packet.getSize()));
+packet.setInt16(3, 1);
+print (cstr(packet.getSize()));
+packet.setInt32(5, whom.serial);
+print (cstr(packet.getSize()));
+packet.setInt16(9, 0);
+print (cstr(packet.getSize()));
+packet.setInt8(11, 0);
+print (cstr(packet.getSize()));
+packet.setInt8(12, 104);
+print (cstr(packet.getSize()));
+packet.setInt8(13, 131);
+print (cstr(packet.getSize()));
+packet.setInt8(14, 18);
+print (cstr(packet.getSize()));
+
+packet.setInt8(15, 0);
+print (cstr(packet.getSize()));
+packet.setInt8(16, 0x0F);
+print (cstr(packet.getSize()));
+packet.setInt8(17, 0xEA); print (cstr(packet.getSize()));
+packet.setInt8(18, 0x1B); print (cstr(packet.getSize()));
+packet.setInt8(19, 0); print (cstr(packet.getSize()));
+packet.setUnicodeString(20, cascz("oggetto"), 0); print (cstr(packet.getSize()));
+packet.setInt8(20, (packet.getSize() - 20)); print (cstr(packet.getSize()));
+packet.setInt8(packet.getSize(), 0); print (cstr(packet.getSize()));
+packet.setInt32(packet.getSize(), 0x00102F32); print (cstr(packet.getSize()));
+packet.setInt8(packet.getSize(), 0); print (cstr(packet.getSize()));
+var start1 := packet.getSize();
+packet.setUnicodeString(packet.getSize(), cascz(txt[1]), 0); print (cstr(packet.getSize()));
+packet.setInt16(packet.getSize(), 9); print (cstr(packet.getSize()));
+packet.setUnicodeString(packet.getSize(), cascz(txt[2]), 0); print (cstr(packet.getSize()));
+
+
+
+
+
+packet.setInt8(packet.getSize(), 0); print (cstr(packet.getSize()));
+packet.setInt32(packet.getSize(), 0); print (cstr(packet.getSize()));
+
+packet.setInt16(1, packet.getSize()); print (cstr(packet.getSize()));
+packet.setInt8(0, 0xD6);
+print (packet);
+print (cstr(packet.getSize()));
+print (cstr(start1));
+
+packet.setInt8(start1, ((packet.getSize() - start1) - 5));
+print ("AOSTOOLTIP4: " + packet);
+packet.sendPacket(who);
+
+print(whom.desc);
+
+
+
+endprogram      

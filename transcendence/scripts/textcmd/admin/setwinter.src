@@ -1,0 +1,9 @@
+use uo;
+use os;
+program setwinter(who);
+var wea := GetGlobalProperty("Weather");
+wea [8] := 2;
+
+SendSysMessage(who, "Winter");
+SetGlobalProperty("Weather", wea);
+endprogram

@@ -1,0 +1,178 @@
+// MYLOOK SCRIPT MADE BY ARTIX
+use uo;
+use os;
+
+
+                 
+
+program mylook (who)
+
+var aname := GetObjProperty(who, "nameA");
+var bname := GetObjProperty(who, "nameB");
+var cname := GetObjProperty(who, "nameC");
+var dname := GetObjProperty(who, "nameD");
+var ename := GetObjProperty(who, "nameE");
+if (!aname)
+ aname := "Unused";
+endif
+if (!bname)
+ bname := "Unused";
+endif
+if (!cname)
+ cname := "Unused";
+endif
+if (!dname)
+ dname := "Unused";
+endif
+if (!ename)
+ ename := "Unused";
+endif 
+var layout := {"page 0",
+                  "resizepic 30 100 5120 470 351",
+                  "text 120 120 90 0",
+                  "text 50 140 90 1",
+                  "text 50 160 90 2",
+                  "text 50 180 90 3",
+                  "text 50 200 90 4",
+                  "text 50 220 90 5",
+                  "text 50 240 90 6",
+                  "text 160 140 90 7",
+                  "text 210 140 90 8",
+                  //"text 50 381 50 9",
+                  "text 250 140 90 9",
+                  "text 250 160 90 10",
+                  "text 250 180 90 11",
+                  "text 250 200 90 12",
+                  "text 250 220 90 13",
+                  "text 250 240 90 14",
+              
+                  "button 160 160 2117 2118 1 0 100",
+                  "button 160 180 2117 2118 1 0 200",
+                  "button 160 200 2117 2118 1 0 300",
+                  "button 160 220 2117 2118 1 0 400",
+                  "button 160 240 2117 2118 1 0 500",
+                  "button 210 160 2117 2118 1 0 101",
+                  "button 210 180 2117 2118 1 0 202",
+                  "button 210 200 2117 2118 1 0 303",
+                  "button 210 220 2117 2118 1 0 404",
+                  "button 210 240 2117 2118 1 0 505"};
+                 
+var data := {"LOOK SELECTION",
+"Position",
+"A",
+"B",
+"C",
+"D",
+"E",
+"Store",
+"Dress",
+"Name",
+aname,
+bname,
+cname,
+dname,
+ename};
+                 
+
+var select := SendDialogGump(who, layout, data);
+
+if (select[0] == 100)
+  StoreLook(who, "A");
+elseif (select[0] == 200) 
+  StoreLook(who, "B");
+elseif (select[0] == 300)
+  StoreLook(who, "C"); 
+elseif (select[0] == 400)
+  StoreLook(who, "D");
+elseif (select[0] == 500);
+  StoreLook(who, "E");
+elseif (select[0] == 101)
+  DressLook(who, "A"); 
+elseif (select[0] == 202)
+  DressLook(who, "B");
+elseif (select[0] == 303)
+  DressLook(who, "C");
+elseif (select[0] == 404)
+  DressLook(who, "D");
+elseif (select[0] == 505)
+  DressLook(who, "E");
+       
+endif
+endprogram
+   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function StoreLook(who, posizione);
+var name := SendTextEntryGump(who, "Please, enter the name for your look template:");
+
+var equipment := {};
+var equipcolor := {};
+var i;
+  for (i := 1; i <= 24; i := i + 1)
+    equipment[i] := GetEquipmentByLayer(who, i);
+    equipcolor[i] := equipment[i].color;
+    equipment[i] := equipment[i].objtype;
+   
+    print(CStr(equipcolor[i]));
+  endfor
+  var hair := GetEquipmentByLayer(who, 11);
+ 
+  print("HAIR COLOR : " + CStr(hair.color));
+  print("HAIR objtype : " + CStr(hair.objtype));
+  var myform := who.graphic;
+  var mycolor := who.color;
+  SetObjProperty(who, "name" + posizione, name);
+  SetObjProperty(who, "graph" + posizione, myform);
+  SetObjProperty(who, "color" + posizione, mycolor);
+  SetObjProperty(who, "equip" + posizione, equipment);
+  SetObjProperty(who, "equipcolor" + posizione, equipcolor );
+endfunction
+
+
+function DressLook(who, pos);
+  print("DRESS");
+  var i;
+  var gr := GetObjProperty(who, "graph" + pos);
+  var col := GetObjProperty(who, "color" + pos);
+  who.graphic := gr;
+  who.color := col;
+  var eqp := GetObjProperty(who, "equip" + pos);
+  var eqpcol := GetObjProperty(who, "equipcolor" + pos);
+  print(CStr(eqp));
+  var theitem;
+  var it;
+  for (i := 1; i <= 24; i := i + 1)
+    theitem := GetEquipmentByLayer(who, i);
+   if (i != 0x15)
+   DestroyItem(theitem);
+    it := CreateItemInBackpack(who, eqp[i]);
+    it.color := eqpcol[i];
+    EquipItem(who, it);
+   endif
+  endfor
+endfunction    

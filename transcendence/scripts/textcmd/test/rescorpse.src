@@ -1,0 +1,29 @@
+use uo;
+use os;
+
+include "include/packets";
+
+program rescorpse(who)
+var corpse := target(who);
+var zombie := CreateNpcFromTemplate( "nymph", corpse.x, corpse.y, corpse.z, 0, who.realm);
+zombie.graphic := corpse.corpsetype;
+zombie.color:=0;
+PlayCharAnim( zombie, 21, 0, 1 );
+var eqitems := getobjproperty(corpse, "equipment");
+var eqp;
+foreach it in eqitems
+eqp := CreateItemInBackpack( who, it[1], 1 );
+eqp.color := it[2];
+equipitem (zombie, eqp);
+endforeach
+var backpack := CreateItemInBackpack( who, 0x0e75 );
+foreach itm in enumerateitemsincontainer(corpse)
+MoveItemToContainer( itm, backpack);
+endforeach
+equipitem(zombie, backpack);
+setobjproperty (zombie, "master", who.serial);
+zombie.script := "tamed";
+restartscript (zombie);
+destroyitem(corpse);
+
+endprogram

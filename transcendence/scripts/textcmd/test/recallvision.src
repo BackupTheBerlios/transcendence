@@ -1,0 +1,140 @@
+use uo;
+use os;
+include "include/Memory";
+program recvis(who)
+var what := Target(who);
+RecallItem(who, what);
+endprogram
+
+function RecallItem(who, itm)
+  var memory := GetObjProperty(itm, "#memory");
+  if (memory)
+    SendSysMessage(who, "Hai una visione");
+    SetObjProperty(who, "#mrecalling", 1);
+    PlaySoundEffectPrivate(who, SFX_FF, who);
+    Freeze(who);
+    var mobilearray := memory[1];
+    var packethexstring;
+    var packethexstringpart1;
+    var packethexstringpart2;
+    var equipmentarray := memory[2];
+    var graphic;
+    var locs := memory[4];
+    recallscene(who, locs[1], locs[2], locs[3]);
+    foreach mobile in ListMobilesNearLocation(who.x, who.y, who.z, 30, who.realm)
+      DeleteObject(who, mobile);
+    endforeach
+    foreach mobile in mobilearray
+      if (mobile[1] == who.serial)
+        packethexstring := "20"+ ConvertIntToHex(mobile[1], 4);
+        if (who.gender)
+          graphic := 600;
+
+        else
+          graphic := 600;
+        endif
+        packethexstring := packethexstring + ConvertIntToHex(graphic, 2);
+        packethexstring := packethexstring +"00";
+        packethexstring := packethexstring + ConvertIntToHex(who.color, 2);
+        packethexstring := packethexstring +"00";
+        packethexstring := packethexstring + ConvertIntToHex(mobile[3], 2);
+        packethexstring := packethexstring + ConvertIntToHex(mobile[4], 2);
+        packethexstring := packethexstring +"0000";
+        packethexstring := packethexstring + ConvertIntToHex(who.facing, 1);
+        packethexstring := packethexstring + ConvertIntToHex(mobile[5], 1);
+        SendPacket(who, packethexstring);
+      endif
+    endforeach
+    foreach mobile in mobilearray
+      if (mobile[1] != who.serial)
+        packethexstringpart1 := "78";
+        packethexstringpart2 := ConvertIntToHex(mobile[1], 4) + ConvertIntToHex(mobile[2], 2);
+        packethexstringpart2 := packethexstringpart2 + ConvertIntToHex(mobile[3], 2);
+        packethexstringpart2 := packethexstringpart2 + ConvertIntToHex(mobile[4], 2);
+        packethexstringpart2 := packethexstringpart2 + ConvertIntToHex(mobile[5], 1);
+        packethexstringpart2 := packethexstringpart2 + ConvertIntToHex(mobile[6], 1);
+        packethexstringpart2 := packethexstringpart2 + ConvertIntToHex(mobile[7], 2);
+        packethexstringpart2 := packethexstringpart2 +"0000";
+        foreach item in equipmentarray
+          if (item[1] == mobile[1])
+            packethexstringpart2 := packethexstringpart2 + ConvertIntToHex(item[2], 4);
+            if (item[5] == 0)
+              graphic := item[3];
+
+            else
+              graphic := item[3] + 32768;
+            endif
+            packethexstringpart2 := packethexstringpart2 + ConvertIntToHex(graphic, 2);
+            packethexstringpart2 := packethexstringpart2 + ConvertIntToHex(item[4], 1);
+            if (item[5] != 0)
+              packethexstringpart2 := packethexstringpart2 + ConvertIntToHex(item[5], 2);
+            endif
+          endif
+        endforeach
+        packethexstringpart2 := packethexstringpart2 +"00000000";
+        var FullPacketHexStringLength := (len(packethexstringpart1) + len(packethexstringpart2)) / 2 + 2;
+        var fullpackethexstring := packethexstringpart1 + ConvertIntToHex(FullPacketHexStringLength, 2) + packethexstringpart2;
+        SendPacket(who, fullpackethexstring);
+      endif
+    endforeach
+    var itemarray := memory[3];
+    foreach item in ListItemsNearLocation(who.x, who.y, who.z, 30, who.realm)
+      if (!item.invisible)
+        DeleteObject(who, item);
+      endif
+    endforeach
+    foreach item in itemarray
+      packethexstringpart1 := "78";
+      packethexstringpart2 := ConvertIntToHex(item[1], 4) + ConvertIntToHex(item[2], 2);
+      packethexstringpart2 := packethexstringpart2 + ConvertIntToHex(item[3], 2);
+      packethexstringpart2 := packethexstringpart2 + ConvertIntToHex(item[4], 2);
+      packethexstringpart2 := packethexstringpart2 + ConvertIntToHex(item[5], 1);
+      packethexstringpart2 := packethexstringpart2 + ConvertIntToHex(item[6], 1);
+      packethexstringpart2 := packethexstringpart2 + ConvertIntToHex(item[7], 2);
+      packethexstringpart2 := packethexstringpart2 +"000000000000";
+      var FullPacketHexStringLength := (len(packethexstringpart1) + len(packethexstringpart2)) / 2 + 2;
+      var fullpackethexstring := packethexstringpart1 + ConvertIntToHex(FullPacketHexStringLength, 2) + packethexstringpart2;
+      SendPacket(who, fullpackethexstring);
+    endforeach
+    var recstop := 0;
+    while ((who.ip) && (recstop == 0))
+      if (YesNo(who, "Vuoi fermare la visione?"))
+        recstop := 1;
+      endif
+    endwhile
+    Thaw(who);
+    PlaySoundEffectPrivate(who, SFX_FE, who);
+    var whox := who.x;
+    var whoy := who.y;
+    var whoz := who.z;
+    if(who.realm == "britannia")
+     MoveCharacterToLocation(who, 5276, 1164, 0);
+    else 
+     MoveObjectToRealm(who,"britannia", 5276, 1164, 0);
+    endif
+    MoveCharacterToLocation(who, whox, whoy, whoz);
+    
+    EraseObjProperty(who, "#mrecalling");
+    SendSysMessage(who, "You stop recalling.");
+  endif
+endfunction
+
+function recallscene(who, x, y, z)
+var packethexstring := "20"+ ConvertIntToHex(who.serial, 4);
+       /* if (who.gender)
+          graphic := 403;
+
+        else
+          graphic := 402;
+        endif*/
+        packethexstring := packethexstring + ConvertIntToHex(600, 2);
+        packethexstring := packethexstring +"00";
+        packethexstring := packethexstring + ConvertIntToHex(who.color, 2);
+        packethexstring := packethexstring +"00";
+        packethexstring := packethexstring + ConvertIntToHex(x, 2);
+        packethexstring := packethexstring + ConvertIntToHex(y, 2);
+        packethexstring := packethexstring +"0000";
+        packethexstring := packethexstring + ConvertIntToHex(who.facing, 1);
+        packethexstring := packethexstring + ConvertIntToHex(z, 1);
+        SendPacket(who, packethexstring);
+endfunction       

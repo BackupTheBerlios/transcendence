@@ -1,0 +1,8 @@
+use uo;
+use os;
+
+include "include/particles";
+
+program fulmine3d(who)
+Play3DLightningBoltEffect(who);
+endprogram

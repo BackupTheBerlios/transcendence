@@ -1,0 +1,8 @@
+use uo;
+use os;
+
+program sethidding(who, text)
+var hid := cint(text);
+var whom := target(who);
+whom.hidden := hid;
+endprogram

@@ -1,0 +1,10 @@
+use uo;
+use os;
+use polsys;
+
+include "include/client3d";
+
+program testchgraph(who, graph)
+graph := cint(graph);
+ChangeCharGraphic(who, graph);
+endprogram

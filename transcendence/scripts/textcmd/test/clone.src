@@ -1,0 +1,81 @@
+use uo;
+use os;
+include "include/coloreffects";
+
+program clonespell (who)
+
+//local who := parms[1];
+
+var victim := Target(who, TGTOPT_CHECK_LOS);
+var colorrange := { 2986, 2987, 2988, 2989, 2999}; //, 2998, 2997, 2996, 2995, 2994, 2993, 2992, 2992, 2993, 2994, 2995, 2996, 2997, 2998, 2999, 2989, 2988, 2987, 2986};
+var enemyequip := {};
+var myequip := {};
+
+var itemdesc := {};
+var eqitem;
+var i;
+var q;
+var cloneditems := {};
+var prename := who.name;
+
+PlaySoundEffect( who, 0x1e2 );
+	sfumature3(who, colorrange, 60, 3);
+for (i := 1; i <= 24; i := i + 1)
+ eqitem := GetEquipmentByLayer(who, i);
+ itemdesc := {eqitem.objtype, eqitem.graphic, eqitem.color, eqitem.script};
+ myequip[i] := itemdesc;
+ if (i!=21)
+ DestroyItem(eqitem);
+ endif
+endfor
+
+var preclonegraph := who.graphic;
+var preclonecolor := who.color;
+//setobjproperty (who, "precloneequipment", myequip);
+
+who.graphic := victim.graphic;
+who.color := victim.color;
+for (q:=1;q<=24;q:=q+1)
+var victimeqp := GetEquipmentByLayer( victim, q );
+
+if (q!=21)
+
+var cloneditem := CreateItemInBackpack( who, victimeqp.objtype, 1 );
+cloneditems[q] := cloneditem;
+cloneditem.color := victimeqp.color;
+EquipItem( who, cloneditem );
+
+endif
+endfor
+
+SetName( who, victim.name );
+PlaySoundEffect( who, 0x1e2 );
+	sfumature3(who, colorrange, 60, 3);
+sleep(10);
+
+PlaySoundEffect( who, 0x1e2 );
+	sfumature3(who, colorrange, 60, 3);
+foreach itm in cloneditems
+
+DestroyItem(itm);
+
+
+endforeach
+who.graphic := preclonegraph;
+who.color := preclonecolor;
+
+foreach preqp in myequip
+var preitm := CreateItemInBackpack( who, preqp[1], 1 );
+preitm.graphic := preqp[2];
+preitm.color := preqp[3];
+preitm.script := preqp[4];
+EquipItem( who, preitm );
+endforeach
+SetName( who, prename );
+PlaySoundEffect( who, 0x1e2 );
+	sfumature3(who, colorrange, 60, 3);
+
+endprogram
+
+
+

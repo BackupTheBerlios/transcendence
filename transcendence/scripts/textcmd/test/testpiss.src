@@ -1,0 +1,9 @@
+use uo;
+use os;
+
+include "include/animations";
+include "include/sexy";
+include "include/packetutils";
+program testpiss(who)
+piss(who);
+endprogram

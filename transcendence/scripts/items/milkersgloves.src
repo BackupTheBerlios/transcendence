@@ -1,0 +1,113 @@
+// ******* Milker's Gloves Script made by Artix *******
+
+use uo;
+use os;
+
+include "include/client";
+include "include/attributes";
+
+ program use_cowgloves (char, gloves)
+ var eqglov := GetEquipmentByLayer(char, 7);
+ if (eqglov != gloves)
+ SendSysMessage(char, "You must equip those gloves to do use it!", FONT_NORMAL, 0x005a);
+ return;
+ endif
+ SendSysMessage(char, "Selct an animal to milk", FONT_NORMAL, 0x005a);
+
+ var the_animal := Target(char, TGTOPT_CHECK_LOS);
+ if (!the_animal)
+  SendSysMessage(char, "Target Cancelled!", FONT_NORMAL, 0x005a);
+  return;
+ elseif (!the_animal.npctemplate)
+  SendSysMessage(char, "You can only use these on animals!", FONT_NORMAL, 0x005a);
+  return;
+ elseif ((the_animal.graphic != 0xd8 ) && (the_animal.graphic != 0xe7) && (the_animal.graphic != 0xcf))
+  SendSysMessage(char, "These are only for cows or sheeps!", FONT_NORMAL, 0x005a);
+  return;
+ elseif (the_animal.master != char)
+  SendSysMessage(char, "That's not your animal!", FONT_NORMAL, 0x005a);
+  return;
+ endif
+ SendSysMessage(char, "Selct a Tub to put the milk in", FONT_NORMAL, 0x005a);
+
+ var the_tub := Target(char);
+
+ if (!the_tub)
+   SendSysMessage(char, "Target Cancelled!", FONT_NORMAL, 0x005a);
+   return;
+ elseif (the_tub.objtype != 0x3a84)   
+   SendSysMessage(char, "That's not a Tub!", FONT_NORMAL, 0x005a);
+   return;
+ 
+ elseif ( Distance(the_tub, the_animal) > 1)
+   SendSysMessage(char, "You must put the tub under the animal!", FONT_NORMAL, 0x005a);
+   return;
+ endif
+
+
+ var dist := Distance(char, the_animal);
+ if (dist > 1)
+  SendSysMessage(char, "That's too far away!", FONT_NORMAL, 0x005a);
+  return;
+ endif
+ var the_skill := GetEffectiveSkill(char, SKILLID_ANIMALLORE);
+ if (the_skill < 40)
+  SendSysMessage(char, "You have no chance to get milk from that animal!", FONT_NORMAL, 0x005a);
+  return;
+ endif
+  var grass := GetObjProperty(the_animal, "eatengrass");
+  var grassquality := GetObjProperty(the_animal, "milkquality");
+ 
+  if (!grass || (grass < 5))
+    SendSysMessage(char, the_animal.name + " has not enough milk, try to make it graze!", FONT_NORMAL, 0x005a);
+    return;
+  endif
+ 
+ 
+  var i;
+  var success := CheckSkill(char, SKILLID_ANIMALLORE, 60, 1000);
+  SendSysMessage(char, "You're trying to milk " + the_animal.name, FONT_NORMAL, 0x005a);
+  for (i := 1; i <= 5; i := i + 1)
+  if ((the_animal.graphic == 0xd8) || (the_animal.graphic == 0xe7))
+   PlaySoundEffect(char, 0x0079);
+  elseif (the_animal.graphic == 0xcf)
+   PlaySoundEffect(char, 0x00d7);
+  endif
+  sleep(3);
+  endfor
+  if (success)
+   SendSysMessage(char, "You got the Milk!", FONT_NORMAL, 0x005a);
+   SetObjProperty(the_animal, "eatengrass", grass - 5);
+   var milktype;
+   case (the_animal.graphic)
+     0xd8 : milktype := "cow";
+     0xe7 : milktype := "cow";
+     0xcf : milktype := "sheep";
+   endcase
+    
+   the_tub.name := milktype + "'s Milk";
+   the_tub.graphic := 0x3a85;
+   SetObjProperty(the_tub, "type", milktype);
+   
+   var rawquality :=  CDbl(CDbl(grassquality)/grass);
+   var quality := rawquality * 100;
+   quality := CInt(quality);
+   SetObjProperty(the_tub, "milkquality", quality);
+    SetObjProperty(the_animal, "milkquality", grassquality - 5);
+   var checkzero := GetObjProperty(the_animal, "milkquality)");
+   if (checkzero < 0)
+    SetObjProperty(the_animal, "milkquality", 0);
+   endif 
+   if (GetObjProperty(the_animal, "desease") == 1)
+    SetObjProperty(the_tub, "infect", 1);
+   endif
+   SetObjProperty(the_tub, "quantity", 5);
+   print("startscript");
+   start_script( ":cooking:rancidmilk", the_tub );
+   print("startscript");
+  else
+   SendSysMessage(char, "You failed!", FONT_NORMAL, 0x005a);
+    return;
+  endif
+ endprogram
+   

@@ -1,0 +1,26 @@
+use os;
+use uo;
+use util;
+
+include "include/client";
+
+program textcmd_makerand( who, params )
+    params := SplitWords( params );
+    var howmany := CInt( params[1] );
+    var template := params[2];
+   
+    SendSysMessage( who, "Creating " + howmany + " " + template + " npcs" );
+   
+    set_critical(0);
+   
+    while (howmany > 0)
+        var x := RandomInt( 6144 );
+        var y := RandomInt( 4096 );
+        var z := GetMapInfo( x, y, who.realm ).z;
+        var npc := CreateNpcFromTemplate( template, x, y, z, 0, who.realm );
+        if (npc)
+            howmany := howmany - 1;
+        endif
+    endwhile // FIXME if 'endfor' here, prints an incorrect error!
+    SendSysMessage( who, "Done creating npcs!" );
+endprogram

@@ -1,0 +1,13 @@
+use uo;
+use os;
+use polsys;
+
+program changesky(who, text)
+var pck := CreatePacket(0xF0, 6);
+pck.setInt16(1, 0);
+pck.setInt16(3, 1);
+pck.setInt8(5, cint(text));
+pck.setInt16(1, pck.getSize());
+pck.sendPacket(who);
+
+endprogram

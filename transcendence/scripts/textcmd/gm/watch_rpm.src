@@ -1,0 +1,8 @@
+use uo;
+use os;
+
+program watch_rpm(who)
+
+SendSysMessage( who, "RPM: " + cstr(system_rpm() ), 3, 38);
+
+endprogram

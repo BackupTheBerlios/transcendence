@@ -1,0 +1,13 @@
+use uo;
+use os;
+
+program getcharalign(who, text)
+var whom := target(who);
+text := splitwords(text);
+ if(cint(text[1]) == 1)
+  whom.setcriminal(cint(text[2]));
+ endif
+  if(cint(text[1]) == 2)
+  whom.murderer := cint(text[2]);
+ endif
+endprogram

@@ -1,0 +1,10 @@
+use uo;
+use os;
+
+program rain(who, type)
+
+
+		SetRegionWeatherLevel( "Background", type, 15, 0, -1);
+
+
+endprogram

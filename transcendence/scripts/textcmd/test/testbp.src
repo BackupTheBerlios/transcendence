@@ -1,0 +1,7 @@
+use uo;
+use os;
+
+program testbp(who)
+var w := targetcoordinates(who);
+CreateNpcFromTemplate( ":bodypieces:torso", w.x, w.y, w.z);
+endprogram

@@ -1,0 +1,15 @@
+use uo;
+use os;
+
+program testmulti(who)
+
+var house := SystemFindObjectBySerial( 0x6ae4c4b4 );
+
+print ("HOUSE:");
+print ("Graphic:" + cstr(house.graphic));
+print ("Objtype:" + cstr(house.objtype));
+
+SetObjProperty(house, "Prova", "Ciao");
+
+print ("Prop:" + GetObjProperty( house, "Prova" ));
+endprogram

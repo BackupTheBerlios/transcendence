@@ -1,0 +1,9 @@
+use uo;
+use os;
+
+program tesths(who)
+var parms := {who,  0x6ae4c4b4};
+
+start_script( ":CustomHouseDesignTool:StartCustomizing", parms );
+
+endprogram

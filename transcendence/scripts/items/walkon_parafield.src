@@ -1,0 +1,61 @@
+////////
+// paralyze.src
+//
+// Paralyzes the target for 15 seconds.
+//
+// Author: Racalac, 4/29/99
+//
+// Note: DW, you should REALLY write your own comment headers :P
+////////
+
+
+use uo;
+use os;
+
+include "include/client";
+include "include/objtype";
+include "include/skillpoints";
+
+
+program walkon_parafield( cast_on, field)
+        var creater := GetObjProperty(field, "creater");
+        var boss := SystemFindObjectBySerial(CInt(creater));
+        if (boss)
+                SetScriptController(boss);
+        endif
+var leave := 0;
+while (!leave)
+
+        var points := get_default_points(SKILLID_MAGICRESISTANCE);
+         if (CheckSkill(cast_on, SKILLID_MAGICRESISTANCE, 60, points))
+                PrintTextAbovePrivate(cast_on, "You resist the spell", cast_on);   
+         else
+                PlayStationaryEffect( cast_on.x, cast_on.y, cast_on.z, FX_CURSE_EFFECT, 10, 0xa, 0, cast_on.realm );
+                PlaySoundEffect( cast_on, SFX_SPELL_PARALYZE );
+                cast_on.setParalyzed(1);
+                PrintTextAbovePrivate(cast_on, "You are paralyzed!", cast_on);
+                Detach();
+                sleep( 15 );
+                cast_on.setParalyzed(0);
+         endif
+       
+        sleepms(50);
+        var items := ListItemsAtLocation( cast_on.x, cast_on.y, cast_on.z, cast_on.realm );
+        var inside := 0;
+        foreach item in items
+            if( item.objtype == UOBJ_PARAFIELD_NS || item.objtype == UOBJ_PARAFIELD_EW )
+                inside := 1;
+            endif
+        endforeach
+
+        if ((cast_on.x == field.x) && !inside)
+            leave := 1;
+        elseif( !inside )
+            break;
+        endif
+endwhile           
+               
+       
+       
+endprogram
+

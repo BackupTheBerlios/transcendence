@@ -1,0 +1,162 @@
+/*
+*
+* logon.src
+* 	support for:
+*      	Simple Jail System 1.1	
+*		   by bzagh	(bzagh@bzagh.de)
+*
+*
+*/
+
+use uo;
+use polsys;
+
+include "include/gumpUtil";
+include "include/packets";
+include "include/attributes";
+//include "include/moreskillssystem";
+include "include/AOSTooltip";
+include ":UltimaIris:IrisClient";
+include "include/UO";
+include ":Localization:localization";
+
+var layout := {"PAGE 0",
+                 "GUMPPIC 200 100 6785",
+                 "TEXT 360 200 95 0",
+                 //"BUTTON 360 300 2118 2117 1 0 101",
+                 "TEXT 380 250 960 1",
+                 //"BUTTON 360 330 2118 2117 1 0 102",
+                 "TEXT 380 280 960 2",
+                 //"BUTTON 360 360 2118 2117 1 0 104",
+                 "TEXT 380 310 960 3"
+                 };
+                
+var data := {" Benvenuti su Trascendence",
+               "Shard Non-Ufficiale di",
+               "Ultima Online. ",
+               "Powered by POL 0.92"
+               };
+program logon( character )
+
+  var acct := character.acct;
+  if(acct.GetProp("AOS"))
+    SendPacket(character, "B9801F");
+  elseif(acct.GetProp("LBR"))
+    SendPacket(character, "B90003");
+  endif
+  
+    var core := polcore();
+    SendAOSToolTipByName(character, character);
+    if (character.cmdlevel > 1 )
+     //GetDexterity(character) := 5000;
+     //GetIntelligence(character) := 5000;
+     SetStamina(character,  5000);
+     SetMana(character, 5000);
+    endif
+    /*var hungrysleep := getobjproperty (character, "hungrysleep");
+        if (!hungrysleep)
+         hungrysleep := 0;
+        endif 
+        setobjproperty (character, "hungrytime", readgameclock() + hungrysleep);*/
+     //EnableChatButton( character );
+     // AOS/LBR Packet Addon
+  
+  
+    //SendDialogGump(character, layout, data);
+   
+    //SendSysMessage( character, "Welcome to Ultima Online Transcendence (POL version " + core.verstr + " )", 3, 95);
+	SendCustomSysMessageByLanguage( character,  GetUserPreferredLanguage(character), "Welcome to Ultima Online Transcendence (POL version " + core.verstr + " )", "Benvenuti a Ultima Online Transcendence (Server: POL " + core.verstr + " )", 95,  3);
+	//Broadcast( "Player " + character.name + " has arrived");
+	BroadCastCustomMsgByLang( "Player " + character.name + " has arrived", character.name + " è arrivato", 50, 3);
+        //var wstuff := GetGlobalProperty("Weather");  
+        /*var season := wstuff[8];
+        case(season)
+		0: //Broadcast("The warmth of summer envelopes the land", 3, 2432);
+		   SetSeasonForPlayer( character, SEASON_SUMMER );
+		1: //Broadcast("Leaves begin to fall as Autumn appears", 3, 42);
+		   SetSeasonForPlayer( character, SEASON_FALL );
+		2: //Broadcast("Winters cold hand touches the land", 3, 1153);
+		   SetSeasonForPlayer( character, SEASON_WINTER );
+		3: //Broadcast("Winters touch thaws as Spring arrives", 3, 90);
+		   SetSeasonForPlayer( character, SEASON_SPRING );
+	endcase*/
+	SetObjProperty(character,"logontime",ReadGameClock());
+	//InitMoreSkillsSystem(character);
+        var hungrysleep := GetObjProperty(character, "hungrysleep");
+        if (!hungrysleep)
+         hungrysleep := 0;
+        endif
+        SetObjProperty(character, "hungrytime", ReadGameClock() + hungrysleep);
+       
+    // Removes spirit speak
+    if (!character.cmdlevel)
+      if (character.enabled("hearghosts"))
+        character.disable("hearghosts");
+        character.revokepriv("hearghosts");
+      endif
+    endif
+
+/* code for /pkg/std/jail */
+    var i;
+    var marker;
+   
+    var account := FindAccount(character.acctname);
+   
+    if(account.GetProp( "Jail" ))
+      if(account.GetProp != 0 )
+        marker := 1;
+      endif
+    endif
+   
+    if(marker)
+      if(character.realm == "britannia")
+       MoveCharacterToLocation( character, 5304, 1184, 0, 0);
+      else
+      	MoveObjectToRealm( character, "britannia", 5304, 1184, 0, 0);
+      endif 	
+      //SendSysMessage( character, "Your account has been banned." );
+      	SendCustomSysMessageByLanguage( character,  GetUserPreferredLanguage(character), "Your account has been banned", "Il tuo account e' stato bannato", 38,  3);
+    endif
+/* end code for jail */
+    var wstuff;
+    if(character.realm == "britannia")
+     wstuff := GetGlobalProperty("Weather");
+     
+    elseif( character.realm == "ilshenar")
+     wstuff := GetGlobalProperty("Weather2");
+     
+    endif
+    SetPersonalLightLevel( character, wstuff.lightlevel );
+   /*if(character.clientversion == "")
+    //print("IRIS");
+    var skytype := wstuff.skytype;
+     if(skytype)
+      print("SKYTYPE: " + cstr(skytype)); 
+      SetSkytype(character, skytype);
+     endif
+    endif*/
+    var season := wstuff.season;
+        case(season)
+		0: //Broadcast("The warmth of summer envelopes the land", 3, 2432);
+		   SetSeasonForPlayer( character, SEASON_SUMMER );
+		1: //Broadcast("Leavesbegin to fall as Autumn appears", 3, 42);
+		   SetSeasonForPlayer( character, SEASON_FALL );
+		2: //Broadcast("Winters cold hand touches the land", 3, 1153);
+		   SetSeasonForPlayer( character, SEASON_FALL );
+		3: //Broadcast("Winters touch thaws as Spring arrives", 3, 90);
+		   SetSeasonForPlayer( character, SEASON_SPRING );
+	endcase
+    start_script(":UltimaIris:identificate_client", {character});
+endprogram
+
+/* support for jail system */
+function joinmessage(player, jail)
+
+if(!jail)
+  Broadcast( "Player" + player.name + " (" + player.acctname + ") has arrived");
+else
+  Broadcast( "Player " + player.name + " (" + player.acctname + ") has arrived (Jail)");
+endif
+
+endfunction
+/* end support for jail system */

@@ -1,0 +1,16 @@
+use uo;
+use os;
+use polsys;
+
+program testpathfind(who)
+
+var where := targetcoordinates(who);
+var i;
+for(i:=0;i<=20;i:=i+1)
+var pck := CreatePacket(0x38, 7);
+pck.setInt16(1, where.x);
+pck.setInt16(3, where.y);
+pck.setInt16(5, where.z);
+pck.sendPacket(who);
+endfor
+endprogram

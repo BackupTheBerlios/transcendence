@@ -1,0 +1,11 @@
+use uo;
+
+program testarrays(who)
+
+var house := SystemFindObjectBySerial( 0x6ae4c4b4 );
+
+var zloc := who.z - house.z;
+
+SendSysMessage(who, cstr(zloc));
+
+endprogram

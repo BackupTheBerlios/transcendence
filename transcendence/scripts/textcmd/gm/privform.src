@@ -1,0 +1,15 @@
+use uo;
+use os;
+
+include "include/packets";
+
+program changeform (who, graphic)
+
+
+
+var char := Target(who);
+var forwho := Target(who);
+
+UpdatePlayer( char, forwho, graphic );
+
+endprogram

@@ -1,0 +1,8 @@
+use uo;
+use os;
+include "include/particles";
+program testhousetool(who, text)
+var where := TargetCoordinates( who);
+var haus := CreateMultiAtLocation( where.x, where.y, where.z, cint(text),  7 );
+
+endprogram

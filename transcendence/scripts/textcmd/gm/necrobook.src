@@ -1,0 +1,16 @@
+use uo;
+use os;
+
+program createnecrobook(who)
+
+var book := CreateItemInContainer( who.backpack, 0x2253, 1 );
+var spells := {};
+var i;
+
+for (i := 1; i <= 24; i := i + 1)
+ spells.append(1);
+endfor
+SetObjProperty(book, "spells", spells);
+
+
+endprogram

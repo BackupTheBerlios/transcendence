@@ -1,0 +1,8 @@
+use uo;
+use os;
+
+include "include/attributes";
+
+program testnewskills(who, text)
+sendsysmessage(who, cstr(GetEffectiveSkill(who, cint(text))));
+endprogram

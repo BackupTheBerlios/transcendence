@@ -1,0 +1,39 @@
+use uo;
+use os;
+use polsys;
+
+include "include/particles";
+
+program mov3d(who, text)
+if (!text)
+sendsysmessage(who, "Formato Errato");
+return;
+endif
+text := splitwords (text);
+
+var speed;
+/*var effect := cint (0x36d4);
+var translucent := 0; 
+var color := cint (text[4]);
+var speed := cint (text[5]);
+var p1 := cint (text[1]);
+var p2 := cint (text[2]);
+var p3 := cint (text[3]);*/
+var f1 := cint(text[1]);
+/*var f2 := cint(text[2]);
+var f3 := cint(text[3]);
+var f2d := cint(text[4]);
+var speed := cint(text[5]);*/
+//var layer := cint(text[2]);
+if (!speed)
+speed := 10;
+endif
+var trg := target (who);
+if(!trg)
+sendsysmessage(who, "cancelled");
+return;
+endif
+//PlayMovingParticleEffect(who, trg, f2d, f1, f2, f3, speed);
+ParticleMovingEffect(who, trg, 0x379F,  f1, explode := 0, explodefx := 5044,speed := 10, duration := 0, fstrike := 0, fixdir := 0);
+sendsysmessage(who, "OK!!");
+endprogram

@@ -1,0 +1,35 @@
+use uo;
+use os;
+
+program changerealm(who, text)
+
+ if(!text)
+  return;
+ endif
+
+
+ text := splitwords(text);
+ 
+ if(text.size() < 4)
+ sendsysmessage(who, "more params needed!");
+ return;
+ endif
+ 
+ var realm := cint(text[1]);
+ var x := cint( text[2]);
+ var y := cint( text[3]);
+ var z := cint( text[4]);
+ 
+ var realmstr;
+ 
+ case(realm)
+  0: realmstr := "britannia";
+  1: realmstr := "britannia_alt";
+  2: realmstr := "ilshenar";
+  3: realmstr := "malas";
+ endcase
+ 
+ 
+ MoveObjectToRealm( who, realmstr, x, y, z, MOVECHAR_FORCELOCATION );
+
+endprogram

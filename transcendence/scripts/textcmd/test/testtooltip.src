@@ -1,0 +1,17 @@
+use uo;
+use os;
+use polsys;
+
+program testtooltip(who)
+var what := target(who);
+var packet := CreatePacket(0xb7, MSGLEN_VARIABLE);
+packet.setInt16(1, 0);
+packet.setInt32(3, what.serial);
+print(what.name);
+packet.setUnicodeString(7, cascz(what.name),1);
+packet.setInt8((packet.getsize()), 0x33 );
+packet.setInt8((packet.getsize()), 0 );
+packet.setInt16(1, packet.getSize());
+print(packet);
+packet.sendPacket(who);
+endprogram

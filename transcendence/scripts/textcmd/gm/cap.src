@@ -1,0 +1,209 @@
+use basic;
+use cfgfile;
+use uo;
+use os;
+include "include/client";
+
+var layout := array(
+"page 0",
+"nodispose",
+"resizepic 230  10 5100 380  30",
+"resizepic 230  50 5100 380 350",
+"resizepic 230  50 5100 380  30",
+"resizepic 230 410 5100 380  30",
+"text 240 15 80 0",
+"text 240 55 50 1",
+"text 265 415 50 2",
+"button 240 417 2118 2117 1 0 -1"
+);
+
+var data := array(
+       "CAP - Copy And Paste               by Fitzban",
+       "Copy Template Name                      Paste",
+       "New Copy Template ?"
+);
+
+program textcmd_CopyAndPaste (who)
+
+    FillInArrays();
+    var result := SendDialogGump(who, layout, data);
+   
+    if (result[0] > 0)
+		var x:= who.x;
+		var y:= who.y;
+		var z:= who.z;
+
+		var prova := ReadConfigFile("prova");
+	    var keys  := GetConfigStringKeys(prova);
+	    var tag   := keys[result[0]];
+
+		var obj		:= GetConfigStringArray(FindConfigElem(prova,tag), "objtype");
+		var xval		:= GetConfigStringArray(FindConfigElem(prova,tag), "x");
+		var yval		:= GetConfigStringArray(FindConfigElem(prova,tag), "y");
+		var zval		:= GetConfigStringArray(FindConfigElem(prova,tag), "z");
+		var facing	:= GetConfigStringArray(FindConfigElem(prova,tag), "facing");
+		var graphic	:= GetConfigStringArray(FindConfigElem(prova,tag), "graphic");
+		var color		:= GetConfigStringArray(FindConfigElem(prova,tag), "color");
+		var name		:= GetConfigStringArray(FindConfigElem(prova,tag), "name");
+		var amount	:= GetConfigStringArray(FindConfigElem(prova,tag), "amount");
+		var movable	:= GetConfigStringArray(FindConfigElem(prova,tag), "movable");
+	
+
+		var i;
+		for (i:=1; i<=len(obj); i:=i+1)
+			//SendSysMessage (who, i+" --> " + obj[i] + " (" + xval[i] + "," + yval[i] + "," + zval[i] + ")");
+			var newob		:= CreateItemAtLocation(CInt(xval[i])+x, CInt(yval[i])+y, CInt(zval[i])+z, CInt(obj[i]), CInt(amount[i]), who.realm);
+			newob.facing 	:= CInt(facing[i]);
+			newob.graphic 	:= CInt(graphic[i]);
+			newob.color 	:= CInt(color[i]);
+			newob.name	 	:= name[i];
+			newob.movable 	:= CInt(movable[i]);
+		
+
+			PlaySoundEffect(newob, SFX_SPELL_EXPLOSION );
+			PlayStationaryEffect( newob.x,newob.y,newob.z, FX_EXPLODE_3, 7, 0x10, 0, newob.realm );
+			sleepms(30);
+		endfor
+		MoveCharacterToLocation(who, x, y, z);
+	elseif (result[0] == -1)
+		var prova := ReadConfigFile("prova");
+	    var keys  := GetConfigStringKeys(prova);
+		var key;
+		var stop;
+		var tag;
+	
+		while (1)
+			stop := 1;
+			tag := RequestInput(who, who.backpack, "Insert the Copy Template Name:");
+			foreach key in keys
+				if (upper(key) == upper(tag))
+					stop := 0;
+				endif
+			endforeach
+			if (stop == 1)
+				break;
+			endif
+			SendSysMessage(who, "Copy Template Name already existing...");
+		endwhile
+	
+		var range  := CInt(RequestInput(who, who.backpack, "Insert the range of scan: "));
+		var floors := CInt(RequestInput(who, who.backpack, "How Many floors: "));
+
+        var props array;
+        var prop array;
+        prop.+name;
+        prop.+value;
+       
+        var propcount := 0;
+
+		var i;
+		for (i:=0; i < floors; i:=i+1)
+			foreach obj in ListItemsNearLocation(who.x, who.y, who.z+(i*20), range, who.realm)
+				prop.name  := "objtype";
+				prop.value := obj.objtype;
+				propcount := propcount + 1;
+				props[ propcount ] := prop;
+				prop.name  := "x";
+				prop.value := obj.x - who.x;
+				propcount := propcount + 1;
+				props[ propcount ] := prop;
+				prop.name  := "y";
+				prop.value := obj.y - who.y;
+				propcount := propcount + 1;
+				props[ propcount ] := prop;
+				prop.name  := "z";
+				prop.value := obj.z - who.z;
+				propcount := propcount + 1;
+				props[ propcount ] := prop;
+				prop.name  := "facing";
+				prop.value := obj.facing;
+				propcount := propcount + 1;
+				props[ propcount ] := prop;
+				prop.name  := "graphic";
+				prop.value := obj.graphic;
+				propcount := propcount + 1;
+				props[ propcount ] := prop;
+				prop.name  := "color";
+				prop.value := obj.color;
+				propcount := propcount + 1;
+				props[ propcount ] := prop;
+				prop.name  := "name";
+				prop.value := obj.name;
+				propcount := propcount + 1;
+				props[ propcount ] := prop;
+				prop.name  := "amount";
+				prop.value := obj.amount;
+				propcount := propcount + 1;
+				props[ propcount ] := prop;
+				prop.name  := "movable";
+				prop.value := obj.movable;
+				propcount := propcount + 1;
+				props[ propcount ] := prop;
+			endforeach
+		endfor
+
+        AppendConfigFileElem( "prova", "Object", tag, props );
+
+
+    endif
+
+endprogram
+
+function FillInArrays()
+
+	UnloadConfigFile("prova");
+	var prova := ReadConfigFile("prova");
+
+    var keys := GetConfigStringKeys(prova);
+    var datalen;
+    var layoutlen;
+    var prev_y := CInt(65);
+    var datindx;
+    var buttonret:=1;
+    var playercount:=0, playerdone:=0, pagecount:=1;
+
+    layout[GetLayoutLength()+1] := "page " + pagecount;
+    if( len(keys) > 15)
+        layout[GetLayoutLength()+1] := "button 580 415 5540 5541 0 " + (pagecount + 1);
+    endif
+   
+    foreach key in keys
+
+	    playercount := playercount + 1;
+    	playerdone := playerdone +1;
+
+        datalen := GetDataLength();
+        layoutlen := GetLayoutLength();
+
+        datindx := datalen+1;
+        data[datindx] := key;
+        if(playerdone>15)
+	    	playerdone :=1;
+            pagecount := pagecount + 1;
+            layout[GetLayoutLength()+1] := "page " + pagecount;
+            prev_y := 65;
+            //add page turners
+
+            layout[GetLayoutLength()+1] := "button 560 415 5537 5538 0 " + (pagecount - 1);
+            if( len(keys) > playercount + 15)
+	            layout[GetLayoutLength()+1] := "button 580 415 5540 5541 0 " + (pagecount + 1);
+            endif
+        endif
+
+        layout[GetLayoutLength()+1] := ("text 240 " + CStr(prev_y + 20) + " 120 " + datalen);
+        layout[GetLayoutLength()+1] := ("button 575 " + CStr(prev_y + 25) + " 2118 2117 1 0 " + buttonret);
+
+        prev_y := prev_y + 20;
+        buttonret := buttonret + 1;
+
+    endforeach
+
+endfunction
+
+function GetLayoutLength();
+    return (len(layout));
+endfunction
+
+function GetDataLength();
+    return (len(data));
+endfunction

@@ -1,0 +1,4 @@
+PStudio file format:
+
+0x50: particle types (1-5)
+0x4c: particle number

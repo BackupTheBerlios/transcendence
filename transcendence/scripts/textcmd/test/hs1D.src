@@ -1,0 +1,7 @@
+use uo;
+use os;
+
+program testhstool(who)
+sendpacket(who, "BF000D001D6ae4c4b400000001");
+//sendpacket(who, "D8002000006ae4c4b4000000000003000F000800000700080001070008000200");
+endprogram

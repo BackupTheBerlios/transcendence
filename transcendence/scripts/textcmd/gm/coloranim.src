@@ -1,0 +1,22 @@
+use uo;
+use os;
+
+include "include/packets";
+
+program testcoloranim (who, text)
+
+text := SplitWords(text);
+
+
+
+var effect := CInt(text[1]);
+var translucent := CInt(text[3]);
+var color := CInt(text[2]);
+if (!translucent)
+ translucent := 0;
+endif
+var trg := Target(who);
+
+PlayMovingEffectHuefx( who, trg, effect, 4, 
+0, 0, color, translucent);
+endprogram

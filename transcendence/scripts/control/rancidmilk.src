@@ -1,0 +1,13 @@
+use uo;
+use os;
+
+
+program make_rancidmilk (milk)
+
+sleep(60);
+print("rancid");
+
+milk.graphic := 0x3a86;
+SetName(milk, "rancid milk");
+milk.usescript := "makebutter";
+endprogram

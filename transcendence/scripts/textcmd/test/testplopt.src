@@ -1,0 +1,30 @@
+use uo;
+use os;
+
+program testplopt(who)
+ 
+ var l := 
+ {
+  "page 0",
+
+  "resizepic 10 50 83 90 40",
+  "checkertrans 10 50 90 40",
+  "text 24 59 1153 0",
+  "button 72 62 " + cstr(0x25e8) + " " + cstr(0x25e9) + " 1 1 2"
+ };
+ 
+ var res := SendDialogGump( who, l, {"Options"} );
+ if(res[0] == 2)
+  l := 
+ {
+  "page 0",
+ 
+  "resizepic 10 50 83 150 300",
+  "checkertrans 10 50 150 300",
+  "text 24 59 1153 0",
+  "button 142 62 " + cstr(0x25e8) + " " + cstr(0x25e9) + " 1 1 1"
+ };
+ res := SendDialogGump( who, l, {"Options"} );
+ endif
+ 
+endprogram

@@ -1,0 +1,7 @@
+use uo;
+
+program getclient(who)
+//var whom := target(who);
+sendsysmessage(who, "Your Client Version: " + who.clientversion, 3, 90);
+ 
+endprogram

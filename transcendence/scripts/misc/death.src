@@ -1,0 +1,209 @@
+// Modified 10-28-2000 by Michael Branin
+// - Added Dundee's zap storage areas
+// - Added Code necessary Region Spawner code that was missing
+
+use uo;
+use cfgfile;
+use util;
+use os;
+use polsys;
+
+include "include/starteqp";
+include "include/NPCBackpacks";
+include "include/spawnnet";
+include "include/particles";
+
+program npcdeath(corpse)
+
+	set_critical(1);
+	spawnnet_clear(corpse);
+	dismount(corpse);
+
+	set_critical(0);
+
+//play deathsound
+PlaySoundEffect(corpse, CInt(ReadConfigFile("::npcdesc")[GetObjProperty(corpse,"npctemplate")].DeathSound));
+
+        var linked := GetObjProperty(corpse, "LinkedAura");
+        
+        if(linked)
+         var critt := SystemfindObjectBySerial(linked);
+         ApplyRawDamage(critt, GetHp(critt) + 20);
+        endif
+//Check if corpse was a regionspawner spawn
+	if ( GetObjProperty( corpse, "regspawn" ) )
+		var spawnname := GetObjProperty( corpse, "regspawn" );
+		if ( GetGlobalProperty(spawnname) )
+			var numspawns := CInt(GetGlobalProperty(spawnname))-1;
+			SetGlobalProperty(spawnname,numspawns);
+		else
+			EraseGlobalProperty(spawnname);
+		endif
+	endif
+
+var eqpitems := {};
+
+foreach itm in enumerateitemsincontainer(corpse)
+if (itm.layer>0)
+eqpitems.append ({itm.graphic, itm.color});
+
+endif
+endforeach
+setobjproperty (corpse, "equipment", eqpitems);
+
+if (GetObjProperty(corpse, "rise"))
+        var parms := {};
+        parms[1] := corpse.x;
+        parms[2] := corpse.y;
+        parms[3] := corpse.z;
+        parms[4] := GetObjProperty(corpse, "rise");
+        parms[5] := corpse;
+        start_script("misc/rise", parms);
+endif
+        if (GetObjProperty(corpse, "guardkill"))
+                DestroyItem(corpse);
+                return;
+        endif
+
+    MoveBackpackToCorpse(corpse);
+//Dundee's Zap Storage Areas (Searches for and deletes npc Storage areas)
+	zapstorageareas(corpse);
+    if( GetObjProperty( corpse, "summoned" ) )
+       DestroyItem( corpse );
+    elseif( GetObjProperty( corpse, "nocorpse" ) )
+       MakeLoot(corpse, "");
+       foreach item in EnumerateItemsInContainer( corpse );
+          MoveItemToLocation( item, corpse.x, corpse.y, corpse.z, 0 );
+       endforeach
+       DestroyItem( corpse );
+    else
+       MakeLoot(corpse, "");
+//treasuremaps:
+	var corpseof := GetObjProperty(corpse,"npctemplate");
+	foreach item in EnumerateItemsInContainer( corpse );
+		case (item.objtype)
+			0x6001:
+			0x6002:
+			0x6003:
+			0x6004:
+			0x6005:	item.name := item.desc + " from " + corpse.desc +" (" + corpseof + ")";
+				SetObjProperty(item,"wherefrom",corpse.desc +" (" + corpseof + ")");
+		endcase
+	endforeach
+
+    endif
+if(GetObjProperty(corpse, "NecroSummoned"))
+sleep(1);
+ParticleStationaryEffect(corpse.x, corpse.y, corpse.z, 9963, corpse.realm);
+endif
+if(GetObjProperty(corpse, "nocorpse"))
+ destroyitem(corpse);
+endif
+//EraseObjProperty(ghost, "nocorpse");
+endprogram
+
+function dismount(corpse)
+
+	var mount := 0;GetEquipmentByLayer( corpse, 25 );
+	foreach item in EnumerateItemsInContainer(corpse)
+		if (item.objtype == 0xf021)
+			mount := item;
+			break;
+		endif
+	endforeach
+	if (!mount)
+		return;
+	endif
+
+	var critter := "";
+	case (mount.graphic)
+	0x3ffc: critter := "undeadhorse";
+	0x3ffd: critter := "unicorn2";
+	0x3ea2:
+	         if (mount.color == 2913)
+	          critter := "whitehorse";
+	         elseif (mount.color == 1154)
+	          critter := "bhorse";
+	         elseif (mount.color == 50)
+	          critter := "whorse";
+	         elseif (mount.color == 1160)
+	          critter := "mustang";
+	         else
+	          critter := "horse";
+	         endif    
+	0x3e9f:
+	        if (mount.color == 1152)
+	         critter := "icehorse";
+	         else
+	        critter := "horse2";
+	        endif
+	0x3ea0: critter := "horse3";
+	0x3ea1: critter := "horse4";
+	0x3ea6:	critter := "llama";
+	0x3ea3:	critter := "desertostard";
+	0x3ea4:
+	       if (mount.color == 1160)
+	        critter := "rockostard";
+	       elseif (mount.color == 1159)
+	        critter := "raptor";
+	       elseif (mount.color == 1152)
+	        critter := "godsostard";
+	       elseif (mount.color == 1154)
+	        critter := "silverostard";  
+	      
+	      
+	      
+	       else
+	        critter := "frenziedostard";
+	       endif
+	0x3ea5:	critter := "forestostard";
+	0x3ffd: critter := "unicorn";
+	0x3eb4: critter := "unicorn";
+	0x3ea9: critter := "nightmare";
+	0x3eb8: critter := "ridgeback";
+	0x3eba: critter := "savageridgeback";
+	0x3ebb: critter := "skeletalsteed";
+	0x3eb2: critter := "warhorse1";
+	0x3eb1: critter := "warhorse2";
+	0x3eb0: critter := "warhorse3";
+	0x3eb3: critter := "seahorse";
+	0x3eb7: critter := "darksteed";
+	0x3ea8: critter := "silversteed";
+	0x3ead: critter := "kirin";
+	0x3eaf: critter := "warhorse4";
+	0x3ebc: critter := "giantbeetle";
+	0x3ebd: critter := "swampdragon";
+	0x3ebe: critter := "armswampdragon";
+	0x3e9e: critter := "firesteed";
+	endcase
+
+	if (mount.color == 1109)
+		critter := "nightmare";
+	endif
+        if (mount.color == 1153)
+                critter := "unicorn";
+        endif
+
+	var animal := CreateNpcFromTemplate(critter, corpse.x, corpse.y, corpse.z, 0, corpse.realm);
+	animal.color := mount.color;
+	DestroyItem( mount );
+
+endfunction
+
+function zapstorageareas(me)
+
+	var myserial := GetObjProperty(me,"serial");
+	if (!myserial)
+		return;
+	endif
+
+	var storage := FindStorageArea( "Merchant Storage" );
+	if (DestroyRootItemInStorageArea( storage, myserial + " FS"))
+		DestroyRootItemInStorageArea( storage, myserial + " PB");
+		DestroyRootItemInStorageArea( storage, myserial + " 1C");
+	endif
+
+	storage := FindStorageArea( "Tamed Storage" );
+	DestroyRootItemInStorageArea( storage, "Bankbox  " + Hex(myserial));
+
+endfunction

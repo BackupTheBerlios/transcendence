@@ -1,0 +1,21 @@
+use uo;
+use os;
+use cfgfile;
+program checkgrasdiff (who)
+
+var trg := TargetCoordinates(who);
+var info := GetMapInfo(trg.x, trg.y, who.realm);
+var place := info.landtile;
+var grass := ReadConfigFile("grass");
+var diffi := GetHarvestDifficulty(grass, trg.x, trg.y, place);
+
+//if (!diffi)
+//SendSysMessage (who, "Failed!");
+//else
+SendSysMessage(who, CStr(diffi));
+
+//endif
+
+endprogram
+
+

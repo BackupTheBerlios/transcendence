@@ -1,0 +1,6 @@
+use uo;
+use os;
+
+program setlang(who, text)
+SetObjProperty(who,"lang", text);
+endprogram

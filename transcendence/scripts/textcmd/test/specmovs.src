@@ -1,0 +1,13 @@
+use uo;
+use os;
+
+include "include/particles";
+
+program testspecmove(who, text)
+var dest := target(who);
+
+sendpacket(who, "D7000F" + convertinttohex(who.serial, 4) + "001a" + convertinttohex(dest.serial, 4) + text + "07");
+sendpacket(who, "BF000B002201" + convertinttohex(dest.serial, 4) + "19");
+sendpacket(who, "BF00050021");
+print("D7000F" + convertinttohex(who.serial, 4) + "001a" + convertinttohex(dest.serial, 4) + text + "07");
+endprogram

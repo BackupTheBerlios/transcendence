@@ -1,0 +1,6 @@
+use uo;
+use os;
+
+program testattr(who, text)
+sendsysmessage(who, cstr(SetAttributeBaseValue( who, "Mining", 500 )));
+endprogram

@@ -1,0 +1,17 @@
+use uo;
+use os;
+use polsys;
+
+
+include "include/uo";
+include "include/effects";
+
+program testlight(who, text)
+
+ SetPersonalLightLevel( who, cint(text) );
+ /**FadeLightLevel(who, 1, 30, 1, 50);
+ sleep(6);
+ FadeLightLevel(who, 30, 1, 1, 50);*/
+ 
+endprogram
+

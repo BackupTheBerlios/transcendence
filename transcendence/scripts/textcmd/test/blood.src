@@ -1,0 +1,11 @@
+use uo;
+use os;
+use polsys;
+
+program blood(who)
+var what := target(who);
+var packet := CreatePacket(0x2A, 5);
+packet.setInt32(1, what.serial);
+packet.sendPacket(who);
+packet.sendPacket(what);
+endprogram

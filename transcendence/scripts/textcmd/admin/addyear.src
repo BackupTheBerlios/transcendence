@@ -1,0 +1,7 @@
+use uo;
+use os;
+program add_year(who);
+var wea := GetGlobalProperty("Weather");
+wea[9] := 0;
+SetGlobalProperty("Weather", wea);
+endprogram

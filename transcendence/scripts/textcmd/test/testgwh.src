@@ -1,0 +1,6 @@
+use uo;
+use os;
+
+program getwheight(who)
+ SendSysMessage(who, cstr(GetWorldHeight( who.x, who.y )));
+endprogram

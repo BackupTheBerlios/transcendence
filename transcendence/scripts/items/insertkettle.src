@@ -1,0 +1,11 @@
+use uo;
+use os;
+
+program insertinkettle (who, pot, item)
+
+if ((item.objtype == 0x0ff8) || (item.objtype == 0x1f9e) || (item.graphic == 0x09ad) || (item.graphic == 0x1f9c) || (item.graphic == 0x1f96))
+SendSysMessage(who, "You put the content of the pitche rinto the kettle and take out the empty pitcher", 0x003, 0x005a);
+item.invisible := 1;
+CreateItemAtLocation( pot.x, pot.y, pot.z, 0x0ff7, 1, pot.realm );
+endif
+endprogram

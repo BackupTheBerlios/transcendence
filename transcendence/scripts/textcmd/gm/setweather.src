@@ -1,0 +1,20 @@
+// 2/6/99 Day/Night transitions for one time zone only (britain) -Rac
+// 23/4/00 played around with a little bit -Rax
+
+
+use uo;
+use os;
+
+include "include/client";
+include "weather";
+var wstuff := GetGlobalProperty("Weather");
+var day := wstuff[3];
+program whichseason (char, nom)
+case (nom)
+1: setsunny();
+2: setovercast();
+3: setcloudy();
+4: setrain();
+5: setthunder();
+endcase
+endprogram

@@ -1,0 +1,7 @@
+use uo;
+use os;
+
+program giant(who)
+var whom := target(who);
+whom.graphic := 744;
+endprogram

@@ -1,0 +1,41 @@
+use uo;
+use os;
+use polsys;
+
+//include ":UltimaIris:IrisClient";
+
+program test_iris_pck(who, text)
+if(!text)
+ return;
+endif 
+foreach mob in ListMobilesNearLocation( who.x, who.y, who.z, 7, who.realm )
+if(mob.serial != who.serial)
+
+   var i;
+   if(cint(text) < 10)
+    for(i := 10; i >= cint(text); i := i - 1)
+     var pck := CreatePacket(0xF1, 9);
+     pck.setInt32(1, mob.serial);
+     pck.setInt8(5, i);
+     pck.setInt8(6, i);
+     pck.setInt8(7, i);
+     pck.setInt8(8, 0);
+     pck.sendPacket(who);
+     sleepms(100);
+    endfor
+   else
+     for(i := 10; i <= cint(text); i := i + 1)
+     var pck := CreatePacket(0xF1, 9);
+     pck.setInt32(1, mob.serial);
+     pck.setInt8(5, i);
+     pck.setInt8(6, i);
+     pck.setInt8(7, i);
+     pck.setInt8(8, 0);
+     pck.sendPacket(who);
+     sleepms(100);
+    endfor
+   endif
+endif
+endforeach
+
+endprogram

@@ -1,0 +1,58 @@
+use uo;
+
+var layout := 
+{
+"resizepic 100 100 3600 200 150",
+"tilepic 95 95 3312",
+"tilepic 95 170 3312",
+"tilepic 260 95 3308",
+"tilepic 260 170 3308",
+"gumppic 95 97 210",
+"gumppic 280 97 210",
+"button 95 233 210 210 1 0 1",
+"gumppic 280 233 210",
+"button 280 233 9028 9028 1 0 2",
+"tilepic 267 232 5629",
+"button 120 117 9028 9028 1 0 3",
+"tilepic 108 118 3336",
+"button 259 141 9028 9028 1 0 4",
+"tilepic 247 142 3850",
+"button 259 165 9028 9028 1 0 5",
+"tilepic 242 166 3847",
+"button 259 189 9028 9028 1 0 6",
+"tilepic 240 190 3852",
+"button 259 213 9028 9028 1 0 7",
+"tilepic 243 214 3849",
+"gumppic 259 117 210",
+"button 259 117 9028 9028 1 0 8",
+"tilepic 244 118 4089 ",
+"gumppic 120 141 9028",
+"tilepic 111 146 887",
+"gumppic 120 165 9028",
+"tilepic 107 165 3350",
+"gumppic 120 189 9028",
+"tilepic 108 192 6884",
+"gumppic 120 213 9028",
+"tilepic 104 217 5927",
+"gumppic 161 134 1417",
+"tilepic 172 143 2324",
+"tilepic 187 143 2324",
+"tilepic 186 161 2324",
+"tilepic 171 161 2324"
+/*"text 248 213 1152 0",
+"text 248 189 1152 0",
+"text 248 165 1152 0",
+"text 248 141 1152 0",
+"text 249 117 136 1",
+"text 144 143 0 1",
+"text 144 167 0 1",
+"text 144 191 0 1",
+"text 144 215 0 1",
+"text 101 232 1152 2 ",
+"text 100 96 1152 0",
+"text 286 96 152 3"*/
+}; 
+
+program testbowl(who)
+SendDialogGump( who, layout, {} );
+endprogram

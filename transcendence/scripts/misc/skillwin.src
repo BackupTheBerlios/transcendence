@@ -1,0 +1,14 @@
+//include "include/Moreskillwin";
+include "include/attributes";
+include "include/newskillwin";
+include "include/gumpUtil";
+
+//////////////////
+// Hauptprogramm
+//////////////////
+
+program Window_SkillWin(who)
+  //SendSkillWindow( who, who );
+  //MoreSkillWin(who, who);
+  NewSkillWin(who, who);
+endprogram

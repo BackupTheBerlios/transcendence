@@ -1,0 +1,299 @@
+use uo;
+use math;
+
+include "include/string";
+
+var basex 	:= 0;
+var basey 	:= 0;
+var sizex 	:= 0;
+var sizey 	:= 0;
+var vertexes	:= array ();
+var total 	:= 0;
+var type 	:= 1;
+var color 	:= 0;
+var high 	:= 20;
+
+var vmap 	:= array ();
+var rmap 	:= array ();
+
+var roofs 	:= {{1534, 1521, 1533, 1522, 1520, 1532, 1526, 1525, 1524, 1523},
+					{1473, 1460, 1472, 1461, 1459, 1471, 1465, 1464, 1463, 1462},
+					{1488, 1475, 1487, 1476, 1474, 1486, 1480, 1479, 1478, 1477},
+					{1449, 1444, 1447, 1446, 1445, 1448, 1453, 1452, 1451, 1450},
+//					{1631, 1633, 1632, 1630, 1608, 1634, 1635, 1637, 1636, 1638},
+					{1443, 1430, 1442, 1431, 1429, 1441, 1435, 1434, 1433, 1342},
+					{1428, 1423, 1426, 1425, 1424, 1427, 1417, 1416, 1415, 1414}};
+
+program RoofBuilder (who, text)
+	var params := SplitWords(text);
+	if (params[1])
+		type := CInt(params[1]);
+		if (type > 6)
+			SendSysMessage(who, "tipo inesistente");
+			return;
+		endif;
+	else
+		SendSysMessage(who, "Usage: .roof type [color] [base hight]");
+		SendSysMessage(who, "Type: 1)Log 2)Tile(red) 3)Wooden_Shingles 4)Thatch 5)Slate 6)");
+		return;
+	endif;
+	if (params[2])
+		color := CInt(params[2]);
+	endif;
+	if (params[3])
+		high := CInt(params[3]);
+	endif;
+
+	SendSysMessage(who, "Clikka sui tutti i vertici di ogni rettangolo (in ordine) della casa e poi su te stesso!");
+
+	var spot;
+	//vertexes[1].+x;
+	//vertexes[1].+y;
+	var fine := 0;
+
+	while (fine != 1)
+		spot := TargetCoordinates(who);
+		if ((spot.x != who.x) || (spot.y != who.y))
+			total := total +1;
+			vertexes[total] := {};
+			vertexes[total].+x := spot.x;
+			vertexes[total].+y := spot.y;
+		else
+			fine := 1;
+		endif;
+	endwhile;
+
+	/*
+	For i:=1 To total
+		SendSysMessage (who, "Created at " + vertexes[i].x + ", " + vertexes[i].y );
+		CreateItemAtLocation(vertexes[i].x, vertexes[i].y, high, 1520, 1);
+	EndFor;
+	*/
+
+	FindHouseSize(who);
+	if (!VertexControl())
+		SendSysMessage(who, "Wrong vertex position!");
+		return;
+	endif
+
+	for i:=0 to ((total/4)-1)
+		ApplySquare(who, vertexes[(i*4)+1].x-basex+1,vertexes[(i*4)+1].y-basey+1,vertexes[(i*4)+3].x-vertexes[(i*4)+1].x,vertexes[(i*4)+3].y-vertexes[(i*4)+1].y);
+	endfor;
+	CreateRoof(type, color, who);
+
+endprogram;
+
+function FindHouseSize(who)
+	basex := vertexes[1].x;
+	basey := vertexes[1].y;
+
+	// look for house size
+	for i:=1 to total
+		if (vertexes[i].x < basex)
+			basex := vertexes[i].x;
+		endif
+		if (vertexes[i].y < basey)
+			basey := vertexes[i].y;
+		endif
+
+		if (vertexes[i].x > sizex)
+			sizex := vertexes[i].x;
+		endif
+		if (vertexes[i].y > sizey)
+			sizey := vertexes[i].y;
+		endif
+	endfor
+
+	sizex := sizex - basex + 1;
+	sizey := sizey - basey + 1;
+
+	// reset vertex map
+	for ix:=1 to sizex
+			vmap[ix] := {};
+			vmap[ix].+y := array ();
+		for iy:=1 to sizey
+			vmap[ix].y[iy] := 0;
+		endfor;
+	endfor;
+
+	//reset roof map
+	for ix:=1 to sizex
+			rmap[ix] := {};
+			rmap[ix].+y := array ();
+		for iy:=1 to sizey
+			rmap[ix].y[iy] := {};
+			rmap[ix].y[iy].+type := 0;
+			rmap[ix].y[iy].+high := 0;
+		endfor;
+	endfor;
+
+	// set vertexes in map
+	for i:=1 to total
+		vmap[vertexes[i].x-basex+1].y[vertexes[i].y-basey+1] := vmap[vertexes[i].x-basex+1].y[vertexes[i].y-basey+1] + 1;
+	endfor;
+
+	/*
+	local line;
+	For iy:=1 To sizey
+		line := " ";
+		For ix:=1 To sizex
+			line := line + vmap[ix].y[iy] + " ";
+		EndFor;
+		SendSysMessage (who, line);
+	EndFor;
+	*/
+
+	SendSysMessage(who, "House ("+ basex + ", " + basey + ") Size (" + sizex + ", " + sizey + ")");
+endfunction;
+
+function VertexControl()
+	// Control for having a pair number of vertex in each line
+
+	var v;
+
+	for iy:=1 to sizey
+		v := 0;
+		for ix:=1 to sizex
+			v := v + vmap[ix].y[iy];
+		endfor;
+		if (!IsPair(v))
+			return 0;
+		endif;
+	endfor;
+
+	for ix:=1 to sizex
+		v := 0;
+		for iy:=1 to sizey
+			v := v + vmap[ix].y[iy];
+		endfor;
+		if (!IsPair(v))
+			return 0;
+		endif;
+	endfor;
+
+	return 1;
+endfunction;
+
+function IsPair(number)
+	return 1 - (number - (Floor(number/2)*2));
+endfunction
+/*
+Function FindSquares
+	For ix:=1 To sizex
+		For iy:=1 To sizey
+		EndFor;
+	EndFor;
+EndFunction
+*/
+function ApplySquare(who,x,y,sx,sy)
+	var lev := high;
+	var mod := 0;
+
+	SendSysMessage(who, "x("+x+"): " + sx + " y("+y+"): " + sy);
+
+	if (sy<sx)
+		if (IsPair(sy+1))
+			lev := high+3;
+		endif;
+		for iy:=y to (y+sy)
+			for ix:=x to (x+sx)
+				if ((iy-y) < (Ceil(sy/2) + 0 /*+ IsPair(sy+1)*/))
+					ModifyTile(ix,iy,1,lev);
+					mod := 3;
+				elseif ((iy-y) < (Ceil(sy/2) + 1 /*+ IsPair(sy+1)*/))
+					ModifyTile(ix,iy,6,lev);
+					mod := -3;
+				else
+					ModifyTile(ix,iy,3,lev);
+					mod := -3;
+				endif;
+			endfor;
+			lev := lev + mod;
+		endfor;
+	else
+		if (IsPair(sx+1))
+			lev := high+3;
+		endif;
+		for ix:=x to (x+sx)
+			for iy:=y to (y+sy)
+				if ((ix-x) < (Ceil(sx/2) + 0 /*+ IsPair(sx+1)*/))
+					ModifyTile(ix,iy,4,lev);
+					mod := 3;
+				elseif ((ix-x) < (Ceil(sx/2) + 1 /*+ IsPair(sx+1)*/))
+					ModifyTile(ix,iy,5,lev);
+					mod := -3;
+				else
+					ModifyTile(ix,iy,2,lev);
+					mod := -3;
+				endif;
+			endfor;
+			lev := lev + mod;
+		endfor;
+	endif;
+
+endfunction;
+
+function ModifyTile(x, y, type, high)
+	if (rmap[x].y[y].high < high)
+		rmap[x].y[y].type := type;
+		rmap[x].y[y].high := high;
+	elseif (rmap[x].y[y].high == high)
+		case (rmap[x].y[y].type)
+			1:	case (type)
+					1:	rmap[x].y[y].type := type;
+						break;
+					2:	rmap[x].y[y].type := 9;
+						break;
+					3:	rmap[x].y[y].type := type;
+						break;
+					4:	rmap[x].y[y].type := 8;
+						break;
+				break;
+				endcase;
+			2:	case (type)
+					1:	rmap[x].y[y].type := 9;
+						break;
+					2:	rmap[x].y[y].type := type;
+						break;
+					3:	rmap[x].y[y].type := 7;
+						break;
+					4:	rmap[x].y[y].type := type;
+						break;
+				break;
+				endcase;
+			3:	case (type)
+					1:	rmap[x].y[y].type := type;
+						break;
+					2:	rmap[x].y[y].type := 7;
+						break;
+					3:	rmap[x].y[y].type := type;
+						break;
+					4:	rmap[x].y[y].type := 10;
+						break;
+				break;
+				endcase;
+			4:	case (type)
+					1:	rmap[x].y[y].type := 8;
+						break;
+					2:	rmap[x].y[y].type := type;
+						break;
+					3:	rmap[x].y[y].type := 10;
+						break;
+					4:	rmap[x].y[y].type := type;
+						break;
+				endcase;
+				break;
+		endcase;
+	endif;
+endfunction;
+
+function CreateRoof(type, color, who)
+	var obj;
+	for ix:=1 to sizex
+		for iy:=1 to sizey
+			obj := CreateItemAtLocation(basex+ix, basey+iy, rmap[ix].y[iy].high, roofs[type][rmap[ix].y[iy].type], 1, who.realm);
+			obj.movable := 0;
+			obj.color := color;
+		endfor;
+	endfor;
+endfunction;

@@ -1,0 +1,11 @@
+use uo;
+use cfgfile;
+use os;
+
+program testmaxskill(who)
+var fl := ReadConfigFile("::skills"); 
+
+sendsysmessage(who, cstr(len(fl)));
+sendsysmessage(who, cstr(fl[56].name));
+sendsysmessage(who, cstr(GetConfigStringKeys(fl).size()) );
+endprogram

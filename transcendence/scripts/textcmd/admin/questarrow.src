@@ -1,0 +1,8 @@
+use uo;
+use os;
+
+program questarrow(who)
+var where := targetcoordinates(who);
+SendQuestArrow( who, where.x, where.y);
+SendStringAsTipWindow( who, "Ciao" );
+endprogram

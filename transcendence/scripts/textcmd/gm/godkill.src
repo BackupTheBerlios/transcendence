@@ -1,0 +1,36 @@
+use uo;
+use os;
+
+include "include/packets";
+include "include/attributes";
+
+program testcoloranim (who, text)
+
+text := SplitWords(text);
+
+
+var effect := CInt(0x36d4);
+var translucent := CInt(text[2]);
+var color := CInt(text[1]);
+var speed := CInt(text[3]);
+if (!translucent)
+ translucent := 0;
+endif
+
+if (!color)
+color := 1151;
+endif
+if (!speed)
+speed := 10;
+endif
+
+var trg := Target(who);
+RevokePrivilege(trg, "invul");
+PerformAction(who, 0x0010);
+sleepms(500);
+PlaySoundEffect(who, 0x15f);
+PlayMovingEffectHuefx( who, trg, effect, speed, 
+0, 0, color, translucent);
+sleepms(Distance(who, trg ) * 100);
+ApplyRawDamage( trg, GetHp(trg) + 10 );
+endprogram

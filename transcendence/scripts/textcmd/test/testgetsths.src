@@ -1,0 +1,13 @@
+use uo;
+use os;
+use cfgfile;
+use datafile;
+
+include ":CustomHouseDesignTool:CustomHouse";
+
+program test_gethsst(who)
+print(cstr(16536 - 0x4000));
+broadcast(cstr(16536 - 0x4000));
+GetHouseStandardComponents(16536 - 0x4000);
+
+endprogram

@@ -1,0 +1,15 @@
+use uo;
+use os;
+
+program testdict(who)
+
+var dct := dictionary;
+dct["primo"] := "a";
+dct["secondo"] := "b";
+dct["terzo"] := "c";
+var conv := dct.keys();
+var indx := conv[2];
+print("dict: " + dct["secondo"]);
+print("arr: " + conv[2]);
+print("ok: " + dct[conv[2]]);
+endprogram

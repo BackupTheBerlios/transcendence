@@ -1,0 +1,57 @@
+use uo;
+use os;
+use util;
+
+
+program thermometer (who);
+var tmp := checktemperature(who);
+SendSysMessage(who, "The Temperature is : " + CStr(tmp));
+endprogram
+
+
+function checktemperature(who)
+var rawtemp := GetGlobalProperty("rawtemp");
+var temperature;
+var firewarmth := 0;
+var fireplace;
+
+foreach it in ListItemsNearLocation( who.x, who.y, who.z, 10, who.realm )
+ if ((it.graphic == 0x0945) || (it.graphic == 0x095f) || (it.graphic == 0x0937) || (it.graphic == 0x0953))
+   fireplace := it;
+ endif 
+endforeach
+
+if (fireplace)
+
+  
+   firewarmth := 10 - (Distance(who, fireplace) * 2);
+endif
+
+case (GetObjProperty(fireplace, "dir"))
+ 1:
+    if (who.y < fireplace.y)
+     firewarmth := 0;
+    endif
+ 2:
+      if (who.x < fireplace.x)
+     firewarmth := 0;
+    endif
+endcase
+      
+
+if (who.y <= 640)
+ temperature := rawtemp - 20;
+elseif ((who.y >= 641) && (who.y <= 1840))
+ temperature := rawtemp - 10;
+elseif ((who.y >= 1841) && (who.y <= 2530))
+ temperature := rawtemp;
+elseif ((who.y >= 2531) && (who.y <= 3155))
+ temperature := rawtemp + 10;
+elseif (who.y >= 3156)
+ temperature := rawtemp + 15;
+endif
+var altitude := CInt((who.z /10) * 2);
+temperature := temperature - altitude;
+temperature := temperature + firewarmth;
+return temperature;
+endfunction

@@ -1,0 +1,23 @@
+use uo;
+use os;
+include "include/attributes";
+
+program setregenrates (who, text)
+
+
+var parms := SplitWords(text);
+
+var stat := parms[1];
+var value := CInt(parms[2]);
+var trg := Target(who);
+case (stat)
+
+"hp":
+  SetHpRegenRate(trg , ( value) * 12);
+"mana":
+  SetManaRegenRate(trg , ( value) * 12);
+"stamina":
+  SetStaminaRegenRate(trg , ( value) * 12);
+endcase
+endprogram
+    

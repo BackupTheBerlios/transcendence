@@ -1,0 +1,56 @@
+use uo;
+use os;
+use polsys;
+
+include "include/particles";
+
+program sendtt(who, txt)
+
+if(!txt)
+txt := "0 104 66 131 18 OK";
+endif
+if (txt == "NO")
+txt := "0 104 66 131 18 NO";
+endif
+
+var text := splitwords(txt);
+
+var whom := target(who);
+var packet := CreatePacket(0xD6, MSGLEN_VARIABLE);
+packet.setInt16(1, 0);
+packet.setInt16(3, 1);
+packet.setInt32(5, whom.serial);
+packet.setInt16(9, 0);
+packet.setInt8(11, cint(text[1]));
+packet.setInt8(12, cint(text[2]));
+packet.setInt8(13, cint(text[3]));
+packet.setInt8(14, cint(text[4]));
+packet.setInt8(15, 0);
+packet.setInt8(16, 0x0F);
+packet.setInt8(17, 0xEA);
+packet.setInt8(18, 0x1B);
+packet.setInt8(19, 0);
+//packet.setInt8(20, 0);
+/*packet.setInt8(21, 32);
+packet.setInt8(22, 0);
+packet.setInt8(23, 9);*/
+//packet.setInt8(24, 0);
+packet.setUnicodeString(20, cascz(whom.desc), 0);
+/*if (text[6] == "OK")
+packet.setInt8(packet.getSize(), 0);
+packet.setInt8(packet.getSize(), 9);
+packet.setInt8(packet.getSize(), 0);
+packet.setInt8(packet.getSize(), 32);
+endif*/
+packet.setInt8(packet.getSize(), 0);
+packet.setInt32(packet.getSize(), 0);
+
+packet.setInt16(1, packet.getSize());
+packet.setInt8(20, (packet.getsize() - 24));
+packet.sendPacket(who);
+print ("AOSTOOLTIP: " + packet);
+print(whom.desc);
+
+
+
+endprogram      

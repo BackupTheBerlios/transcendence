@@ -1,0 +1,57 @@
+use uo;
+use os;
+program testanim (who, act);
+
+var critt := Target(who);
+if (!critt)
+SendSysMessage(who, "Cancelled!");
+else
+
+
+PerformAction(critt, 0x0000);
+sleep(2);
+PerformAction(critt, 0x0001);
+sleep(2);
+
+PerformAction(critt, 0x0002);
+sleep(2);
+
+PerformAction(critt, 0x0003);
+sleep(2);
+
+PerformAction(critt, 0x0004);
+sleep(2);
+
+PerformAction(critt, 0x0005);
+sleep(2);
+
+PerformAction(critt, 0x0006);
+sleep(2);
+
+PerformAction(critt, 0x0007);
+sleep(2);
+
+PerformAction(critt, 0x0008);
+sleep(2);
+
+PerformAction(critt, 0x0009);
+sleep(2);
+
+PerformAction(critt, 0x000a);
+sleep(2);
+
+PerformAction(critt, 0x000b);
+sleep(2);
+
+PerformAction(critt, 0x000c);
+sleep(2);
+
+PerformAction(critt, 0x000d);
+sleep(2);
+
+
+
+
+
+endif
+endprogram
