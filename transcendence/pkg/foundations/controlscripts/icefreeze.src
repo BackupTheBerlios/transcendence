@@ -1,0 +1,16 @@
+use uo;
+use os;
+
+program icefreeze (parms)
+var who := parms[2];
+var eqpcolors := parms[1];
+var orgcol := parms[3];
+sleep(25);
+var i;
+for (i:=0;i<=25;i:=i+1)
+var eqp := GetEquipmentByLayer( who, i );
+eqp.color := eqpcolors[i + 1];
+endfor
+who.frozen := 0;
+who.color := orgcol;
+endprogram

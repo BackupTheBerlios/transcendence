@@ -1,0 +1,19 @@
+use uo;
+use os;
+include "include/attributes";
+
+program negapolycontrol (parms)
+var enemy := parms;
+
+
+var origform := GetObjProperty(enemy, "origform");
+var origstr := GetObjProperty(enemy, "origstr");
+print("NEGAPOLYCONTROLSTARTED ON " + enemy.name + " (origstr: " + CStr(origstr) + ")");
+sleep(120);
+
+enemy.graphic := origform;
+	SetBaseStrength(enemy,origstr);
+      EraseObjProperty(enemy,"origform");
+	EraseObjProperty(enemy,"origstr");
+	EraseObjProperty(enemy,"trasformed");
+endprogram

@@ -1,0 +1,269 @@
+//--> control <--
+//
+// CONTROL:CHECK_PACKAGES.SRC
+//
+// Goes through the list of installed packages and calls
+// their "ctrl_reg" scripts to see if they want registered :)
+//
+// If it doesn't return a valid structure, then it's invalid.
+// (see ./docs/readme.htm for instructions)
+//
+// Creator: TJ Houston (Myrathi)
+// Contact: myrathi@templar.dhs.org
+//
+// Created: 05-Apr-2000
+// Updated: 01-May-2000
+//
+use uo;
+use os;
+use basic;
+use util;
+
+include "include/string"; // Sigismund's - requires v1.2!
+
+// Disable runaway errors (the loops can get rather intensive)
+set_script_option( SCRIPTOPT_NO_RUNAWAY, 1 );
+
+const CTRL_KEY := "#CTRL_KEY";
+const CTRL_INST := "#CTRL_Installed";
+
+enum CTRL
+	CTRL_NAME := 1,	//1
+	CTRL_VERSION,	//2
+	CTRL_HASIFACE,	//3
+	CTRL_SCRIPT		//4
+endenum
+
+program check_packages()
+
+	set_priority( 250 );
+
+	print( "[CONTROL] Enumerating packages for registration..." );
+
+	var zchklist := polcore().packages;
+
+	if ( !zchklist || (zchklist.size() == 0) )
+		print( "[CONTROL] No installed packages??!!" );
+		CTRL_Finished(-1);
+		return 0;
+	endif
+
+	// List to hold valid packages
+	var zlist := {};
+	var znoreg := {};
+	var zinval := {};
+	var zinval2 := {};
+
+	// hmm... should consider changing this to a foreach loop... later:)
+
+	var icount := 1;
+	while( icount <= zchklist.size() )
+		sleepms(2);
+		var spkg := zchklist[icount];
+
+		var zreginfo := run_script_to_completion( ":"+spkg+":ctrl_reg" ); //, sKey );
+		if ( !zreginfo )
+			//print( "[CONTROL] No Reg-check script for '" + sPkg + "' package." );
+			zchklist.erase( icount );
+			znoreg.append( spkg );
+			continue;
+		else
+			//print( "[CONTROL] Return: zRegInfo.sName = " + zRegInfo.sName );
+		endif
+
+	//	var badprop := 0;
+	//	var zRegInfo := GetGlobalProperty( sKey );
+	//	if ( !zRegInfo )
+	//		badprop := 1;
+	//	endif
+	//	if ( !badprop )
+	//		EraseGlobalProperty( sKey );
+	//	endif
+	//	if ( badprop or (zRegInfo.size() <> 4) )
+
+		if ( zreginfo.size() != 4 )
+			print( "[CONTROL] Invalid package entry: " + zreginfo );
+			zchklist.erase( icount );
+			zinval.append( spkg );
+			continue;
+		endif
+
+		var sname := zreginfo.sName;		// Userfriendly name of package.
+		var sver := zreginfo.sVer;		// Version number.
+		var bctrl := CInt(zreginfo.bCtrl);	// Does it have a command interface?
+		var sscript := zreginfo.sScript;	// - If so, what's the script-name?
+
+		if ( bctrl )
+			sscript := ":"+spkg+":"+sscript;
+			if ( !run_script_to_completion( sscript, { "ICP", -1 } ) )
+				//print( "[CONTROL] Package returned an invalid script name: '"+sScript+"'" );
+				zchklist.erase( icount );
+				zinval2.append( spkg );
+				continue;
+			endif
+			zreginfo.sScript := sscript;
+		endif
+
+	// People saw this bit as "spam"... so it's been disabled.
+	//
+	//	var sMsg := "[CONTROL] Package: " + sName + " (" + sPkg + ") v" + sVer;
+	//	if ( bCtrl )
+	//		sMsg := sMsg + " (" + (sScript - (":"+sPkg+":")) + ")";
+	//	else
+	//		//sMsg := sMsg + " (NO I/FACE)";
+	//	endif
+	//	print( sMsg );
+
+		zlist.append( zreginfo );
+
+		icount := icount + 1;
+	endwhile
+
+	icount := zlist.size();
+	var smsg := "[CONTROL] Check completed (";
+	if ( icount == 0 )
+		smsg := smsg + "no";
+	else
+		smsg := smsg + icount;
+	endif
+	smsg := smsg + " valid package entr";
+	if ( icount == 1 )
+		smsg := smsg + "y)";
+	else
+		smsg := smsg + "ies)";
+	endif
+	print( smsg );
+
+	ListReg( zlist );
+
+	ListNonReg( znoreg );
+	ListInvalidStruct( zinval );
+	ListInvalidScript( zinval2 );
+
+	print( "[CONTROL] Sorting..." );
+	var zlistsort := SortMultiArrayByIndex( zlist, CTRL_NAME );
+	if ( zlistsort == 0 )
+		print( "[CONTROL] ...failed!!!" );
+	else
+		print( "[CONTROL] ...complete." );
+		zlist := zlistsort;
+	endif
+
+	CTRL_Finished( zlist );
+
+	return 1;
+
+endprogram
+
+function ListReg( list )
+
+	if ( list.size() == 0 )
+		return;
+	endif
+
+	var size := list.size();
+	var msg := "[CONTROL] : ";
+	foreach zpkg in list
+		if ( len(msg) + len(zpkg[CTRL_NAME]) > 75 )
+			print( msg );
+			msg := "[CONTROL] : ";
+		endif
+		msg := msg + zpkg[CTRL_NAME] + ", ";
+		sleepms(2);
+	endforeach
+	msg[len(msg)-1] := ".";
+	print( msg );
+
+endfunction
+
+function ListNonReg( list )
+
+	if ( list.size() == 0 )
+		return;
+	endif
+
+	var size := list.size();
+	var msg := "[CONTROL] " + size + " package";
+	if ( size != 1 )
+		msg := msg + "s";
+	endif
+	msg := msg + " had no registration details.";
+	print( msg );
+
+	msg := "[CONTROL] : ";
+	foreach pkg in list
+		if ( len(msg) + len(pkg) > 75 )
+			print( msg );
+			msg := "[CONTROL] : ";
+		endif
+		msg := msg + pkg + ", ";
+		sleepms(2);
+	endforeach
+	msg[len(msg)-1] := ".";
+	print( msg );
+
+endfunction
+
+function ListInvalidStruct( list )
+
+	if ( list.size() == 0 )
+		return;
+	endif
+
+	var size := list.size();
+	var msg := "[CONTROL] " + size + " package";
+	if ( size == 1 )
+		msg := msg + " had an invalid rergistration structure.";
+	else
+		msg := msg + "s had invalid registration structures.";
+	endif
+	print( msg );
+
+	msg := "[CONTROL] : ";
+	foreach pkg in list
+		if ( len(msg) + len(pkg) > 75 )
+			print( msg );
+			msg := "[CONTROL] : ";
+		endif
+		msg := msg + pkg + ", ";
+		sleepms(2);
+	endforeach
+	msg[len(msg)-1] := ".";
+	print( msg );
+
+endfunction
+
+function ListInvalidScript( list )
+
+	if ( list.size() == 0 )
+		return;
+	endif
+
+	var size := list.size();
+	var msg := "[CONTROL] " + size + " package";
+	if ( size == 1 )
+		msg := msg + " had an invalid interface-script reference.";
+	else
+		msg := msg + "s had invalid interface-script references.";
+	endif
+	print( msg );
+
+	msg := "[CONTROL] : ";
+	foreach pkg in list
+		if ( len(msg) + len(pkg) > 75 )
+			print( msg );
+			msg := "[CONTROL] : ";
+		endif
+		msg := msg + pkg + ", ";
+		sleepms(2);
+	endforeach
+	msg[len(msg)-1] := ".";
+	print( msg );
+
+endfunction
+
+function CTRL_Finished( list )
+
+	SetGlobalProperty( CTRL_INST, list );
+
+endfunction
