@@ -1,0 +1,21 @@
+use uo;
+use os;
+
+program playsound (parms);
+var rune := parms[1];
+var character := parms[2];
+character.hidden := 1;
+//SetName( character, "" );
+
+
+while (1)
+       var pause := CInt(GetObjProperty(rune, "pause"));
+       var soundtype := CInt(GetObjProperty(rune, "soundtype"));
+       PlaySoundEffect( character, soundtype);
+       sleepms(pause);
+       if (GetObjProperty(rune, "stop") == 1)
+        break;
+       endif
+endwhile
+endprogram
+      

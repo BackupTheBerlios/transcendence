@@ -1,0 +1,18 @@
+use uo;
+use os;
+
+program hidesrune (who, text)
+
+
+ var runes := ListItemsNearLocation( who.x, who.y, who.z, 3, who.realm );
+ foreach rune in runes
+  if (rune.objtype == 0xfd01)
+   if (text == "0")
+    rune.graphic := 0x01;
+   else
+    rune.graphic := 0x20f8;
+   endif
+  endif
+ endforeach
+endprogram
+   

@@ -1,0 +1,118 @@
+// Quest Altar
+// (c) 2003 Keelhaul
+
+use uo;
+use os;
+use util;
+
+include "include/client";
+include "include/objtype";
+include "include/gumpUtil";
+
+program altar(who, altar)
+	var active;
+	var goal;
+	var item1;
+	var item2;
+	var item3;
+	var received1;
+	var received2;
+	var received3;
+
+	// Altar setup
+	if(who.cmdlevel > 1)		
+		SendSysMessage(who, "Resetting altar configuration...");
+		altar.color := 0x76c;
+		active := 0;
+		goal := 0;
+		item1 := 0;
+		item2 := 0;
+		item3 := 0;
+		received1 := 0;
+		received2 := 0;
+		received3 := 0;
+		var mode := CInt(SendTextEntryGump
+                             (who, "Shall this altar (1) destroy an obstacle or (2) unlock a door/container?", 40));
+		case(mode)
+			1:		SendSysMessage(who, "Select obstacle item to be destroyed by the altar.");
+			2:		SendSysMessage(who, "Select door or container to be unlocked by the altar.");
+			default:	SendSysMessage(who, "Invalid mode, aborting.");
+					return;
+		endcase;
+		goal := Target(who);
+		if(!goal)
+			SendSysMessage(who, "No target assigned, aborting.");
+			return;
+		endif
+		SendSysMessage(who, "Select altar item #1 (ESC to skip).");
+		item1 := Target(who);
+		if(!item1)
+			item1 := 0;
+		else
+			item1 := item1.objtype;
+		endif
+		SendSysMessage(who, "Select altar item #2 (ESC to skip).");
+		item2 := Target(who);
+		if(!item2)
+			item2 := 0;
+		else
+			item2 := item2.objtype;
+		endif
+		SendSysMessage(who, "Select altar item #3 (ESC to skip).");
+		item3 := Target(who);
+		if(!item3)
+			item3 := 0;
+		else
+			item3 := item3.objtype;
+		endif
+		if((item1 && item1 == item2) || (item2 && item2 == item3) || (item1 && item1 == item3))
+			SendSysMessage(who, "Items may not be identical, aborting.");
+			return;
+		endif
+		if(item1 || item2 || item3)
+			active := mode;
+			altar.color := 0x64;
+			SendSysMessage(who, "Altar active.");
+		else
+			SendSysMessage(who, "No items assigned, aborting.");
+		endif
+	else
+		SendSysMessage(who, "Place here what is asked of thee.");
+	endif
+	detach();
+
+	// Altar function
+	while(active)
+		sleepms(1000);
+		foreach item in ListItemsAtLocation(altar.x, altar.y, altar.z)
+			if(item.objtype == item1)
+				PlaySoundEffect(altar, SFX_SPELL_FLAME_STRIKE);
+				PlayStationaryEffect(altar.x, altar.y, altar.z, 0x3709, 1, 0, 0);
+				DestroyItem(item);
+				received1 := item1;
+			elseif(item.objtype == item2)
+				PlaySoundEffect(altar, SFX_SPELL_FLAME_STRIKE);
+				PlayStationaryEffect(altar.x, altar.y, altar.z, 0x3709, 1, 0, 0);
+				DestroyItem(item);
+				received2 := item2;
+			elseif(item.objtype == item3)
+				PlaySoundEffect(altar, SFX_SPELL_FLAME_STRIKE);
+				PlayStationaryEffect(altar.x, altar.y, altar.z, 0x3709, 1, 0, 0);
+				DestroyItem(item);
+				received3 := item3;
+			endif
+		endforeach
+		if(received1 == item1 && received2 == item2 && received3 == item3)
+			sleepms(1000);
+			PrintTextAbove(altar, "It is done");
+			PlaySoundEffect(altar, SFX_SPELL_LIGHTNING);
+			case(active)
+				1:	DestroyItem(goal);
+				2:	goal.locked := 0;
+					PrintTextAbove(goal, "Unlocked");
+			endcase
+			active := 0;
+			altar.color := 0x76c;
+		endif
+	endwhile
+endprogram

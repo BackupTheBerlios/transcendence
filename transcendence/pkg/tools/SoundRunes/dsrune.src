@@ -1,0 +1,18 @@
+use uo;
+use os;
+include "include/attributes";
+
+
+program destroyrune (rune)
+
+ foreach mob in ListMobilesNearLocationEx( rune.x,rune.y,rune.z, 6, 0x02, rune.realm )
+       if (mob.npctemplate == "null")
+        print("detected");
+        var kill := GetHp(mob) + 10;
+        ApplyDamage(mob, kill);
+       endif
+ endforeach
+
+endprogram
+       
+       

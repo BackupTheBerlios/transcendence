@@ -1,0 +1,32 @@
+use uo;
+use os;
+use util;
+
+include "include/dist";
+
+program ArenaEnter(player, teleporter)
+  if (coordist(player.x, player.y, teleporter.x, teleporter.y) > 1)
+    SendSysMessage (player, "You are too far away.");
+    return;
+  endif
+  //Entered already 
+  if(GetObjProperty (player, "xfrom"));
+     return;
+  endif
+  SetObjProperty (player, "guardignore", 1);
+  SetObjProperty (player, "npcignore", 1);
+  SetObjProperty (player, "nocast", 1);
+  SetObjProperty (player, "xfrom", player.x);
+  SetObjProperty (player, "yfrom", player.y);
+  SetObjProperty (player, "zfrom", player.z);
+
+  GrantPrivilege(player, "invul");
+  player.enable("invul");
+
+  PlayStationaryEffect(player.x, player.y, player.z, 0x3728, 0xa, 0xa);
+  sleep(1);
+  MoveCharacterToLocation(player, 1417 + RandomInt(3), 3738 + RandomInt(7), 0, MOVECHAR_FORCELOCATION);
+  PlayStationaryEffect(player.x, player.y, player.z, 0x3728, 0xa, 0xa);
+
+
+endprogram

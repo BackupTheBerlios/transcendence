@@ -1,0 +1,27 @@
+use uo;
+use os;
+use util;
+include "include/dist";
+
+program SalidaEstadio(player, teleporter)
+
+  if (coordist(player.x, player.y, teleporter.x, teleporter.y) > 1)
+    SendSysMessage (player, "You are too far away.");
+    return;
+  endif
+
+  EraseObjProperty (player, "guardignore");
+  EraseObjProperty (player, "npcignore");
+  EraseObjProperty (player, "nocast");
+  PlayStationaryEffect(player.x, player.y, player.z, 0x3728, 0xa, 0xa);
+  sleep(1);
+  MoveCharacterToLocation(player, GetObjProperty(player, "xfrom"), GetObjProperty(player, "yfrom"), GetObjProperty(player, "zfrom"), MOVECHAR_FORCELOCATION);
+  PlayStationaryEffect(player.x, player.y, player.z, 0x3728, 0xa, 0xa);
+  EraseObjProperty (player, "xfrom");
+  EraseObjProperty (player, "yfrom");
+  EraseObjProperty (player, "zfrom");
+  player.disable("invul");
+  RevokePrivilege(player, "invul");
+
+
+endprogram

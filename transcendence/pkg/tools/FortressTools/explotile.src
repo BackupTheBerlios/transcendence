@@ -1,0 +1,61 @@
+use uo;
+use os;
+use util;
+
+
+program lighttile (who, tile);
+
+
+var colorrange := { 2986, 2987, 2988, 2989, 2999, 2998, 2997, 2996, 2995, 2994, 2993, 2992, 2992, 2993, 2994, 2995, 2996, 2997, 2998, 2999, 2989, 2988, 2987, 2986};
+PlaySoundEffect( who, 0x0208 );
+var explosion := CreateItemAtLocation(tile.x, tile.y, tile.z, 0x3709, 1, tile.realm);
+explosion.color := colorrange[1];
+var dam := RandomDiceRoll("1d10 + 20");
+
+ApplyRawDamage( who, dam );
+sfumatureitem(explosion, colorrange, 60, 1);
+
+sleep(2);
+DestroyItem(explosion);
+
+endprogram
+
+function sfumatureitem( item, colorrange, tempo, ripetizione);
+var i;
+
+var repeatcounter := 0;
+var origcolor := item.color;
+SetObjProperty(item, "origcol", origcolor);
+
+
+repeat
+item.color := colorrange[1];
+
+
+
+for (i := 1; i <= len(colorrange); i := i + 1)
+item.color := colorrange[i];
+
+
+sleepms(tempo);
+endfor
+
+
+
+
+repeatcounter := repeatcounter + 1;
+until repeatcounter == ripetizione;
+
+
+var restorcolor := GetObjProperty(item, "origcol");
+item.color := restorcolor;
+
+
+
+EraseObjProperty(item, "origcol");
+
+
+endfunction
+
+
+

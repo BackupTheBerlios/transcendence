@@ -1,0 +1,1227 @@
+//Jhelom Arena by
+//Harold, fractal@ono.com
+//Based on scripts by:
+//Austin Heilman, Austin@tsse.net
+
+//Read arenadoc.txt for other scripts modified by this pkg!
+
+use uo;
+use os;
+use util;
+include "include/attributes";
+include "include/client";
+include "include/dist";
+include "util/bank";
+include ":gumps:gumps";
+include "include/yesNo";
+
+var STD_COLOR := 0;
+var organizer := {};     
+var board := {};         
+var duelstyle := {};    
+var teams;           //0: Last alive; 1: Teams.
+var stdequipment;    //1: Standard equipment.
+var monsters;        //1: With monsters/Players team against monsters team.
+var team1 := {};     //(default team or blue team)
+var team2 := {};     //(red team)
+var announce;        //1: Broadcast main events. 
+var dueltime;          
+var timewarn := 1;   //Next 'time to end' warning.
+var prize := 0;      //Collected prize.
+var joinfee;         //Join fee.
+var level;           //Monsters level
+
+program MakeDuel (who, theboard)
+  if (coordist(who.x, who.y, theboard.x, theboard.y) > 1)
+    SendSysMessage (who, "You are too far away.");
+    return;
+  endif
+  organizer := who;
+  board := theboard;
+  var j;
+  var duelist;
+
+  //Running already? 
+  if (IsInUse())
+    SendSysMessage(organizer, "A duel is running or being set up already.");
+    return;
+  else
+    //Must be activated by a player 
+    if (organizer.isa(POLCLASS_MOBILE))
+      InUse(1);
+    else
+      return 0;
+    endif
+  endif
+
+  //Well, I really wonder where is the best place to detach the script. 
+  detach();  
+  
+  //ToDo: place all the YesNo gumps into a function.
+  GFInitGump(0, 0);
+
+  GFResizePic(0, 0, BKGND_SILVERTRIM, 300, 165);
+  GFResizePic(15, 15, BKGND_DARK_STONE, 270, 35);
+  GFTextMid(15, 20, 270, STD_COLOR, "Duel menu");
+
+  GFResizePic(15, 55, BKGND_DARK_STONE, 270, 100);
+
+  GFTextLine(25, 65, STD_COLOR, "Do you want to organize a duel?");
+  GFTextLine(25, 85, STD_COLOR, "It will cost you 1000 gold pieces.");
+  GFButtonID(25, 110, 2121, 2120, 1, 0);
+  GFButtonID(85, 110, 2130, 2129, 1, 1);
+
+  var answer := GFSendGump(organizer);
+
+  if (!answer[0])
+    SendSysMessage(organizer, "Cancelled");
+    FinishDuel();
+    return 0;
+  endif
+
+  if (!organizer.spendgold(1000))
+    SendSysMessage(organizer, "You don't have enough gold.");
+    FinishDuel();
+    return;
+  endif
+
+
+  //Opciones del torneo.
+  GFInitGump(0, 0);
+
+  GFResizePic(0, 0, BKGND_SILVERTRIM, 300, 260);
+  GFResizePic(15, 15, BKGND_DARK_STONE, 270, 35);
+  GFTextMid(15, 20, 270, STD_COLOR, "Duel menu");
+
+  GFResizePic(15, 55, BKGND_DARK_STONE, 270, 190);
+
+  GFCheckBox(25, 68, 208, 209, 0, 10);
+  GFTextLine(45, 65, STD_COLOR, "Teams.");
+  GFCheckBox(25, 88, 208, 209, 0, 20);
+  GFTextLine(45, 85, STD_COLOR, "Monsters.");
+  GFCheckBox(25, 108, 208, 209, 0, 40);
+  GFTextLine(45, 105, STD_COLOR, "Standard equipment.");
+  GFCheckBox(25, 128, 208, 209, 0, 80);
+  GFTextLine(45, 125, STD_COLOR, "Inscription fee.");
+  GFButtonID(25, 190, 2121, 2120, 1, 0);
+  GFButtonID(85, 190, 2130, 2129, 1, 1);
+
+  duelstyle := GFSendGump(organizer);
+  if (!duelstyle[0])
+    SendSysMessage(organizer, "Cancelled");
+    FinishDuel();
+    return 0;
+  endif
+
+  var opts;
+  var total;
+
+  total := cint(duelstyle.keys[3]) + cint(duelstyle.keys[4]) + cint(duelstyle.keys[5]) + cint(duelstyle.keys[6]);
+  case (total)
+  10: teams := 1;
+  20: monsters := 1;
+  30: teams := 1; monsters := 1;
+  40: stdequipment := 1;
+  50: teams := 1; stdequipment := 1;
+  60: monsters := 1; stdequipment := 1;
+  70: teams := 1; monsters := 1; stdequipment := 1;
+  80: joinfee := 1;
+  90: teams := 1; joinfee := 1;
+ 100: monsters := 1; joinfee := 1;
+ 110: teams := 1; monsters := 1; joinfee := 1;
+ 120: stdequipment := 1; joinfee := 1;
+ 130: teams := 1; stdequipment := 1; joinfee := 1;
+ 140: monsters := 1; stdequipment := 1; joinfee := 1;
+ 150: teams := 1; monsters := 1; stdequipment := 1; joinfee := 1;
+ endcase
+
+
+  //Ask for fee
+  //Gold won't be returned if the cancel the duel.
+  if (joinfee)
+    joinfee := SendTextEntryGump (organizer, "Enter the inscription fee.", TE_CANCEL_ENABLE, TE_STYLE_NORMAL, 60, "");
+    joinfee := CInt(joinfee);
+    if (!joinfee)
+      SendSysMessage(organizer, "Cancelled");
+      FinishDuel();
+      return;
+    else
+      if (!TakeFee(organizer))
+        SendSysMessage(organizer, "Cancelled");
+        FinishDuel();
+        return;
+      endif
+    endif
+  endif
+
+  //Announce the duel?
+  GFInitGump(0, 0);
+
+  GFResizePic(0, 0, BKGND_SILVERTRIM, 300, 165);
+  GFResizePic(15, 15, BKGND_DARK_STONE, 270, 35);
+  GFTextMid(15, 20, 270, STD_COLOR, "Duel menu");
+
+  GFResizePic(15, 55, BKGND_DARK_STONE, 270, 100);
+
+  GFTextLine(25, 65, STD_COLOR, "Do you want to announce the duel?");
+  GFTextLine(25, 85, STD_COLOR, "It will cost you 1000 gold pieces.");
+  GFButtonID(25, 110, 2121, 2120, 1, 0);
+  GFButtonID(85, 110, 2130, 2129, 1, 1);
+
+  announce := GFSendGump(organizer);
+  if (announce[0])
+    if (!organizer.spendgold(1000))
+      SendSysMessage(organizer, "You don't have enough gold.");
+      FinishDuel();
+      return;
+    endif
+
+    var textoanuncio1;
+    var textoanuncio2;
+    if (teams)
+      if (monsters)
+         textoanuncio1 := organizer.name + " is organizing a duel team against monsters.";
+      else
+         textoanuncio1 := organizer.name + " is organizing a team duel.";
+      endif
+    else
+      if (monsters)
+         textoanuncio1 := organizer.name + " is organizing a duel with monsters.";
+      else
+         textoanuncio1 := organizer.name + " is organizing a duel.";
+      endif
+    endif
+    if (stdequipment)
+       textoanuncio2 := "Don't bring weapons or items.";
+    else
+       textoanuncio2 := "Bring your own equipment.";
+    endif
+    Broadcast( textoanuncio1, 0, 46);
+    Sleep(3);
+    Broadcast( textoanuncio2, 0, 46);
+    if (joinfee)
+        Sleep(3);
+        Broadcast("The inscription fee is " + joinfee + "gps.", 0, 46);
+    else
+        Sleep(3);
+        Broadcast("The inscription is free.", 0, 46);
+    endif
+  endif
+
+  //Ventana informativa.
+  GFInitGump(0, 0);
+	
+  GFResizePic(0, 0, BKGND_SILVERTRIM, 300, 260);
+  GFResizePic(15, 15, BKGND_DARK_STONE, 270, 35);
+  GFTextMid(15, 20, 270, STD_COLOR, "Duel menu");
+
+  GFResizePic(15, 55, BKGND_DARK_STONE, 270, 190);
+  GFTextLine(25, 65, STD_COLOR, "After clicking ok, select your");
+  GFTextLine(25, 85, STD_COLOR, "opponents. Your opponents must");
+  GFTextLine(25, 105, STD_COLOR, "agree to duel to enter the");
+  GFTextLine(25, 125, STD_COLOR, "tournament. Hit escape once you");
+  GFTextLine(25, 145, STD_COLOR, "have finished selecting players.");
+
+  GFButtonID(25, 185, 2121, 2120, 1, 0);
+  GFButtonID(85, 185, 2130, 2129, 1, 2);
+
+  answer := GFSendGump(organizer);
+  if ((!answer) or (answer[0] != 2))
+    SendSysMessage(organizer, "Cancelled");
+    FinishDuel();
+    return 0;
+  endif
+
+  //Pick opponents
+  j := 1;  //1: next player goes to blue team; 0: to red team.
+
+  //Don't include the GM if he's hosting the duel.
+  if (organizer.cmdlevel == 0)
+    //It's a blues against reds?
+    if ((teams) and (!monsters))
+      //Then let him choose team.
+
+      GFInitGump(0, 0);
+
+      GFResizePic(0, 0, BKGND_SILVERTRIM, 300, 165);
+      GFResizePic(15, 15, BKGND_DARK_STONE, 270, 35);
+      GFTextMid(15, 20, 270, STD_COLOR, "Duel menu");
+
+      GFResizePic(15, 55, BKGND_DARK_STONE, 270, 100);
+
+      GFTextLine(25, 65, STD_COLOR, "Press ok to join blue team.");
+      GFTextLine(25, 85, STD_COLOR, "Press cancel to join red team.");
+      GFButtonID(25, 110, 2121, 2120, 1, 0);
+      GFButtonID(85, 110, 2130, 2129, 1, 1);
+
+      answer := GFSendGump(organizer);
+      if (answer[0])
+        SendSysMessage (organizer, "You will fight with the blue team.");
+        team1.append(organizer);
+        j := 0;
+      else
+        SendSysMessage (organizer, "You will fight with the red team.");
+        team2.append(organizer);
+        j := 1;
+      endif
+    else
+      team1.append(organizer);
+      j := 0;
+    endif
+
+  //Pick players.
+  repeat
+    //If it isn't a blues against reds, place all them in team1
+    if ((teams) and (!monsters))
+      if (j)
+        SendSysMessage (organizer, "Pick a player for the blue team");
+        duelist := ChooseOpponent(team1);
+        if (duelist)
+          Speaker (duelist.name + " will fight with the blue team!");
+          j := 0;
+        endif
+      else
+        SendSysMessage (organizer, "Pick a player for the red team");
+        duelist := ChooseOpponent(team2);
+        if (duelist)
+          Speaker (duelist.name + " will fight with the red team!");
+          j := 1;
+        endif
+      endif
+    else
+      duelist := ChooseOpponent(team1);
+      if (duelist)
+        Speaker (duelist.name + " has joined the duel!");
+      endif
+    endif
+  until (!duelist);
+
+  //Remove players disconected while picking.
+  j := 0;
+  foreach duelist in team1
+    if (!duelist.ip)
+      team1.erase(j);
+      j := j - 1;
+    endif
+  endforeach
+  if ((teams) and (!monsters))
+    j := 0;
+    foreach duelist in team2
+      if (!duelist.ip)
+        team2.erase(j);
+        j := j - 1;
+      endif
+    endforeach
+  endif
+
+  //Check if there are enough players to start.
+  if ((teams) and (!monsters))
+    if ((!team1.size()) or (!team2.size()))
+      SendSysMessage(organizer, "Cancelled.");
+      FinishDuel();
+      return;
+    endif
+  else
+    if (!team1.size())
+      SendSysMessage(organizer, "Cancelled.");
+      FinishDuel();
+      return;
+    endif
+  endif
+
+  //Don't needed to explain what this does
+  if (monsters)
+    level := ChooseMonsterLevel();
+  endif
+
+  //Let him cancel the duel.
+  GFInitGump(0, 0);
+
+  GFResizePic(0, 0, BKGND_SILVERTRIM, 300, 165);
+  GFResizePic(15, 15, BKGND_DARK_STONE, 270, 35);
+  GFTextMid(15, 20, 270, STD_COLOR, "Duel menu");
+
+  GFResizePic(15, 55, BKGND_DARK_STONE, 270, 100);
+
+  GFTextLine(25, 65, STD_COLOR, "Press ok to start the duel, or");
+  GFTextLine(25, 85, STD_COLOR, "cancel to suspend it.");
+  GFButtonID(25, 110, 2121, 2120, 1, 0);
+  GFButtonID(85, 110, 2130, 2129, 1, 2);
+
+  answer := GFSendGump(organizer);
+  if (!answer[0])
+    if (!announce)
+      Speaker ("Duel has been suspended.");
+    endif
+    SendSysMessage(organizer, "Cancelled");
+    FinishDuel();
+    return;
+  endif
+
+  //Enter the monsters.
+  if (monsters)
+      EnterMonsters();
+  endif
+  sleep(1);
+
+  //Announce the start
+  if (announce)
+    Broadcast("The duel has started!", 0, 73);
+    if (prize)
+      if (teams)
+        Broadcast ("The prize for the winners will be " + prize + " gold pieces!", 0, 73);
+      else
+        Broadcast ("The prize for the winner will be " + prize + " gold pieces!", 0, 73);
+      endif
+    endif
+  else
+    Speaker("The duel has started!");
+    if (prize)
+      if (teams)
+        Speaker("The prize for the winners will be " + prize + " gold pieces!");
+      else
+        Speaker("The prize for the winner will be " + prize + " gold pieces!");
+      endif
+    endif
+  endif
+
+  //Set up the fighters and send them to the arena.
+  EnterPlayers(team1, 1);
+  if ((teams) and (!monsters))
+    EnterPlayers(team2, 2);
+  endif
+
+  //This forces end after 30 minutes.
+  dueltime := ReadGameClock();
+    
+  while (board)
+    //Time is out?
+    if (DuelClock())
+      break;
+    endif
+    sleep(5);
+
+    //Shame for the losers.
+    RemoveDead(team1);
+    if (teams)
+      RemoveDead(team2);
+    endif
+
+    //Hum, has won someone already?
+    if (teams)      
+      if (team1.size() == 0)
+        break;
+      else
+        if (team2.size() == 0)
+          break;
+        endif
+      endif
+    else
+      if (team1.size() <= 1)
+        break;
+      endif
+    endif
+  endwhile
+
+  //Oh, yeah!
+  if (teams)
+    if (team1.size() == 0)
+      Speaker ("Red team wins!");
+      j := Cint(prize / team2.size());
+      sleep(10);
+      foreach duelist in team2
+        RemovePlayer(duelist);
+        if ((j) and (!duelist.isa(POLCLASS_NPC)))
+          CreateItemInBackpack(duelist, 0x0eed, j);
+          SendSysMessage(duelist, "You won " + j + " gold pieces.");
+        endif
+      endforeach
+    endif
+    if (team2.size() == 0)
+      Speaker ("Blue team wins!");
+      j := Cint(prize / team1.size());
+      sleep(10);
+      foreach duelist in team1
+        RemovePlayer(duelist);
+        sleep(5);
+        if ((j) and (!duelist.isa(POLCLASS_NPC)))
+          CreateItemInBackpack(duelist, 0x0eed, j);
+          SendSysMessage(duelist, "You won " + j + " gold pieces.");
+        endif
+      endforeach
+    else
+      sleep(5);
+      foreach duelist in team1
+        RemovePlayer(duelist);
+      endforeach
+      foreach duelist in team2
+        RemovePlayer(duelist);
+      endforeach
+    endif
+  else
+    if ((!team1[1].dead) and (team1[1]) and (team1[1].size() == 1))
+      Speaker("Winner: " + team1[1].name + "!");
+      sleep(10);
+      RemovePlayer(team1[1]);
+      sleep(5);
+      if (prize)
+        answer := CreateItemInBackpack(team1[1], 0x0eed, prize);
+        SendSysMessage(team1[1], "You won " + prize + " gold pieces.");
+      endif
+    else
+      Speaker("The duel is draw!");
+      sleep(5);
+      foreach duelist in team1
+        RemovePlayer(duelist);
+      endforeach
+    endif
+  endif
+
+  FinishDuel();
+
+endprogram
+
+
+//***** FUNCTIONS *****//
+//Notice that many variables are global - declared at top.
+
+function InUse(yes)
+	if (yes)
+		SetObjProperty(board, "InUse", organizer.serial);
+	else
+		EraseObjProperty(board, "InUse");
+	endif
+endfunction
+
+function ChooseOpponent (byref team)
+  repeat
+    var opponent;
+    var text;
+    if (joinfee)
+      text := " (fee: " + joinfee + "gps.)";
+    endif
+    print (organizer.name);
+    SendSysMessage(organizer, "Pick an opponent.");
+    opponent := target(organizer);
+    if (opponent.isa(POLCLASS_NPC))
+      SendSysMessage(organizer, "You can't pick that.");
+    elseif ((opponent) and (!opponent.ip))
+      SendSysMessage(organizer, "That opponent isn't connected.");
+    elseif (opponent.dead)
+      SendSysMessage(organizer, "That opponent seems to be a bit dead.");
+    elseif (opponent == organizer)
+      SendSysMessage(organizer, "List closed.");
+      return 0;
+    elseif ( opponent && opponent.isa(POLCLASS_MOBILE) && !opponent.isa(POLCLASS_NPC))
+      SendSysMessage(organizer, "Inviting "+oponente.name+" to join the duel.");
+
+      GFInitGump(0, 0);
+
+      GFResizePic(0, 0, BKGND_SILVERTRIM, 300, 165);
+      GFResizePic(15, 15, BKGND_DARK_STONE, 270, 35);
+      GFTextMid(15, 20, 270, STD_COLOR, "Duel menu");
+
+      GFResizePic(15, 55, BKGND_DARK_STONE, 270, 100);
+
+      GFTextLine(25, 65, STD_COLOR, organizer.name + " invites you to join a duel.");
+      GFTextLine(25, 85, STD_COLOR, "Do you accept?" + text);
+      GFButtonID(25, 110, 2121, 2120, 1, 0);
+      GFButtonID(85, 110, 2130, 2129, 1, 1);
+      answer := GFSendGump(oponente);
+
+      if ( !answer[0] )
+        SendSysMessage(organizer, opponent.name + " doesn't want to join the duel.");
+      else
+        if (joinfee)
+          if (!opponent.spendgold(joinfee))
+            SendSysMessage(organizer, opponent.name + " can't pay the fee.");
+            SendSysMessage(opponent, "You can't pay the fee.");
+            return 0;
+          endif
+        endif
+        team.append(opponent);
+        break;
+      endif
+    else
+      SendSysMessage(organizer, "List closed.");
+      return 0;
+    endif
+  until (!opponent);
+  return 1;
+endfunction
+
+function IsInUse()
+	if ( GetObjProperty (board, "InUse") )
+		return 1;
+	endif
+	return 0;
+endfunction
+
+function EnterMonsters()
+  var critter;
+  var template;
+  var number;
+  if(!level)
+    SendSysMessage(organizer, "Cancelled");
+    FinishDuel();
+    return 0;
+  endif
+  if (level > 7)
+   level := 7;
+  elseif (level < 1)
+    level := 1;
+  endif
+  //Place here your npcs.
+  case (level)
+    1: //Very easy (50Hp)
+      critter := RandomInt(12);
+      case (critter)
+        1: number := 8; template := "walrus";
+        2: number := 8; template := "deer";
+        3: number := 8; template := "pig";
+        4: number := 8; template := "eagle";
+        5: number := 8; template := "dog";
+        6: number := 8; template := "cow";
+        7: number := 8; template := "sheep";
+        8: number := 8; template := "slime";
+        9: number := 8; template := "mongbat";
+       10: number := 6; template := "headless";
+       11: number := 6; template := "bullfrog";
+       12: number := 6; template := "frostooze";
+      endcase
+    2: //Easy (100Hp)
+      critter := RandomInt(14);
+      case (critter)
+        1: number := 5; template := "bear";
+        2: number := 5; template := "blackbear";
+        3: number := 5; template := "bull";
+        4: number := 5; template := "gorilla";
+        5: number := 5; template := "alligator";
+        6: number := 5; template := "panther";
+        7: number := 6; template := "grat";
+        8: number := 5; template := "whitewolf";
+        9: number := 5; template := "greywolf";
+       10: number := 5; template := "timberwolf";
+       11: number := 4; template := "giantspider";
+       12: number := 6; template := "brigand";
+       13: number := 5; template := "gianttoad";
+       14: number := 6; template := "imp";
+      endcase
+    3: //Medium (200Hp)
+      critter := RandomInt(32);
+      case (critter)
+        1: number := 4; template := "grizzly";
+        2: number := 4; template := "polar";
+        3: number := 4; template := "ettin";
+        4: number := 4; template := "ettin2";
+        5: number := 4; template := "ogre";
+        6: number := 4; template := "hellhound";
+        7: number := 4; template := "direwolf";
+        8: number := 4; template := "frostwolf";
+        9: number := 5; template := "ratman";
+       10: number := 5; template := "ratman2";
+       11: number := 5; template := "ratman3";
+       12: number := 4; template := "harpy";
+       13: number := 4; template := "gazer";
+       14: number := 4; template := "reaper";
+       15: number := 4; template := "giantscorp";
+       16: number := 4; template := "lavalizard";
+       17: number := 4; template := "troll1";
+       18: number := 4; template := "troll2";
+       19: number := 4; template := "troll3";
+       20: number := 4; template := "evilmage";
+       21: number := 3; template := "liche";
+       22: number := 4; template := "orcmage";
+       23: number := 6; template := "orc1";
+       24: number := 6; template := "orc2";
+       25: number := 5; template := "lizardman1";
+       26: number := 5; template := "lizardman2";
+       27: number := 5; template := "lizardman3";
+       28: number := 4; template := "frosttroll";
+       29: number := 4; template := "frostspider";
+       30: number := 4; template := "iceelemental";
+       31: number := 2; template := "desertostard";
+       32: number := 4; template := "swamptentacle";
+      endcase
+    4: //Tough (400Hp)
+      critter := RandomInt(16);
+      case (critter)
+        1: number := 3; template := "terathandrone";
+        2: number := 3; template := "eldergazer";
+        3: number := 3; template := "gargoyle";
+        4: number := 3; template := "giant_serpent";
+        5: number := 3; template := "magelord";
+        6: number := 5; template := "orclord";
+        7: number := 3; template := "iceserpent";
+        8: number := 2; template := "forestostard";
+        9: number := 2; template := "frenziedostard";
+       10: number := 3; template := "ophidianshaman";
+       11: number := 3; template := "ophidianmage";
+       12: number := 3; template := "ophidianenforcer";
+       13: number := 3; template := "ophidianwarrior";
+       14: number := 3; template := "stonegargoyle";
+       15: number := 3; template := "stoneharpy";
+       16: number := 3; template := "terathanwarrior";
+      endcase
+    5: //Very tough (600Hp)
+      critter := RandomInt(12);
+      case (critter)
+        1: number := 2; template := "vortex";
+        2: number := 2; template := "drake1";
+        3: number := 2; template := "drake2";
+        4: number := 3; template := "dreadspider";
+        5: number := 3; template := "lichelord";
+        6: number := 2; template := "ophidianmatriarch";
+        7: number := 2; template := "cyclopse";
+        8: number := 2; template := "titan";
+        9: number := 2; template := "ophidianavenger";
+       10: number := 2; template := "ophidianknighterrant";
+       11: number := 2; template := "terathanmatriarch";
+       12: number := 2; template := "terathanavenger";
+      endcase
+    6: //Uh, oh (1000Hp)
+      critter := RandomInt(8);
+      case (critter)
+        1: number := 2; template := "ogrelord";
+        2: number := 1; template := "whitewyrm";
+        3: number := 1; template := "greatwyrm";
+        4: number := 1; template := "daemon";
+        5: number := 1; template := "dragon1";
+        6: number := 1; template := "dragon2";
+        7: number := 1; template := "nightmare";
+        8: number := 1; template := "blackliche";
+      endcase
+    7: //I see dead people... (+1000Hp)
+      critter := RandomInt(3);
+      case (critter)
+        1: number := 1; template := "balron";
+        2: number := 1; template := "balrog";
+        3: number := 1; template := "shadowlord";
+      endcase
+  endcase
+  //Jhelom arena
+  var npcx;
+  var npcy;
+  var npcz := -21;
+  var npc;
+
+  //More monsters against big teams.
+  if ((teams) and (level))
+      number := number + (team1.size() / (level * 2));
+  endif
+
+  repeat
+    npcx := 1389 + RandomInt(18);
+    npcy := 3733 + RandomInt(19);
+
+    if ( !template )
+      npc := CreateNPCFromTemplate("daemon", npcx, npcy, npcz);
+      npc.name := "Bug daemon";
+    else
+      npc := CreateNPCFromTemplate(template, npcx, npcy, npcz);
+      if ( npc.errortext )
+        npc := CreateNPCFromTemplate("daemon", npcx, npcy, npcz);
+        npc.name := "Trust me, I'm a " + template;
+      endif
+    endif
+
+    //Don't tame them, don't leave corpse.
+    //Look arenadoc.txt for how guardignore works.
+    EraseObjProperty(npc, "tameskill");
+    SetObjProperty(npc, "guardignore", 1);
+    SetObjProperty(npc, "guardkill", 1);
+
+    //Not tested.
+    if (GetObjProperty(npc, "script") == "animal")
+       SetObjProperty(npc,"script", "dumbKillPCs");
+       SetObjProperty(npc,"alignment", "evil");
+       RestartScript(npc);
+    endif
+
+    //Well, npcs seem to stay quiet till they get damaged.
+    //I'm sure this must can be done by other way... but well...
+    //let's kick their back. Not sure if it works.
+    ApplyRawDamage(npc, 1);
+
+    if (teams)
+      team2.append (npc);
+    else
+      team1.append (npc);
+    endif
+    number := number - 1;
+  until (number == 0);
+endfunction
+
+function EnterPlayers (byref team, color)
+  var duelist;
+  
+  //Jhelom arena
+  var pcx;
+  var pcy;
+  var pcz := -21;
+
+  foreach duelist in team
+  if (!duelist.isa(POLCLASS_NPC))
+    if (teams)
+      //To your corners!
+      if (color == 1)
+        pcx := 1386;
+        pcy := 3734 + RandomInt(16);
+        PlayStationaryEffect(duelist.x, duelist.y, duelist.z, 0x3728, 0xa, 0xa);
+        MoveCharacterToLocation(duelist, pcx, pcy, pcz, MOVECHAR_FORCELOCATION);
+        PlayStationaryEffect(duelist.x, duelist.y, duelist.z, 0x3728, 0xa, 0xa);
+      else
+        pcx := 1411;
+        pcy := 3734 + RandomInt(16);
+        PlayStationaryEffect(duelist.x, duelist.y, duelist.z, 0x3728, 0xa, 0xa);
+        MoveCharacterToLocation(duelist, pcx, pcy, pcz, MOVECHAR_FORCELOCATION);
+        PlayStationaryEffect(duelist.x, duelist.y, duelist.z, 0x3728, 0xa, 0xa);
+      endif
+    else
+      //Random start place.
+      pcx := 1385 + RandomInt(26);
+      pcy := 3734 + RandomInt(16);
+      PlayStationaryEffect(duelist.x, duelist.y, duelist.z, 0x3728, 0xa, 0xa);
+      MoveCharacterToLocation(duelist, pcx, pcy, pcz, MOVECHAR_FORCELOCATION);
+      PlayStationaryEffect(duelist.x, duelist.y, duelist.z, 0x3728, 0xa, 0xa);
+    endif
+   endif
+
+    //No more an spectator.
+    EraseObjProperty(duelist, "npcignore");
+
+    duelist.disable("invul");
+    RevokePrivilege(duelist, "invul");
+
+    EraseObjProperty(duelist, "nocast");
+
+    if ((stdequipment) and (!duelist.isa(POLCLASS_NPC)))
+        ForceEquipment(duelist, color);
+    endif
+  endforeach
+endfunction
+
+function ChooseMonsterLevel()
+  GFInitGump(0, 0);
+
+  GFResizePic(0, 0, BKGND_SILVERTRIM, 300, 260);
+  GFResizePic(15, 15, BKGND_DARK_STONE, 270, 35);
+  GFTextMid(15, 20, 270, STD_COLOR, "Monsters level");
+  GFResizePic(15, 55, BKGND_DARK_STONE, 270, 190);
+  var y_pos := 65;
+  var i := 1;
+  for ( i; i<=7; i:=i+1 )
+    GFButtonID(25, y_pos+3, 2117, 2118, 1, i);
+    GFTextLine(45, y_pos, STD_COLOR, "Level " + i);
+    y_pos := y_pos + 20;
+    sleepms(10);
+  endfor
+
+  var input := GFSendGump(organizer);
+  input := input[0];
+  return input;
+endfunction
+
+function RemovePlayer (player)
+  if (!player.isa(POLCLASS_NPC))
+    //Erase standard equipment.
+    if (stdequipment)
+      EraseEquipment(player);
+    endif
+    //Send the player to the dressroom.
+    PlayStationaryEffect(player.x, player.y, player.z, 0x3728, 0xa, 0xa);
+    MoveCharacterToLocation(player, 1379, 3744, 0, MOVECHAR_FORCELOCATION);
+    PlayStationaryEffect(player.x, player.y, player.z, 0x3728, 0xa, 0xa);
+    if (player.dead)
+      Resurrect(player);
+    endif
+    if ((player.corpse) and (!stdequipment))
+      //Give back their items.
+      //Not sure if it works.
+      var item;
+      foreach item in EnumerateItemsInContainer(player.corpse)
+        MoveItemToContainer (item, player.backpack);
+      endforeach
+    endif
+
+    EraseObjProperty(player, "guardkill");
+    SetObjProperty(player, "npcignore", 1);
+    SetObjProperty(player, "nocast", 1);
+    GrantPrivilege(player, "invul");
+    player.enable("invul");
+  else
+    //Kill the remaining monsters.
+    ApplyRawDamage(player, 10000);
+  endif
+endfunction
+
+function RemoveDead (byref team)
+  var i;
+  var z;
+  z := 1;
+  foreach i in team
+    if (!i)
+       Speaker ("A monster has died!");
+       team.erase(z);
+       z := z - 1;
+    else
+     if(!i.isa(POLCLASS_NPC))
+      if ((i.dead) or (!i.ip) or (i.x < 1370) or (i.x > 1426) or (i.y < 3720) or (i.y > 3760))
+       Speaker (i.name + " has been defeated!");
+       team.erase(z);
+       z := z - 1;
+       RemovePlayer(i);
+      endif
+     endif
+    endif
+    z := z + 1;
+  endforeach
+endfunction
+
+function Speaker (mensaje)
+  var individuo;
+  //Nice, heh. You can hear the speaker even from out of the arena.
+  //I did code for random comments about players hp, but didn't want to mees
+  //so much the script so removed it. You can make a function and place it in
+  //DuelClock.
+  //Also you can ask for team names, so the speaker uses them instead of blues/reds.
+  foreach individuo in ListMobilesNearLocation(1399, 3743, -21, 40);
+    SendSysMessage(individuo, mensaje, 0, 59);
+  endforeach
+endfunction
+
+function FinishDuel()
+  if (announce)
+    Broadcast( "The duel has finished!", 0, 73);
+  endif
+  InUse(0);
+endfunction
+
+function DuelClock()
+  if (ReadGameClock() > dueltime + 900)
+    if (ReadGameClock() > dueltime + 1200)
+      if (ReadGameClock() > dueltime + 1500)
+        if (ReadGameClock() > dueltime + 1740)
+          if (ReadGameClock() > dueltime + 1800)
+            Speaker ("The duel is over! No one wins!");
+            return 1;
+          elseif (timewarn == 4)
+            Speaker ("Last minute!");
+            timewarn := 5;
+          endif
+        elseif (timewarn == 3)
+          Speaker ("Five minutes remaining!");
+          timewarn := 4;
+        endif
+      elseif (timewarn == 2)
+        Speaker ("Ten minutes remaining!");
+        timewarn := 3;
+      endif
+    elseif (timewarn == 1)
+      Speaker ("Fifteen minutes remaining!");
+      timewarn := 2;
+    endif
+  endif
+endfunction
+
+function TakeFee(player)
+  if (!player.spendgold(joinfee))
+    SendSysMessage(player, "You can't pay the fee.");
+    return 0;
+  else
+    SendSysMessage(player, joinfee + " gold coins have been added to the prize.");
+    prize := prize + joinfee;
+    return 1;
+  endif
+endfunction
+
+function EraseEquipment (duelist)
+  var junk;
+  var item;
+  for (item := 1; item <= 24; item := item + 1)
+    if ( (item == 0x0b) || (item == 0x10) || (item == 0x15) || (item == 0x16))
+      junk := { };
+    else
+      junk := GetEquipmentByLayer(duelist, item);
+       if (junk)
+         DestroyItem(junk);
+       endif
+    endif
+  endfor
+
+  //Empty the backpack.
+  //(Hum, I wonder if there was a core function for this... )
+  foreach junk in EnumerateItemsInContainer(duelist.backpack)
+    if (junk)
+       DestroyItem(junk);
+    endif
+  endforeach
+endfunction
+
+function ForceEquipment(duelist, color)
+  //Remove equipment.
+  var junk;
+  var item;
+  var bankbox;
+  for (item := 1; item <= 24; item := item + 1)
+    if ((item == 0x0b) || (item == 0x10) || (item == 0x15))
+      junk := { };
+    else
+      junk := GetEquipmentByLayer(duelist, item);
+       if (junk)
+         bankbox := FindBankbox(duelist);
+         if (bankbox)
+           MoveItemToContainer (junk, bankbox);
+         endif
+       endif
+    endif
+  endfor
+
+  //Empty the backpack
+  foreach junk in EnumerateItemsInContainer(duelist.backpack)
+    if (junk)
+      bankbox := FindBankbox(duelist);
+      if (bankbox)
+        MoveItemToContainer (junk, bankbox);
+      else
+        DestroyItem(junk);
+      endif
+    endif
+  endforeach
+
+  //Give the equipment that best suits the skills.
+  var archerpc := GetAttribute(duelist, ATTRIBUTEID_ARCHERY);
+  var magepc   := GetAttribute(duelist, ATTRIBUTEID_MAGERY);
+  var swordpc  := GetAttribute(duelist, ATTRIBUTEID_SWORDSMANSHIP);
+  var macepc   := GetAttribute(duelist, ATTRIBUTEID_MACEFIGHTING);
+  var fencerpc := GetAttribute(duelist, ATTRIBUTEID_FENCING);
+  var warrior;
+
+  //Armas
+  if ((swordpc >= magepc) and (swordpc >= archerpc))
+    item := CreateItemInBackpack (duelist, 0x0f5e, 1); //Broadsword
+    item.name := "Duelist sword";
+    if (color == 2)
+      item.color := 30;
+    elseif (teams)
+      item.color := 95;
+    endif
+    EquipItem(duelist, item);
+    warrior := 1;
+  elseif ((macepc >= magepc) and (macepc >= archerpc))
+    item := CreateItemInBackpack (duelist, 0x1438, 1); //War Hammer
+    item.name := "Duelist hammer";
+    if (color == 2)
+      item.color := 30;
+    elseif (teams)
+      item.color := 95;
+    endif
+    EquipItem(duelist, item);
+    warrior := 1;
+  elseif ((fencerpc >= magepc) and (fencerpc >= archerpc))
+    item := CreateItemInBackpack (duelist, 0x1404, 1); //War Fork
+    item.name := "Duelist fork";
+    if (color == 2)
+      item.color := 30;
+    elseif (teams)
+      item.color := 95;
+    endif
+    EquipItem(duelist, item);
+    warrior := 1;
+  elseif (archerpc >= magepc)
+    item := CreateItemInBackpack (duelist, 0x13b2, 1); //Bow
+    item.name := "Duelist bow";
+    if (color == 2)
+      item.color := 30;
+    elseif (teams)
+      item.color := 95;
+    endif
+    EquipItem(duelist, item);
+    item := CreateItemInBackpack (duelist, 0xf3f, 300); //Arrows
+  endif
+  //Armor
+  if (warrior)
+    item := CreateItemInBackpack (duelist, 0x140E, 1); //Nose Helm
+    item.name := "Duelist helm";
+    if (color == 2)
+      item.color := 30;
+    elseif (teams)
+      item.color := 95;
+    endif
+    EquipItem(duelist, item);
+
+    item := CreateItemInBackpack (duelist, 0x1b74, 1); //Kite Shield
+    item.name := "Duelist shield";
+    if (color == 2)
+      item.color := 30;
+    elseif (teams)
+      item.color := 95;
+    else
+      item.color := (RandomInt(21) - 1) * 5;
+    endif
+    EquipItem(duelist, item);
+
+    item := CreateItemInBackpack (duelist, 0x1415, 1); //Chest
+    item.name := "Duelist armor";
+    if (color == 2)
+      item.color := 30;
+    elseif (teams)
+      item.color := 95;
+    endif
+    EquipItem(duelist, item);
+
+    item := CreateItemInBackpack (duelist, 0x1410, 1); //Sleeves
+    item.name := "Duelist sleeves";
+    if (color == 2)
+      item.color := 30;
+    elseif (teams)
+      item.color := 95;
+    endif
+    EquipItem(duelist, item);
+
+    item := CreateItemInBackpack (duelist, 0x1411, 1); //Leggings
+    item.name := "Duelist leggings";
+    if (color == 2)
+      item.color := 30;
+    elseif (teams)
+      item.color := 95;
+    endif
+    EquipItem(duelist, item);
+
+    item := CreateItemInBackpack (duelist, 0x1414, 1); //Gauntlets
+    item.name := "Duelist gauntlets";
+    if (color == 2)
+      item.color := 30;
+    elseif (teams)
+      item.color := 95;
+    endif
+    EquipItem(duelist, item);
+
+    item := CreateItemInBackpack (duelist, 0x1413, 1); //Gorget
+    item.name := "Duelist gorget";
+    if (color == 2)
+      item.color := 30;
+    elseif (teams)
+      item.color := 95;
+    endif
+    EquipItem(duelist, item);
+
+  else
+    //Mages and archers
+    if (magepc >= archerpc)
+      var regsbag := CreateItemInBackpack(duelist, "backpack", 1);
+      foreach item in array( 0x0f7a, 0x0f7b, 0x0f84, 0x0f85, 0x0f86, 0x0f88, 0x0f8c, 0x0f8d )
+        CreateItemInContainer(regsbag, item, 100);
+      endforeach
+      //Full spellbook
+      item := CreateItemInContainer(regsbag, 0x0efa, 1);
+      if (color == 2)
+        item.color := 30;
+      elseif (teams)
+        item.color := 95;
+      else
+        item.color := (RandomInt(21) - 1) * 5;
+      endif
+      var i;
+      for (i := 0x1f2d; i <= 0x1f6c; i := i + 1)
+        CreateItemInContainer(item,  i, 1);
+      endfor
+      EquipItem(duelist, item);
+    endif
+
+    item := CreateItemInBackpack (duelist, 0x13ec, 1); //Chest
+    item.name := "Duelist armor";
+    EraseObjProperty(item, "medloss");
+    item.ar_mod := 15;
+    if (color == 2)
+      item.color := 30;
+    elseif (teams)
+      item.color := 95;
+    endif
+    EquipItem(duelist, item);
+
+    item := CreateItemInBackpack (duelist, 0x13ee, 1); //Sleeves
+    item.name := "Duelist sleeves";
+    EraseObjProperty(item, "medloss");
+    item.ar_mod := 15;
+    if (color == 2)
+      item.color := 30;
+    elseif (teams)
+      item.color := 95;
+    endif
+    EquipItem(duelist, item);
+
+    item := CreateItemInBackpack (duelist, 0x13f0, 1); //Leggings
+    item.name := "Duelist leggings";
+    EraseObjProperty(item, "medloss");
+    item.ar_mod := 15;
+    if (color == 2)
+      item.color := 30;
+    elseif (teams)
+      item.color := 95;
+    endif
+    EquipItem(duelist, item);
+
+    item := CreateItemInBackpack (duelist, 0x13f2, 1); //Gauntlets
+    item.name := "Duelist gauntlets";
+    EraseObjProperty(item, "medloss");
+    item.ar_mod := 15;
+    if (color == 2)
+      item.color := 30;
+    elseif (teams)
+      item.color := 95;
+    endif
+    EquipItem(duelist, item);
+
+    item := CreateItemInBackpack (duelist, 0x170f, 1); //Shoes
+    item.name := "Duelist shoes";
+    item.ar_mod := 15;
+    if (color == 2)
+      item.color := 30;
+    elseif (teams)
+      item.color := 95;
+    endif
+    EquipItem(duelist, item);
+  endif
+
+  //Bandages, potions and clothes
+    item := CreateItemInBackpack (duelist, 0x1515, 1); //Cloak
+    item.name := "Duelist cloak";
+    if (color == 2)
+      item.color := 30;
+    elseif (teams)
+      item.color := 95;
+    else
+      item.color := (RandomInt(21) - 1) * 5;
+    endif
+    EquipItem(duelist, item);
+
+    item := CreateItemInBackpack (duelist, 0x1f03, 1); //Robe
+    item.name := "Duelist robe";
+    if (color == 2)
+      item.color := 30;
+    elseif (teams)
+      item.color := 95;
+    else
+      item.color := (RandomInt(21) - 1) * 5;
+    endif
+    EquipItem(duelist, item);
+
+    item := CreateItemInBackpack (duelist, 0x0e21, 300); //Bandages
+    item := CreateItemInBackpack (duelist, 0xdc03, 1); //Greater Heal
+    item := CreateItemInBackpack (duelist, 0xdc03, 1); //Greater Heal
+    item := CreateItemInBackpack (duelist, 0xdc03, 1); //Greater Heal
+    item := CreateItemInBackpack (duelist, 0xdc03, 1); //Greater Heal
+    item := CreateItemInBackpack (duelist, 0xdc03, 1); //Greater Heal
+    item := CreateItemInBackpack (duelist, 0xdc03, 1); //Greater Heal
+    item := CreateItemInBackpack (duelist, 0xdc03, 1); //Greater Heal
+    item := CreateItemInBackpack (duelist, 0xdc03, 1); //Greater Heal
+    item := CreateItemInBackpack (duelist, 0xdc03, 1); //Greater Heal
+    item := CreateItemInBackpack (duelist, 0xdc03, 1); //Greater Heal
+    item := CreateItemInBackpack (duelist, 0xdc03, 1); //Greater Heal
+    item := CreateItemInBackpack (duelist, 0xdc03, 1); //Greater Heal
+    item := CreateItemInBackpack (duelist, 0xdc03, 1); //Greater Heal
+    
+endfunction
+
+

@@ -1,0 +1,51 @@
+use uo;
+use os;
+
+
+
+program lighttile (who, tile);
+
+PlaySoundEffect( who, 0x00f7 );
+var colorrange := { 2986, 2987, 2988, 2989, 2999, 2998, 2997, 2996, 2995, 2994, 2993, 2992, 2992, 2993, 2994, 2995, 2996, 2997, 2998, 2999, 2989, 2988, 2987, 2986};
+sfumatureitem(tile, colorrange, 60, 1);
+endprogram
+
+function sfumatureitem( item, colorrange, tempo, ripetizione);
+var i;
+
+var repeatcounter := 0;
+var origcolor := item.color;
+SetObjProperty(item, "origcol", origcolor);
+
+
+repeat
+item.color := colorrange[1];
+
+
+
+for (i := 1; i <= len(colorrange); i := i + 1)
+item.color := colorrange[i];
+
+
+sleepms(tempo);
+endfor
+
+
+
+
+repeatcounter := repeatcounter + 1;
+until repeatcounter == ripetizione;
+
+
+var restorcolor := GetObjProperty(item, "origcol");
+item.color := restorcolor;
+
+
+
+EraseObjProperty(item, "origcol");
+
+
+endfunction
+
+
+

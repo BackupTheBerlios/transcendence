@@ -1,0 +1,138 @@
+
+[ Jhelom Arena ]
+by Harold
+fractal@ono.com
+
+This is an engine for player run duels at the Jhelom Arena,
+designed originally for the spanish shard Tierra Maldita.
+We are using 095SP1 without any substantial changes.
+
+Consider this script in alpha dev state.
+
+I scripted it from the Austin Heilman (Austin@tsse.net) scripts
+available at the files section in pol-scriptforum. 
+There are really few things from those scripts that remain unchanged
+(gumps style, some gumps text and part of the monsters level menu script).
+This doesn't use events and it's all in one engine.
+
+I added some features, like standard equipment, time limit,
+inscription fees that share between the winners, some control for
+spectators, an entrance and exit items and guards/npcs ignore scripts
+so monsters don't attack spectators and pks can go too to the arena, 
+an speaker, etc.
+
+[ How to install ]
+
+Place the scripts in a folder at pkg (sample c:\pol\pkg\jhelomarena).
+Go to the end of this doc and make those changes.
+Compile.
+
+Place an entry item everywhere you want the players to access the arena.
+Also place an exit item and the arenaboard inside the east building.
+You must lock the doors that let players to exit to the street or
+enter the arena itself.
+
+You'll may want to edit the map and replace that footbridge over the
+arena by one that goes around it. It would be way better if you don't
+have to worry about if they try to shoot arrows through the bridge's
+floor. It's annoying also for the players that are dueling - it
+doesn't let them see the arena right at the north.
+
+Also, you can place a banker in the east building, and a healer and some
+dressroom decoration at the west building. Losers and winners will be
+teleported to the west building.
+
+It needs a lot (really, really a lot) of optimization. It may also contain
+bugs. I just haven't got still enough skill (or time) to do it. So feel
+free to rescript it. Don't forget to discuss and post the changes at the
+mail group and the pol forum.
+
+Only some more words from the scripter:
+Share your scripts. That makes POL grow faster!
+
+Have fun :D
+
+
+//*** Scripts to modify ***//
+
+[- chrdeath.src -]
+-- Where AdjustNoto, replace code --
+
+  if(killer != error)
+    //Don't adjust noto in arena.
+    if ((ghost.x < 1370) and (ghost.x > 1426) and (ghost.y < 3720) and (ghost.y > 3760))
+      AdjustNoto((SystemFindObjectBySerial(killer[2], SYSFIND_SEARCH_OFFLINE_MOBILES)), ghost);
+    else
+      //Don't report kills.
+      foreach reportable in(ghost.reportables)
+        if (reportable.serial == killer.serial)
+       	  ghost.removeReportable(reportable.serial, reportable.gameclock);
+        endif
+      endforeach
+    endif
+  endif
+
+
+-- At the end, before endprogram, replace the SendReportGump by --
+
+  //Don't send gump.
+  if ((ghost.x < 1370) and (ghost.x > 1426) and (ghost.y < 3720) and (ghost.y > 3760))
+    if(len(ghost.reportables)>0)
+	SendReportGump(ghost);
+    endif
+  endif
+  
+
+//I still wonder if all this "nocast" stuff is done already in core.
+[- spellRestrictions.inc -]
+-- At the end, add --
+
+function CanUseSpellsHere(player)
+  if (GetObjProperty(player, "nocast"))
+    SendSysMessage (player, "You can't cast spells here.");
+    return 0;
+  else
+    return 1;
+  endif
+endfunction
+
+//Be absolutely sure this is the wrong way to do it.
+//All this stuff should be done before casting the spell :/
+//So I'll have to change this. Someday.
+
+[- Mark.src -]
+-- After: caster := result[1]; add --
+ 
+  if (!CanUseSpellsHere(caster))
+    return;
+  endif
+  //Don't mark runes in the arena.
+  if ((caster.x > 1370) and (caster.x < 1426) and (caster.y > 1396) and (caster.y < 1403))
+    SendSysMessage(caster, "You can't mark runes in the arena.");
+    return;
+  endif
+  
+[- Recall.src -]
+-- After: caster := result[1]; add --
+
+  if (!CanUseSpellsHere(caster))
+    return;
+  endif
+  //Don't recall in the arena.
+  if ((caster.x > 1370) and (caster.x < 1426) and (caster.y > 3720) and (caster.y < 3720)
+    SendSysMessage(caster, "You can't recall in the arena.");
+    return;
+  endif
+
+[- All the spells but recall.src and mark.src -]
+-- After: caster := result[1]; add --
+
+  if (!CanUseSpellsHere(caster))
+    return;
+  endif
+
+
+
+* Plz, ask your questions in the pol-scriptforum mail list or the forum. *
+
+-- Harold.

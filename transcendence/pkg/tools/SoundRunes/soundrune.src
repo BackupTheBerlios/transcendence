@@ -1,0 +1,126 @@
+//
+// SoundRune
+//
+//
+//
+// Creator: Artix
+// Contact: artix@artix.f2s.com
+//
+// Created: 28-Oct-2001
+// Updated: 
+//
+
+
+use uo;
+use os;
+include "include/attributes";
+
+
+
+program soundrune (who, rune)
+if (who.cmdlevel < 1)
+ return;
+endif
+
+var soundtype := CStr(GetObjProperty(rune, "soundtype"));
+var pause := CStr(GetObjProperty(rune, "pause"));
+ var layout := { "nodispose",
+			"page 0",
+			"resizepic 20 50 5120 600 30",	
+			"resizepic 20 85 5120 600 400",
+			"text 25 55 1500 0",
+		
+			"button 25 95 2118 2117 1 0 505",
+                        "text 45 90 1500 1",
+                        "button 25 125 2118 2117 1 0 506",
+                        "text 45 120 1500 2",
+                        //"button 25 155 2118 2117 1 0 507",
+                        "text 100 90 1500 3",
+                       // "button 25 185 2118 2117 1 0 508",
+                        "text 100 120 1500 4",
+                        //"button 25 215 2118 2117 1 0 509",
+                        "text 45 210 1500 5",
+                        //"button 25 245 2118 2117 1 0 510",
+                        "text 45 240 1500 6",
+                        "button 25 275 2118 2117 1 0 511",
+                        "text 45 270 1500 7",
+                        "button 25 305 2118 2117 1 0 512",
+                        "text 45 300 1500 8"
+                        };
+                       
+   var data := {"Sound Rune",
+                          "Sound",
+                          "Pause",
+                          soundtype,
+                          pause,
+                          "",
+                          "",
+                          "Start",
+                          "Stop"
+                          };
+                         
+
+
+ var select := SendDialogGump(who, layout, data);
+ 
+ var character;    
+ case (select[0])
+  505:
+      var snd := SendTextEntryGump(who, "Enter the sound number");
+      SetObjProperty(rune, "soundtype", snd);
+  506:
+      var ps :=  SendTextEntryGump(who, "Enter the sound number");
+      SetObjProperty(rune, "pause", CInt(ps));
+  511:
+      SetObjProperty(rune, "stop", 0);
+      foreach mob in ListMobilesNearLocationEx( rune.x,rune.y,rune.z, 6, 0x02, rune.realm )
+       if (mob.npctemplate == "null")
+        print("detected");
+        var kill := GetHp(mob) + 10;
+        ApplyDamage(mob, kill);
+       endif
+      endforeach
+       
+      character := CreateNpcFromTemplate("null", rune.x, rune.y, rune.z, 0, rune.realm);
+      //setname (character, "");
+      character.hidden := 1;
+      SetObjProperty(character, "pause", CInt(pause));
+      SetObjProperty(character, "soundtype", CInt(soundtype));
+      character.script := "playsound";
+      RestartScript( character );
+      /*local parms := {};
+      parms[1] := rune;
+      parms[2] := character;
+      
+      start_script ("sound", parms);*/
+      /*while (1)
+       pause := cint(getobjproperty (rune, "pause"));
+       soundtype := cint (getobjproperty (rune, "soundtype"));
+       PlaySoundEffect( character, cint (soundtype));
+       sleepms (pause);
+       if (getobjproperty (rune, "stop") = 1)
+        break;
+       endif
+      endwhile*/
+       
+  512:
+      SetObjProperty(rune, "stop", 1);
+      /*if (!character)
+       foreach char in ListMobilesNearLocation( rune.x, rune.y, rune.z, 6 )
+         //if (char.npctemplate)
+          if (char.script = "playsound")
+           char.hp := char.hp - (char.hp + 10);
+          endif 
+         //endif
+       endforeach
+      else 
+      character.hp := character.hp - (character.hp + 10);
+      endif*/
+ endcase
+endprogram
+         
+     
+      
+     
+                         
+                         
