@@ -1,0 +1,25 @@
+use uo;
+
+
+program textcmd_gospawn(who)
+
+var targ := Target(who, TGTOPT_NOCHECK_LOS + TGTOPT_NEUTRAL);
+
+if(!targ)
+	SendSysMessage(who, "Canseled");
+endif
+
+var spawnnet := CInt(GetObjProperty(targ,"spawnnet"));
+if(!spawnnet)
+	SendSysMessage(who,"Invalid target");
+	return;
+endif
+
+var list := GetGlobalProperty("runeserial");
+var rune := SystemFindObjectBySerial(list[spawnnet]);
+if(!rune)
+	SendSysMessage(who,"Rune not found");
+	return;
+endif
+
+endprogram

@@ -1,0 +1,52 @@
+///////////////////////////////////////////////
+// wakeup.src
+//
+// Created 7/26/2002 11:31AM
+// Updated 2/14/2003 9:04AM
+//
+// By Austin Heilman
+// http://www.tsse.net
+//
+///////////////////////////////////////////////
+//
+// This is a simple reaction nerve that listens for
+// entered area events and will wake the npc up when
+// it gets one. This will then make the npc begin running
+// its cycle script.
+//
+// This script is always running so long as the npc is alive
+// but sleeps until it gets an event.
+//
+///////////////////////////////////////////////
+
+use uo;
+use os;
+
+include "util/bank";
+include ":ai_brain:ai_include/NPC_Commands";
+
+program EnterAreaNerve(params)
+	var nerve_name	:= params[1];
+	var npc		:= params[2];
+	var ev		:= params[3];
+	var settings	:= params[4];
+		
+	while( npc )
+		if ( ev )
+			case ( ev.type )
+				SYSEVENT_ENTEREDAREA:
+					var source := ev.source;
+					if ( source.npctemplate );
+						Run_Script_To_Completion(settings["cycle_script"], {npc, settings});
+					elseif ( source.concealed );
+						//Do nothing
+					else
+						AI_WakeUp(npc);
+					endif
+			endcase
+		endif
+		
+		sleepms(5);
+		ev := wait_for_event(900000);
+	endwhile
+endprogram

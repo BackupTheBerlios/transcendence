@@ -1,0 +1,87 @@
+///////////////////////////////////////////////
+// fleecombat.src
+//
+// Created 7/26/2002 11:31AM
+// Updated 2/14/2003 9:04AM
+//
+// By Austin Heilman
+// http://www.tsse.net
+//
+///////////////////////////////////////////////
+//
+// This nerve simply causes a creature to run
+// away from what ever is attacking it.
+//
+///////////////////////////////////////////////
+
+use uo;
+use os;
+
+include ":ai_brain:ai_include/NPC_Commands";
+
+program FleeNerve(params)
+	var nerve_name	:= params[1];
+	var npc		:= params[2];
+	var opponent	:= params[3].source;
+	var settings	:= params[4];
+
+	//Enter combat mode, set the new opponent.
+	AI_Setopponent(npc, opponent);
+
+	//Store it here so it does not have to do the math over and over.
+	var flee_level := CInt((GetVitalMaximumValue(npc, "hits") * settings["flee_level"]) / 100);
+
+	while( npc )
+		var dist := Distance(npc, opponent);
+		if ( Distance(npc, opponent) < 20 )
+			AI_Move(npc, opponent, NEMOVE_AWAY, NEMOVE_RUN, WAKEUP, 100);
+		//If we have not healed all the way, but the opponent is far enough away
+		//then run away from anyone else attacking
+		else
+			if ( opponent.dead || !opponent )
+				var new_opponent := FleeStatus(npc, opponent, nerve_name);
+				if ( !new_opponent )
+					AI_Warmode(0);
+					AI_WinFight(npc, opponent);
+					AI_EndNerve(npc, nerve_name);
+				else
+					opponent := new_opponent;
+				endif
+			elseif ( !opponent )
+				var new_opponent := FleeStatus(npc, opponent, nerve_name);
+				if ( ! new_opponent )
+					AI_Warmode(0);
+					AI_EndNerve(npc, nerve_name);
+				else
+					opponent := new_opponent;
+				endif
+			elseif ( dist > 20 )
+				var new_opponent := FleeStatus(npc, opponent, nerve_name);
+				if ( new_opponent )
+					opponent := new_opponent;
+				else
+					AI_Warmode(0);
+					AI_EndNerve(npc, nerve_name);
+				endif
+			endif
+		endif
+
+		sleepms(600);
+		AI_ClearThoughts(npc, CLR_NERVE);
+	endwhile
+endprogram
+
+function FleeStatus(npc, byref opponent, nerve_name)
+
+	var hostiles := ListHostiles(npc, 10);
+	if ( hostiles.size() > 0 )
+		//Enter combat mode, set the new opponent.
+		AI_Setopponent(npc, hostiles[1]);
+		return hostiles[1];
+	else
+		//If there are no hostiles then just kill the nerve.
+		return 0;
+	endif
+
+	return 0;
+endfunction

@@ -1,0 +1,16 @@
+//Example: .npcsleep -> Forces all npcs to go to sleep.
+use uo;
+use os;
+
+include ":ai_brain:ai_include/NPC_Commands";
+
+program FixAI(who)
+	foreach mobile in ListObjectsInBox(0, 0, -120, 6000, 6000, 120, who.realm)
+		if (mobile.npctemplate)
+			AI_Sleep(mobile);
+		endif
+		sleepms(5);
+		clear_event_queue();
+	endforeach
+	SendSysMessage(who, "Done telling all npcs to sleep.");
+endprogram

@@ -1,0 +1,87 @@
+use uo;
+use os;
+use math;
+use cfgfile;
+
+
+
+
+var scrolls := ReadConfigFile(":magic:itemdesc");
+var spells := ReadConfigFile(":spells:spells");
+
+program on_insert(who, book, movetype, inserttype, adding_item, existing_stack, amt_to_add )
+  var itm;
+  if(inserttype == INSERT_INCREASE_STACK)
+    itm := existing_stack;
+  else
+  	itm := adding_item;
+  endif
+print("DESC" + cstr(itm.desc));
+
+var scrollID;
+var scrollObjType;
+var scrollDef;
+var scrollCircle;
+var scrollPosition;
+
+var bookSpells := GetObjProperty( book, "Spells" );
+
+if(!bookSpells)
+
+SendSysMessage (who, "Spellbook buggato. Contattare lo staff");
+print( "Spellbook buggato. Serial = "+ cStr(book.serial));
+return;
+
+endif
+
+if(!scrolls)
+SendSysMessage (who, "Itemdesc non trovato!");
+print( "Itemdesc non trovato");
+return;
+endif
+
+
+
+if(!spells)
+SendSysMessage (who, "Spells.cfg non trovato!");
+print( "Spells.cfg non trovato");
+return;
+endif
+
+  if(book.movable == 0)
+    SendSysMessage(who, "You cannot do that while the book is locked down.");
+    MoveItemToContainer(itm, who.backpack);
+    return 0;
+  endif
+
+scrollObjType := itm.objtype;
+scrollDef := scrolls[scrollObjType];
+if(!scrollDef)
+SendSysMessage( who, "L'oggetto non e uno scroll. ObjType = " + cstr(scrollObjtype), font := _DEFAULT_TEXT_FONT, color := _DEFAULT_TEXT_COLOR );
+MoveItemToContainer( itm, who.backpack );
+return 0;
+endif
+scrollID := scrollDef.spellid;
+scrollCircle := spells[scrollID].circle;
+scrollPosition := scrollID - ((scrollCircle - 1) * 8);
+
+
+if(bookSpells[scrollCircle][scrollPosition] == 0)
+bookSpells[scrollCircle][scrollPosition] := 1;
+print("Circle" + scrollCircle);
+print("Sepllid" + scrollID);
+print("Spells"  + bookSpells);
+SetObjProperty( book, "Spells", bookSpells );
+DestroyItem(itm);
+else
+MoveItemToContainer( itm, who.backpack );
+SendSysMessage( who, "Spell già inserito nello Spellbook!", font := _DEFAULT_TEXT_FONT, color := _DEFAULT_TEXT_COLOR );
+endif 
+
+
+  
+   
+endprogram
+
+
+

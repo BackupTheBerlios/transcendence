@@ -1,0 +1,98 @@
+use uo;
+
+var layout := array(
+"page 0",
+"nodispose",
+"resizepic 200  10 5100 420  30",
+"resizepic 200  50 5100 420 350",
+"resizepic 200  50 5100 420  30",
+"resizepic 200 410 5100 420  30",
+"text 210 15 80 0",
+"text 210 55 50 1"
+);
+
+var data := array(
+       "SpawNet: SpawnRune Browse                y Fitzban",
+       "N#    Location                   Template      Goto"
+);
+
+program textcmd_spawnbrowse(who)
+
+	FillInArrays();
+
+    var result := SendDialogGump(who, layout, data);
+    if (result[0] != 0)
+    	var dummy := SystemFindObjectBySerial(result[0]);
+    	MoveCharacterToLocation(who, dummy.x, dummy.y, dummy.z);
+    endif
+   
+
+endprogram;
+
+function FillInArrays()
+
+	var runeserial := GetGlobalProperty("runeserial");
+	var rune,dummy;
+
+    var prev_y := CInt(65);
+    var buttonret:=1;
+    var count:=0, done:=0, pagecount:=1;
+   
+    var totalrunestext := len(data) + 1;
+    layout[len(layout) + 1] := "text 210 415 50 " + len(data);
+	data[len(data) + 1] := "Total Runes in world : " + len(runeserial);
+
+    layout[len(layout)+1] := "page " + pagecount;
+    if( len(runeserial) > 15)
+        layout[len(layout)+1] := "button 595 415 5540 5541 0 " + (pagecount + 1);
+    endif
+   
+    var number := 0;
+   
+    foreach rune in runeserial
+   
+    	number := number + 1;
+		if(!rune)
+			continue;
+		endif
+        dummy := SystemFindObjectBySerial(rune);
+        if (!dummy)
+        	continue;
+        endif;
+    
+    	count := count + 1;
+    	done := done +1;
+
+        if(done>15)
+	    	done :=1;
+            pagecount := pagecount + 1;
+            layout[len(layout)+1] := "page " + pagecount;
+            prev_y := 65;
+            //add page turners
+
+            layout[len(layout)+1] := "button 575 415 5537 5538 0 " + (pagecount - 1);
+            if( len(runeserial) > count + 15)
+	            layout[len(layout)+1] := "button 595 415 5540 5541 0 " + (pagecount + 1);
+            endif
+        endif
+       
+        ///////////////////////////////////////////////
+        // Layout:
+        layout[len(layout)+1] := ("text 210 " + CStr(prev_y + 20) + " 120 " + (len(data)));
+        layout[len(layout)+1] := ("text 265 " + CStr(prev_y + 20) + " 120 " + (len(data)+1));
+        layout[len(layout)+1] := ("text 480 " + CStr(prev_y + 20) + " 120 " + (len(data)+2));
+        layout[len(layout)+1] := ("button 595 " + CStr(prev_y + 25) + " 2118 2117 1 0 " + rune);
+        // Data:
+        data[len(data)+1] := "#" + number;
+        data[len(data)+1] := GetObjProperty(dummy,"note");
+        data[len(data)+1] := GetObjProperty(dummy,"template");
+        ///////////////////////////////////////////////
+
+        prev_y := prev_y + 20;
+        buttonret := buttonret + 1;
+
+    endforeach
+
+	data[totalrunestext] := "Total Runes in world : " + count;
+
+endfunction

@@ -1,0 +1,12 @@
+use uo;
+use os;
+
+program Massacre(who, range)
+	foreach mobile in ListMobilesNearLocationEX(who.x, who.y, who.z, CInt(range), LISTEX_FLAG_NORMAL+LISTEX_FLAG_HIDDEN, who.realm)
+		if ( mobile.npctemplate )
+			SetObjProperty(mobile, "guardkill", 1);
+			ApplyRawDamage(mobile, GetVitalMaximumValue(mobile, "Hits"));
+		endif
+		sleepms(2);
+	endforeach
+endprogram

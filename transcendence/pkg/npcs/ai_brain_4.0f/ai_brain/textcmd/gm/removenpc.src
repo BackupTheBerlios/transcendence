@@ -1,0 +1,19 @@
+use uo;
+use os;
+program npcwipe(who, text)
+	var x1 := 1, y1 := 1, x2 := 6141, y2 := 4085;
+	var z1 := -120, z2 := 120;
+	var count := 0;
+	text := Lower(text);
+	foreach thing in ListObjectsInBox(x1, y1, z1, x2, y2, z2, who.realm)
+		if ( Lower(thing.npctemplate) == text )
+			SetObjProperty(thing, "guardkill", 1);
+			ApplyRawDamage(thing, 8000);
+			count := count + 1;
+		endif
+		sleepms(2);
+	endforeach
+	
+	SendSysMessage(who, "Killed " + count + " NPCs");
+
+endprogram

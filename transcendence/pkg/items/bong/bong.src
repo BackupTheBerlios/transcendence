@@ -1,0 +1,34 @@
+use uo;
+
+include "include/canAccess";
+
+const BONG_NOISE := 0x22;
+
+program bonghit(who, bong)
+  EraseObjProperty(who, "IsMeditating");
+  EraseObjProperty(who, "HealTimer");
+  if(!can_access(who, bong))
+    return;
+  endif
+  if(!ReserveItem(bong))
+    return;
+  endif
+  SendSysMessage(who, "What would you like to smoke with that, " + who.name + "?");
+  var use_on := TargetCoordinates(who);
+  if(!use_on)
+    return;
+  endif
+  if(use_on.item)
+    if(!can_access(who, use_on.item))
+      return;
+    endif
+  endif
+  var isherb := use_on.item.objtype;
+  if(isherb = 0xfffe)
+    PlaySoundEffect(who, BONG_NOISE);
+    PrintTextAbove(who, "*takes a bong toke*");
+    SubtractAmount(use_on.item, 1); 
+  else
+    SendSysMessage(who, "That's not what you use with that!");
+  endif
+endprogram

@@ -1,0 +1,31 @@
+use uo;
+use os;
+
+program npcwipe(who, text)
+	var x1 := 1, y1 := 1, x2 := 6141, y2 := 4085;
+	var z1 := -120, z2 := 120;
+	if (text)
+		text := SplitWords(text);
+		x1 := cint(text[1]);
+		y1 := cint(text[2]);
+		x2 := cint(text[3]);
+		y2 := cint(text[4]);
+	endif
+	
+	Set_Priority(100);
+	SendSysMessage(who, "Starting npc wiper [" + x1 + " " + y1 + " " + x2 + " " + y2 + "]");
+	SysLog("Starting npc wiper [" + x1 + " " + y1 + " " + x2 + " " + y2 + "]");
+	var count := 0;
+	foreach thing in ListObjectsInBox(x1, y1, z1, x2, y2, z2, who.realm)
+		if ( thing.npctemplate )
+			SetObjProperty(thing, "GuardKill", 1);
+			ApplyRawDamage(thing, GetVitalMaximumValue(thing, "Hits"));
+			count := count + 1;
+			sleepms(4);
+		endif
+		sleepms(5);
+	endforeach
+	
+	SendSysMessage(who, "Killed " + count + " NPCs");
+	SysLog("Killed " + count + " NPCs");
+endprogram

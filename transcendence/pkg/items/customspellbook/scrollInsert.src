@@ -1,0 +1,47 @@
+use uo;
+use os;
+
+program on_insert(who, book, item);
+  if(book.movable == 0)
+    SendSysMessage(who, "You cannot do that while the book is locked down.");
+    MoveItemToContainer(item, who.backpack);
+    return 0;
+  else
+    if(GetObjProperty(item ,"name"))
+      AddScroll(who, book, item);
+    else
+      SendSysMessage(who, "You cant put that in a spellbook.");
+      MoveItemToContainer(item, who.backpack);
+    endif
+  endif
+endprogram
+
+
+
+function AddScroll(who, book, rune)
+  if(!ReserveItem(rune))
+    SendSysMessage(who,"cancelled");
+    MoveItemToContainer(rune, who.backpack);
+    return;
+  endif
+  var spellname := GetObjProperty(rune, "name");
+  var def := GetObjProperty(book, "names");
+  if(!def)
+  SetObjProperty(book, "names", { spellname } );
+  SendSysMessage(who, "You add the scroll");
+  DestroyItem(rune);
+  else
+      foreach x in def
+      if(spellname = x)
+      SendSysMessage(who, "You have already incribed that spell");
+      MoveItemToContainer(rune, who.backpack);
+      return 0;
+      endif
+      endforeach
+  def.append(spellname);
+  SetObjProperty(book, "names", def);
+  SendSysMessage(who, "You add the scroll");
+  DestroyItem(rune);
+  endif
+
+endfunction

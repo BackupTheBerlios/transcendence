@@ -1,0 +1,55 @@
+use uo;
+use cfgfile;
+use os;
+use util;
+use polsys;
+
+include "include/math";
+include "include/particles";
+
+
+program openspellbook( who, book )
+    SendSysMessage(who, "Book");
+    
+    var packet;
+    var circleValue;
+    var i;
+    
+    var bookspells := GetObjProperty( book, "Spells" );
+    if(!bookSpells)
+
+     SendSysMessage (who, "Spellbook buggato. Contattare lo staff");
+     print( "Spellbook buggato. Serial = "+ cStr(book.serial));
+     return;
+
+    endif
+    
+    
+    
+    sendpacket(who, "24" + convertinttohex(book.serial, 4) + "FFFF");
+    
+packet := CreatePacket(0xBF, MSGLEN_VARIABLE);
+
+
+
+packet.setInt16(1,0);
+packet.setInt16(3, 0x1B);
+packet.setInt16(5,1);
+packet.setInt32(7, book.serial);
+packet.setInt16(11, 0xEFA);
+packet.setInt16(13,1);
+for (i := 1; i <= 8; i := i + 1)
+print("BITARRAY: " +  bookSpells[i]);
+print("BITREVERSED: " +  bookSpells[i].reverse() );
+print("INTVALUE:" + BitIn(bookSpells[i]) );
+circleValue := BitIn(bookSpells[i] );
+packet.setInt8(packet.getSize() ,circleValue);
+
+endfor
+packet.setInt16(1, packet.getSize());
+print(packet);
+packet.sendPacket(who);
+   
+endprogram
+
+

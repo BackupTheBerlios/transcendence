@@ -1,0 +1,69 @@
+///////////////////////////////////////////////
+// archercombat.src
+//
+// Created 7/26/2002 11:31AM
+// Updated 2/14/2003 9:04AM
+//
+// By Austin Heilman
+// http://www.tsse.net
+//
+///////////////////////////////////////////////
+//
+// This nerve requires that the npc have AiSetting
+// lines for a "max_range" and a "min_range" to 
+// determine when it should shoot.
+//
+///////////////////////////////////////////////
+
+use uo;
+use os;
+
+include ":ai_brain:ai_include/NPC_Commands";
+
+program ArcherCombatNerve(params)
+	var nerve_name	:= params[1];
+	var npc		:= params[2];
+	var opponent	:= params[3].source;
+	var settings	:= params[4];
+	
+	//Enter combat mode, set the new opponent.
+	AI_SetOpponent(npc, opponent);
+	
+	//Store it here so it does not have to do the math over and over.
+	var flee_level := 0;
+	if ( settings["flee_script"] )
+		flee_level := CInt((GetVitalMaximumValue(npc, "hits") * settings["flee_level"]) / 100);
+	endif
+	
+	//Run until the npc dies.
+	while( npc )
+		var dist := Distance(npc, opponent);
+		if ( GetVital(npc, "hits") < flee_level )
+			AI_Disengage(npc);
+			AI_Flee(npc, opponent);
+			AI_EndNerve(npc, nerve_name);
+		elseif ( opponent.dead || !opponent )
+			// Is the opponent dead, yet?
+			AI_Disengage(npc);
+			AI_WinFight(npc, opponent);
+			AI_EndNerve(npc, nerve_name);
+		elseif ( (opponent.hidden) || (opponent.concealed) )
+			// Did they hide??
+			AI_Disengage(npc);
+			AI_EndNerve(npc, nerve_name);
+		elseif( dist > settings["max_range"]+10 )
+			//Did the opponent escape?
+			AI_Disengage(npc);
+			AI_EndNerve(npc, nerve_name);
+		elseif( dist <= settings["min_range"] )
+			//Is the opponent too close?
+			AI_Move(npc, opponent, NEMOVE_AWAY, NEMOVE_RUN, WAKEUP, 1);
+		elseif ( dist >= settings["max_range"])
+			//Chase if the opponent is trying to escape			
+			AI_Move(npc, opponent, NEMOVE_TOWARD, NEMOVE_RUN, WAKEUP, 1);			
+		endif
+			
+		sleepms(600);
+		AI_ClearThoughts(npc, CLR_NERVE);
+	endwhile
+endprogram

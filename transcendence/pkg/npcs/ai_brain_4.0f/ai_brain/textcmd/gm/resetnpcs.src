@@ -1,0 +1,18 @@
+use uo;
+use os;
+
+include ":ai_brain:ai_include/NPC_Commands";
+
+program ResetAllNPCs(who)
+	SysLog("Starting npc reset.");
+	foreach mobile in ListObjectsInBox(0, 0, -120, 6000, 6000, 120, who.realm)
+		if (mobile.npctemplate)
+			RestartScript(mobile);
+			sleepms(5);
+			
+			clear_event_queue();
+		endif
+	endforeach
+	SendSysMessage(who, "Done restarting all npcs.");
+	SysLog("Finished restarting all npcs.");
+endprogram

@@ -1,0 +1,84 @@
+///////////////////////////////////////////////
+// mongbatcombat.src
+//
+// Created 7/26/2002 11:31AM
+// Updated 2/14/2003 9:04AM
+//
+// By Austin Heilman
+// http://www.tsse.net
+//
+///////////////////////////////////////////////
+// Unique combat nerve script for mongbats.
+// Causes them to throw poo at players.
+//
+// Note, this requires that Austin's poison watcher
+// be installed with the "poostink" curse. If you do not
+// want to install the poisonwatcher, you must remove the
+// AddPoison() function call in this script. 
+///////////////////////////////////////////////
+
+use uo;
+use util;
+use os;
+
+include ":poisonwatcher:poisons";
+include ":ai_brain:ai_include/NPC_Commands";
+
+program MongbatCombatNerve(params)
+	var nerve_name	:= params[1];
+	var npc	:= params[2];
+	var opponent	:= params[3].source;
+	var settings	:= params[4];
+
+	//Enter combat mode, set the new opponent.
+	AI_Setopponent(npc, opponent);
+
+	//Store it here so it does not have to do the math over and over.
+	var flee_level;
+	if ( settings["flee_script"] )
+		flee_level := CInt((GetVitalMaximumValue(npc, "hits") * settings["flee_level"]) / 100);
+	else
+		flee_level := 0;
+	endif
+
+	while( npc )
+		var dist := Distance(npc, opponent);
+		if ( GetVital(npc, "hits") < flee_level )
+			AI_Disengage(npc);
+			AI_Flee(npc, opponent);
+			AI_EndNerve(npc, nerve_name);
+		// Is the opponent dead, yet?
+		elseif ( opponent.dead || !opponent )
+			AI_Disengage(npc);
+			AI_WinFight(npc, opponent);
+			AI_EndNerve(npc, nerve_name);
+		// Did they hide??
+		elseif ( opponent.hidden || opponent.concealed )
+			AI_Disengage(npc);
+			AI_EndNerve(npc, nerve_name);
+		elseif ( dist >= 35)
+			AI_Disengage(npc);
+			AI_EndNerve(npc, nerve_name);
+		elseif ( dist > 1 )
+			AI_Move(npc, opponent, NEMOVE_TOWARD, NEMOVE_RUN, WAKEUP, 100);
+		endif
+
+		if ( CInt( GetObjProperty(npc, "#NextShoot") ) < ReadGameClock() )
+			if ( RandomInt(10) == 1 )
+				if ( dist <= 8 )
+					if ( CheckLineOfSight(npc, opponent) )
+						AI_Speak(npc, "Take dat yuuz stinkar!!!");
+						AI_Turn(npc, opponent, NETURN_TOWARD);
+						PlayMovingEffect(npc, opponent, 3900, 10, 10);
+						PrintTextAbove(opponent, "*SPLAT!*");
+						AddPoison(opponent, "poostink", 30, npc);
+						SetObjProperty(npc, "#NextShoot", ReadGameClock()+30);
+					endif
+				endif
+			endif
+		endif
+
+		sleepms(600);
+		AI_ClearThoughts(npc, CLR_NERVE);
+	endwhile
+endprogram

@@ -1,0 +1,147 @@
+///////////////////////////////////////////////
+// lootandscoot.src
+//
+// Created 7/26/2002 11:31AM
+// Updated 2/14/2003 9:04AM
+//
+// By Austin Heilman
+// http://www.tsse.net
+//
+///////////////////////////////////////////////
+//
+// This nerve makes an npc loot 1 item and then walk 
+// away from the corpse of a player or what ever else it killed.
+// It does require chrdeath.src to store a cprop called
+// "corpse_serial" on the ghost or if you do this but
+// with another cprop name, then change the cprop it 
+// looks for here.
+//
+// If the npc does loot an item and it is a piece of
+// armor that gives more AR on that slot than its current
+// item does, it will try to equip it.
+//
+// The npc will also look around for other players
+// too attack before walking away. 
+//
+///////////////////////////////////////////////
+
+
+use uo;
+use util;
+use os;
+use math;
+
+include ":ai_brain:ai_include/NPC_Commands";
+
+program WinNerve(params)
+	var nerve_name	:= params[1];
+	var npc		:= params[2];
+	var ghost	:= params[3].source;
+	var settings	:= params[4];
+
+	if ( !ghost )
+		AI_EndNerve(npc, nerve_name);
+		return;
+	endif
+
+	AI_EndNerve(npc, "Combat");
+
+	var corpse := SystemFindObjectBySerial(GetObjProperty(ghost, "corpse_serial"));
+	var corpse_x := corpse.x;
+	var corpse_y := corpse.y;
+
+	var has_looted := 0;
+
+	while ( CoordDistance(npc.x, npc.y, corpse_x, corpse_y) < CInt(settings["attack_range"])+10 )
+		var new_opponent := LookAround(npc, settings);
+		var dist := Distance(npc, corpse);
+		if ( new_opponent )
+			AI_Attack(npc, new_opponent);
+			AI_EndNerve(npc, nerve_name);
+			return;
+		elseif ( npc.warmode )
+			AI_EndNerve(npc, nerve_name);
+			return;
+		elseif ( !ghost.dead )
+			AI_EndNerve(npc, nerve_name);
+			return;
+		elseif ( !has_looted && dist < 5 )
+			AI_Move(npc, corpse, NEMOVE_TOWARD, NEMOVE_WALK, NOWAKE, dist+1);
+			if ( Distance(npc, corpse) <= 1 )
+				LootSomething(npc, corpse);
+				has_looted := 1;
+			endif
+		else
+			AI_Move_XYZ(npc, corpse_x, corpse_y, NEMOVE_AWAY, NEMOVE_WALK, NOWAKE, settings["attack_range"]+10);
+		endif
+
+		sleepms(600);
+		AI_ClearThoughts(npc, CLR_NERVE);
+	endwhile
+	AI_EndNerve(npc, nerve_name);
+endprogram
+
+function LookAround(npc, settings)
+	return Run_Script_To_Completion(settings["cycle_script"], {npc, settings});
+endfunction
+
+function LootSomething(npc, corpse)
+	if ( !npc.backpack )
+		EquipItem(npc, CreateItemAtLocation(npc.x, npc.y, npc.z, "backpack", 1, npc.realm));
+	endif
+
+	var contents := array;
+	foreach item in EnumerateItemsInContainer(corpse)
+		var inside := 0;
+		if ( item.IsA(POLCLASS_CONTAINER) )
+			inside := EnumerateItemsInContainer(item).size();
+		endif
+		
+		if ( inside > 0 );
+			//PrintTextAbove(corpse, item.desc+" is a container.. skipping it");
+			//Do nothing
+		elseif ( !item.movable );
+			//PrintTextAbove(corpse, item.desc+" cant be moved.. skipping it");
+			//Do nothing
+		else
+			//PrintTextAbove(corpse, item.desc+" is lootable.");
+			contents.append(item);
+		endif
+		sleepms(5);
+	endforeach
+
+	if ( contents.size() > 0 )
+		var item := contents[RandomInt(contents.size())+1];
+		contents := 0;
+		
+		if ( item )
+			//PrintTextAbove(npc, "*rummages through the corpse*");
+			MoveItemToContainer(item, npc.backpack);
+			
+			if ( item.layer )
+				var equip := GetEquipmentByLayer(npc, item.layer);
+				if ( !equip.IsA(POLCLASS_WEAPON) )
+					if ( item.ar > equip.ar )
+						MoveItemToContainer(equip, npc.backpack);
+						if ( !EquipItem(npc, item) )
+							EquipItem(npc, equip);
+						endif
+					endif
+				endif
+			elseif ( item.IsA(POLCLASS_EQUIPMENT) )
+				EquipItem(npc, item);
+			endif
+		endif
+	endif
+endfunction
+
+function CoordDistance(x1, y1 ,x2 ,y2)
+	var x_dist := abs(x1 - x2);
+	var y_dist := abs(y1 - y2);
+	
+	if ( x_dist > y_dist)
+		return x_dist;
+	else
+		return y_dist;
+	endif
+endfunction

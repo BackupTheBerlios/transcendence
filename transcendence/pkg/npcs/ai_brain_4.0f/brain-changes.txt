@@ -1,0 +1,138 @@
+-=[ 3:26PM Oct. 20, 2003 (Austin)]=---------
+
+Removed:
+       uo_extend.inc include file requirements in sendevent.src and
+       massacre.src.
+
+Added:
+       'WhatIsBrain.txt' to the archive. This comes from a post made by
+       Birdy on polserver.com, explaining what the brain AI is all about.
+
+Updated:
+       Comments at the top of the banker.src listen nerve now points to
+       the correct URL where bank.inc is on the pol-script-forum.
+
+       Updated the mongbat.src combat nerve to have instructions for making
+       it not require my poison watcher package.
+
+-=[ 4:46PM Apr. 19, 2003 (Austin)]=---------
+BRAIN.SRC
+   Added: NPCs can now have a restart_script setting.
+   This will run when POL starts up, and the npc was
+   already created, and when RestartScript() is called
+   on an npc. 
+   
+NPC_FLAGS.INC
+   Changed: The FlagInfo CProp was renamed to #FlagInfo.
+
+-=[ 6:29PM Apr. 17, 2003 (Austin)]=---------
+Added: New include file, NPC_Flags.inc.
+       You can now set/read flags on an npc for specific nerves.
+       Currently, the only flag used in the brain its self is CONTINUE_ON_SLEEP.
+
+       Functions added to NPC_Flags.inc are
+       LoadFlags(mobile)
+       SaveFlags(mobile)
+       GetFlags(mobile, nerve_name)
+       AddFlag(mobile, nerve_name, flag)
+       RemoveFlag(mobile, nerve_name, flag)
+
+       NPC_Flags.inc is an extension of NPC_Nerves.inc and
+       is automatically included with NPC_Nerves.inc.
+       
+NPC_FLAGS.INC
+  Added: There is now a check in StopNerves() allowing you to
+         pass information. If a string is passed called "sleep",
+         then it will leave nerves running that have a flag of
+         CONTINUE_ON_SLEEP.
+         
+BRAIN.SRC
+  Added: Brain now reads in NerveFlag settings from the npcdesc.cfg.
+         Format is NerveFlag NerveName INT //Const Name
+         You can redefine multiple flags for a specific nerve.
+         
+         Example:
+              NerveFlag Flee 1 //CONTINUE_ON_SLEEP
+              
+         To do: Keep existing flag settings, and make them default
+                to the config file settings. Too sleepy to implement
+                that yet though, sorry!
+
+-=[ 6:18PM Mar. 31, 2003 (Austin)]=---------
+BRAIN.SRC
+  Added: Nerve handling for item given events. 
+         Thanks to Birdy for noting I forgot to put that in.
+
+-=[ 3:18PM Mar. 25, 2003 (Austin)]=---------
+MOVEMENT.INC
+  Fixed:
+     Movement will only do the distance check when 
+     the npc has been told to move toward the object.
+
+  Changed:
+     DO-WHILE loops have been turned into REPEAT-UNTIL
+     loops to avoid any possible deprecation problems in 096.
+  
+     SleepMS() statements moved from 10ms to 3ms. This will make
+     npcs move more accurately with the new npc.run_speed setting.
+
+     Added priority toggling. Movement sets the priority to 50.
+     Once the movement is complete, the priority is returned to
+     what it previously was.
+
+MISC
+  Changed:
+     Include paths now use 095 ecompile.cfg style paths.
+
+-=[ 12:04 AM Feb. 13, 2003 (Austin)]=-------
+BRAIN.SRC
+  Added:
+     First off, I have seriously commented the brain.src file.
+     I think now, even my friend Karen could understand it.
+
+  Changed:
+     I have changed Initialize() a bit, so now all the checks
+     are dict.exists() instead of dict[key] == error.
+
+     I also changed the check for a "merchant" line, and made
+     it "merchant_script". Both merchant events will go to this
+     same nerve.
+
+   Fix:
+     I have changed line 103 from if ( ev.WakeUp ) to
+     if ( ev.WakeUp != NOWAKE). This will make it work
+     correctly with core sent events.
+
+MOVEMENT.INC
+  Added:
+     In MoveLoopCheck() I added a distance check.
+     This is only applied for normal NPC movement, and not
+     XY movement. This will remove the problem where an npc
+     would run in circles around the object until it got a
+     new event.
+
+NPC_COMMANDS.INC
+  Addded:
+     AI_ClearThoughts(mobile, flags) function. 
+     This is for 095 only, and will clear the
+     event queue for the nerve that calls it and/or to 
+     make a nerve clear the brain's event queue. 
+
+     I have beefed up the commenting for this file because
+     it is a very important one. I also fixed some comments
+     like the one for AI_ForwardEvent().
+
+NPC_EVENT.INC
+  Added:
+     I have added a comment for NPCEVENT_FWDNERVE.
+
+     I have added three new constants.
+     CLR_BRAIN, CLR_NERVE and CLR_BOTH.
+     You can use these with the AI_ClearThoughts() function.
+     CLR_BOTH is the same as CLR_BRAIN+CLR_NERVE.
+
+  Changed:
+     I have changed NETURN_TOWARD and _AWAY to 1 and 2
+     instead of 0 and 1.
+
+     I have changed WAKEUP from 1 to 0 and NOWAKE from 0 to 1.

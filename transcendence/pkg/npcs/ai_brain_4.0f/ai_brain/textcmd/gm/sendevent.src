@@ -1,0 +1,21 @@
+use uo;
+use os;
+
+program ControlNPC(who, event)
+	
+	if ( event[1] in {"+", "-"})
+		event := CInt(event);
+	endif
+
+	var ev := struct;
+	ev.+source := who;
+	ev.+type := event;
+	
+	var targ := target(who);
+	if ( targ )
+		SendEvent(targ, ev);
+		SendSysMessage(who, "Event sent as "+TypeOf(event)+")");
+	else
+		SendSysMessage(who, "Cancelled");
+	endif
+endprogram
