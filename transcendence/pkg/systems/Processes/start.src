@@ -1,0 +1,11 @@
+use uo;
+use os;
+use datafile;
+
+program start()
+
+print("Starting Daemon Processes System...");
+if(!OpenDataFile("Processes")) 
+CreateDataFile( "Processes", DF_KEYTYPE_STRING );
+endif
+endprogram

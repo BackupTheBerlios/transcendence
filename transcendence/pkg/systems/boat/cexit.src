@@ -1,0 +1,81 @@
+use uo;
+use os;
+
+program dive (who)
+
+if (who.cmdlevel < 2)
+if (GetObjProperty(who, "race") != "triton")
+  return;
+endif
+endif
+
+if (!iswater(GetMapInfo(who.x, who.y)))
+ SendSysMessage(who, "You already are on the land", 0x003, 30);
+ return;
+endif
+if (len(ListItemsAtLocation( who.x, who.y, who.z, who.realm)) > 0)
+ SendSysMessage(who, "You already are on the land", 0x003, 30);
+ return;
+endif
+SetObjProperty(who, "endoxytime", ReadGameClock() + 3600);
+
+
+var where := TargetCoordinates(who);
+if (!where)
+ return;
+endif
+
+
+var is_itemtile;
+var antibug := GetMapInfo(where.x, where.y);
+if (where.item)
+ is_itemtile := 1;
+endif
+
+var null := CreateItemAtLocation( where.x, where.y, where.z, 0x352d, 1, who.realm );
+null.graphic := 0x0001;
+if (Distance( who, null) > 4)
+ SendSysMessage(who, "That's too far", 0x003, 30);
+ DestroyItem(null);
+ return;
+endif
+DestroyItem(null);
+var locinfo := GetMapInfo(where.x, where.z);
+
+if (antibug.landtile > 0x006)
+if (is_itemtile != 1)
+if (!iswater(locinfo))
+ SendSysMessage(who, "That's not land", 0x003, 30);
+ return;
+endif
+endif
+endif
+
+if (who.gender == 0)
+who.graphic := 0x190;
+else
+who.graphic := 0x191;
+endif
+PerformAction(who, 3);
+MoveCharacterToLocation( who, where.x, where.y, where.z, MOVECHAR_FORCELOCATION);
+SetObjProperty(who, "stop", 1);
+//PlaySoundEffect( who, 0x027);
+//PlayStationaryEffect( where.x, where.y, where.z, 0x352d, 10, 1, 0 );
+endprogram
+
+
+function iswater(locinfo)
+
+
+    	if ((locinfo.landtile >= 0x00a8) && (locinfo.landtile <= 0x00ab))
+        	return 1;
+    	elseif ((locinfo.landtile >= 0x0136) && (locinfo.landtile <= 0x0137))
+        	return 1;
+    	elseif ((locinfo.landtile >= 0x004c) && (locinfo.landtile <= 0x0066))
+        	return 1;
+    	elseif ((locinfo.landtile >= 0x3ff0) && (locinfo.landtile <= 0x3ff3))
+        	return 1;
+	
+	endif
+    return 0;
+endfunction

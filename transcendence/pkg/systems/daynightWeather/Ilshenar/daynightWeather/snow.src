@@ -1,0 +1,20 @@
+use uo;
+use os;
+use util;
+program SnowAndRain()
+
+var wstuff := GetGlobalProperty("Weather2");
+var weathercheck := wstuff.type;
+var sev := 30;
+while(wstuff.type == weathercheck)
+
+	        SetRegionWeatherLevel( "Ilshenar", 2, sev, 0, -1);
+	       
+
+
+
+	wstuff := GetGlobalProperty("Weather2");
+	sleep(30);
+endwhile
+
+endprogram

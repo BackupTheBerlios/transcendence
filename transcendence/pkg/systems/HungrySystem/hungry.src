@@ -1,0 +1,165 @@
+//
+// HungrySystem
+//
+// 
+//
+// Creator: Artix
+// Contact: 
+//
+// Created: 28-Oct-2000
+// Updated: 
+//
+
+
+use uo;
+use os;
+use cfgfile;
+
+include "include/attributes";
+include ":Localization:localization";
+
+program hungry ()
+
+var hungrytime;
+var hpregenlost;
+var stamregenlost;
+var sleeptime;
+var hungrylength := ReadConfigFile("hungrylength");
+ if (!hungrylength)
+  print("HungrySystem Error : hungrylength.cfg file not found!");
+ endif 
+ 
+var elem := FindConfigElem(hungrylength, "phaseslength");
+var seconds := GetConfigInt(elem, "seconds");
+
+/*local secondphase := Cint(firstphase * 2);
+local thirdphase := Cint(firstphase * 3);
+local fourthphase := Cint (firstphase * 4);*/
+
+var secondhungrytime;
+var thirdhungrytime;
+var fourthhungrytime;
+var time;
+var maxstufftime := 3600;
+var percent;
+var energymedia;
+var need := ReadConfigFile("needalimentation");
+var need_to_eat := need["level"].maxlevel;
+
+while (1)
+set_critical( 1 );
+
+foreach char in EnumerateOnlineCharacters()
+ if (need_to_eat != 100)
+  if (char.cmdlevel > need_to_eat)
+   continue;
+  endif
+ endif 
+ 
+ hungrytime := GetObjProperty(char, "hungrytime");
+ if (!hungrytime)
+   hungrytime := ReadGameClock();
+   SetObjProperty(char, "hungrytime", hungrytime);
+ endif
+
+ energymedia := GetMedia(GetObjProperty(char, "eatenfood"));
+ if(!energymedia)
+  energymedia := 0;
+ endif
+ energymedia := CInt(energymedia / 10);
+ seconds := CInt((energymedia * seconds) / 100);
+ if (seconds < 300)
+  seconds := 300;
+ endif
+ secondhungrytime := hungrytime + CInt(seconds * 2);
+ thirdhungrytime := hungrytime + CInt(seconds * 3);
+ fourthhungrytime := hungrytime + CInt(seconds * 4);
+ 
+  hpregenlost := CInt((25 * GetHpRegenRate(char)) / 100);
+  stamregenlost := CInt((25 * GetStaminaRegenRate(char)) / 100);
+  percent := CInt((GetStrength(char)) * 2); 
+  maxstufftime := CInt((percent * maxstufftime) / 100);
+ 
+  if (!hungrytime)
+   hungrytime := ReadGameClock();
+  endif
+  
+ time := ReadGameClock();
+ if ((hungrytime - time) > maxstufftime)
+  //print ("A");
+  SetObjProperty(char, "stuffed", 1);
+ else
+  //print ("B");
+  SetObjProperty(char, "stuffed", 0);
+  SetObjProperty(char, "noeat", 0);
+ endif
+  	
+ if ((time >= hungrytime) && (time < secondhungrytime))
+ 
+  //SendSysMessage(char, "Your feel your stomach empty!", 0x003, 0x005a);
+    SendCustomSysMessageByLanguage( char,  GetUserPreferredLanguage(char), "Your feel your stomach empty!", "Senti lo stomaco vuoto", 95,  3);
+  if (GetObjProperty(char, "hungryphase") == 1)
+   continue;
+  endif
+  
+  SetHpRegenRate(char , ( GetHpRegenRate(char) - hpregenlost) * 12);
+  SetStaminaRegenRate(char , ( GetStaminaRegenRate(char) - stamregenlost) * 12);
+  SetObjProperty(char, "hungryphase", 1);
+
+ elseif ((time >= secondhungrytime) && (time < thirdhungrytime))
+
+  SendSysMessage(char, "Your feel a bit hungry!", 0x003, 0x005a);
+  if (GetObjProperty(char, "hungryphase") == 2)
+   continue;
+  endif
+  SetHpRegenRate(char , ( GetHpRegenRate(char) - hpregenlost) * 12);
+  SetStaminaRegenRate(char , ( GetStaminaRegenRate(char) - stamregenlost) * 12);
+ 
+ 
+  SetObjProperty(char, "hungryphase", 2);
+ elseif ((time >= thirdhungrytime) && (time < fourthhungrytime))
+  //SendSysMessage(char, "Your feel hungry!", 0x003, 0x005a);
+     SendCustomSysMessageByLanguage( char,  GetUserPreferredLanguage(char), "Your feel hungry!", "Hai fame!", 95,  3);
+  if (GetObjProperty(char, "hungryphase") == 3)
+   continue;
+  endif
+  
+  SetHpRegenRate(char , ( GetHpRegenRate(char) - hpregenlost) * 12);
+  SetStaminaRegenRate(char , ( GetStaminaRegenRate(char) - stamregenlost) * 12);
+  SetObjProperty(char, "hungryphase", 3);
+ 
+
+ elseif (time >= fourthhungrytime)
+  if (GetObjProperty(char, "hungryphase") == 4)
+   continue;
+  endif
+  start_script("starving", char);
+  SetObjProperty(char, "hungryphase", 4);
+ endif
+
+endforeach
+sleep(60);
+endwhile
+
+endprogram
+
+
+function GetMedia(thearray)
+
+var i;
+var sum;
+for (i := 1; i < len(thearray); i := i + 1)
+ if (i == 1)
+  sum := thearray[1];
+ endif
+ sum := sum + thearray[i + 1];
+endfor
+var result := CInt(sum / len(thearray));
+
+
+
+
+/*local  somma := thearray[1] + thearray[2] + thearray[3] + thearray[4] + thearray[5] + thearray [6] + thearray[7] + thearray[8] + thearray[9] + thearray[10];
+local result := cint (somma / 10);*/
+return result;
+endfunction 

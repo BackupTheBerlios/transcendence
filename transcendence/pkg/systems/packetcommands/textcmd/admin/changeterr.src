@@ -1,0 +1,9 @@
+use uo;
+use os;
+
+include "include/packets";
+
+program changeterr(who)
+var what := targetcoordinates(who);
+sendpacket(who, "47" + fixpacketlength(what.x, 4) +  fixpacketlength(what.y, 4) + "000500000000");
+endprogram

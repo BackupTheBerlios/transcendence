@@ -1,0 +1,154 @@
+// 2/6/99 Day/Night transitions for one time zone only (britain) -Rac
+// 23/4/00 played around with a little bit -Rax
+
+
+use uo;
+use os;
+use util;
+set_critical( 1 );
+
+include "include/clock";
+include ":ilshenar_daynight:moonlight";
+include "include/packets";
+include ":Localization:localization";
+include "include/uo";
+
+const NIGHT_NUMERATOR := 1.0;
+const DENOMINATOR := 4;
+
+
+var lunghezza := (CInt(GetDayLength()) * 60);
+var transtime := ( lunghezza * (0.25) );
+
+program DNCycle()
+
+print("Starting Ilshenar Day/Night cycle...");
+
+var time;
+
+var weather := struct; // ilshenar weather
+
+
+weather.+FPhase;
+weather.+TPhase;
+weather.+season;
+weather.+year;
+weather.+moonlight;
+weather.+daylight;
+weather.+lightlevel;
+weather.+isDay;
+weather.+type;
+// new values
+weather.+skytype;
+weather.+fog;
+
+
+
+
+var wstuff := GetGlobalProperty("Weather2");
+
+
+if (!wstuff)
+ weather.FPhase := 0;
+ weather.TPhase:= 0;
+ weather.season:= 0;
+ weather.year:= 0;
+ weather.moonlight:= 27;
+ weather.daylight:= 0;
+ weather.lightlevel:= 0;
+ weather.isDay:= 0;
+ weather.type:= 0;
+// new values
+ weather.skytype:= 0;
+ weather.fog:= 0;
+	//SetGlobalProperty("Weather", {0, 0, 0, 0, 27, 0, 0, 0, 0});
+ SetGlobalProperty("Weather2", weather);	
+endif
+
+
+
+
+while(1)
+	time := CInt(GetTime());
+	time := GetIlshenarTime(time);
+	
+        var vartranstime;
+        wstuff := GetGlobalProperty("Weather2");
+       
+        var stagione := wstuff.season;
+      
+        
+         case (stagione)
+           0 : vartranstime := transtime - 300;
+           1 : vartranstime := transtime;
+	   2 : vartranstime := transtime + 300;
+	   3 : vartranstime := transtime;
+	 endcase
+	//local varday;
+	// case (stagione)
+           //0 : varday := transtime + 300;
+          // 1 : varday := transtime;
+	   //2 : varday := transtime - 300;
+	   //3 : varday := transtime;
+	// endcase 
+	if( (time >= 0) && (time < transtime))
+		//Broadcast("It's night.", 3, 95);
+		BroadCastCustomMsgByLang(  "It's night.", "E' notte.", 95, 3, "ilshenar");
+		wstuff := GetGlobalProperty("Weather2");
+		start_script(":ilshenar_daynight:modifysky", {0});
+		wstuff.skytype := 0;
+		wstuff := DoMoons(wstuff);
+		SetRegionLightLevel("Ilshenar", wstuff.moonlight);
+		wstuff.lightlevel := wstuff.moonlight;
+	   	wstuff.isDay := 0;
+		SetGlobalProperty("Weather2", wstuff);
+		print("ILSHENAR NIGHT at " + CStr(time));
+		sleep(transtime - time);
+
+        elseif( (time >= (transtime)) && (time < (lunghezza / 2)))
+	   	//Broadcast("Dawn approaches.", 3, 36);
+	   	BroadCastCustomMsgByLang(  "Dawn approaches.", "Sta albeggiando.", 36, 3, "ilshenar");
+		wstuff := GetGlobalProperty("Weather2");
+		wstuff.isDay := 2;
+		start_script("modifysky", {1});
+		wstuff.skytype := 1;
+		SetGlobalProperty("Weather2", wstuff);
+	  	print("ILSHENAR DAWN at " + CStr(time));
+	  	DawnTransition(wstuff);
+
+ 	elseif( (time >= (lunghezza - vartranstime)) && (time < lunghezza))
+	   	//Broadcast("The sun begins to set.", 3, 43);
+	   	BroadCastCustomMsgByLang(  "The sun begin to set.", "Il sole sta tramontando.", 43, 3, "ilshenar");
+		SetGlobalProperty("ilshenarday", 2);
+		wstuff := GetGlobalProperty("Weather2");
+		wstuff.isDay := 2;
+		start_script("modifysky", {3});
+		wstuff.skytype := 3;
+		SetGlobalProperty("Weather2", wstuff);
+	   	print("ILSHENAR DUSK at " + CStr(time));
+	   	DuskTransition(wstuff);
+               
+	else
+	   	//Broadcast("It's Midday.", 3, 2432);
+	        BroadCastCustomMsgByLang(  "It's Midday.", "E' mezzogiorno.", 2432, 3, "ilshenar");
+		wstuff := GetGlobalProperty("Weather2");
+	
+		wstuff := GetGlobalProperty("Weather2");
+		start_script("modifysky", {2});
+		wstuff.skytype := 2;
+		ChangeMoonlightSet(wstuff);
+	   	wstuff := GetGlobalProperty("Weather2");
+	   	wstuff.isDay := 1;
+                SetRegionLightLevel( "Ilshenar", wstuff.daylight );
+		wstuff.lightlevel := wstuff.daylight;
+	   	SetGlobalProperty("Weather2", wstuff);
+		print("ILSHENAR DAY at " + CStr(time));
+		var daylen := lunghezza - vartranstime;
+		sleep(daylen - time);
+
+	endif
+print(CStr(vartranstime));
+endwhile
+
+endprogram
+

@@ -1,0 +1,88 @@
+use uo;
+use os;
+use util;
+use polsys;
+
+include "include/client";
+include "include/attributes";
+include "include/particles";
+
+const SOUND_EFFECT_THUNDER:=  0x002a;
+
+program LightningEffect()
+
+var daymoon := GetGlobalProperty("Weather");
+var thundelay;
+var plight;
+var list := {};
+
+while (daymoon.type == 4)
+	daymoon := GetGlobalProperty("Weather");
+	SetRegionLightLevel("Background", 0);
+	foreach who in EnumerateOnlineCharacters()
+		if (who.x <= 5119)
+			if (RandomInt(10) >= 5)
+				list.append(who.serial);
+				DoBolt(who);
+			endif
+		endif
+	endforeach
+	sleep(1);
+	SetRegionLightLevel("Background", CInt(daymoon.daylight));
+	thundelay := RandomInt(5);
+	sleep(thundelay);	
+	foreach who in EnumerateOnlineCharacters()
+		if (who.x <= 5119)
+			DoThunder(who,list);
+		endif
+	endforeach
+	list.erase(1);
+	var randompause := CInt(RandomInt(20));
+	sleep(randompause);
+endwhile
+
+endprogram
+
+function DoBolt(who)
+
+if (who.multi)
+	return;
+endif
+var xpos := who.x;
+var ypos := who.y;
+var xrand := RandomInt(20);
+var yrand := RandomInt(20);
+var props := struct;
+props.+facing := who.facing;
+xpos := ((xpos - xrand) + 10);
+ypos := ((ypos - yrand) + 10);
+var zpos := GetMapInfo( xpos, ypos ).z;
+var mob := CreateNpcFromTemplate( "invis", xpos, ypos, zpos, props, who.realm );
+mob.invisible := 1;
+SetObjProperty(mob, "guardkill", 1);
+PlayLightningBoltEffect( mob );
+ParticleOnCharEffect(who, PART_FULMINE, 3 );
+PlaySoundEffect(who, SOUND_EFFECT_THUNDER);
+sleep(2);
+MoveCharacterToLocation( mob, 0, 0, 0, MOVECHAR_FORCELOCATION );
+
+Damage( mob, GetHp(mob) );
+
+endfunction
+
+function DoThunder(who,list)
+
+var counter := list.size();
+var i;
+if (!list)
+	PlaySoundEffect(who, SOUND_EFFECT_THUNDER);
+	return;
+endif
+for (i := 1; i <= counter; i := i + 1);
+	if (who.serial == list[i])
+	else
+	PlaySoundEffect(who, SOUND_EFFECT_THUNDER);
+	endif
+endfor
+
+endfunction

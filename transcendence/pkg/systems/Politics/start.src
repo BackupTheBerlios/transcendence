@@ -1,0 +1,11 @@
+use uo;
+use os;
+use datafile;
+
+program start()
+
+if(!OpenDataFile("Reigns"))
+ CreateDataFile( "Reigns", flags := DF_KEYTYPE_STRING );
+endif
+
+endprogram

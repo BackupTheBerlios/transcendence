@@ -1,0 +1,287 @@
+use uo;
+use os;
+use polsys;
+use datafile;
+use cfgfile;
+
+include "CustomHouse";
+include "util/bank";
+
+
+var Customizer;
+
+program HouseToolCommands()
+print ("Listening for AOS Packets (Custom House, Warrior Book...");
+return 1;
+endprogram
+
+exported function General(who, byref packet)
+ 
+endfunction
+
+exported function Backup(who, byref packet)
+ /*var bckfile := OpenDataFile("BackupHouses");
+ 
+ var bckhouse := bckfile.findElement(houseserial);
+ if(!bckhouse)
+ SendSysMessage(who, "Backup not saved");
+ return 0;
+ endif
+ var cmps := bckhouse.getProp("Components");
+ var rev := bckhouse.getProp("Revision");
+ var hsfile := OpenDataFile("CustomHouses");
+ var house := hsfile.findElement(houseserial);
+ house.setProp("Components", cmps);
+ house.setProp("Revision", rev);
+ SendCustomHouse(who, houseserial, rev, cmps);*/
+ var HouseSerial := GetObjProperty(who, "Customizing"); 
+ var bckfile := OpenDataFile("BackupHouses");
+ var bckhouse := bckfile.findElement(houseserial);
+ var rev := GetLastRevision (HouseSerial);
+ var comps := GetCustomHouseComponents(HouseSerial);
+ //var bckhouse := bckupfile.findElement(HouseSerial);
+if(!bckhouse)
+bckhouse := bckfile.createElement(HouseSerial);
+endif
+bckhouse.setProp("Revision", rev);
+bckhouse.setProp("Components", comps);
+bckhouse.setProp("Customizer", Customizer.serial);
+endfunction
+
+exported function Restore(who, byref packet)
+ var bckfile := OpenDataFile("BackupHouses");
+ var houseserial := GetObjProperty(who, "Customizing"); 
+ var bckhouse := bckfile.findElement(houseserial);
+ if(!bckhouse)
+ SendSysMessage(who, "Backup not saved");
+ return 0;
+ endif
+ var cmps := bckhouse.getProp("Components");
+ var rev := bckhouse.getProp("Revision");
+ var hsfile := OpenDataFile("CustomHouses");
+ var house := hsfile.findElement(houseserial);
+ house.setProp("Components", cmps);
+ house.setProp("Revision", rev);
+ SendCustomHouse(who, houseserial, rev, cmps);
+endfunction
+
+exported function Commit(who, byref packet)
+
+
+var HouseSerial := GetObjProperty(who, "Customizing" );
+var house := SystemFindObjectBySerial( HouseSerial);
+var comps := GetCustomHouseComponents(HouseSerial);
+var bankbox := FindBankBox( who );
+
+SendSysMessage(who, "House Cost is: " + cstr(len(comps) * 500));
+
+if(ConsumeSubstance( bankbox, 0xEED, (len(comps) * 500) ))
+//SendSysMessage
+ var rev := IncreaseCustomHouseRevision (HouseSerial);
+
+ SetObjProperty(SystemFindObjectBySerial( HouseSerial ), "Revision", rev); 
+ SendCustomHouse(who, HouseSerial, rev, comps);
+ CloseCustomHouseTool(who, HouseSerial);
+ if(who.hidden)
+  who.hidden := 0;
+ endif
+ var dfile := OpenDataFile(":CustomHouseDesignTool:CommittedHouses");
+ var hElem := dfile.findElement(HouseSerial);
+ if(!hElem)
+  hElem := dfile.createElement(HouseSerial);
+ endif
+ helem.setProp("Customizer", who.serial);
+ helem.setProp("Revision", rev);
+ helem.setProp("Components", comps);
+ SetObjProperty(house, "Committed", rev);
+
+ EraseObjProperty(who, "Customizing" );
+else
+	SendSysMessage(who, "Not enough money to commit house!");
+endif
+
+
+endfunction
+
+exported function Delete(who, byref packet)
+var HouseSerial := GetObjProperty(who, "Customizing" );
+var house := SystemFindObjectBySerial( HouseSerial);
+var mItem := struct;
+mItem.x := packet.getInt8(18);
+mItem.y:= packet.getInt8(23);
+mItem.z := packet.getInt8(28);
+//mItem.z := GetObjProperty(who, "ZEditing");
+//mItem.z := (who.z - house.z) + 1;
+/*if(!GetObjProperty(who, "ZEditing"))
+mItem.z := 7;
+endif*/
+var parms := {who, mItem};
+start_script ("DeleteItem", parms);
+endfunction
+
+exported function Add(who, byref packet)
+
+var HouseSerial := GetObjProperty(who, "Customizing" );
+var house := SystemFindObjectBySerial( HouseSerial);
+
+var mItem := struct;
+mItem.art := packet.getInt16(12);
+SendSysMessage(who, cstr(mItem.art));
+
+mItem.x := packet.getInt8(18);
+mItem.y:= packet.getInt8(23);
+mItem.z := GetObjProperty(who, "ZEditing");
+//mItem.z := (who.z - house.z) + 1;
+SendSysMessage(who, "ItemZ: " + cstr(mItem.z));
+if(isDoor(mItem.art))
+var x, y, subtract;
+if(mItem.x > 240)
+x := 0 - (256 - mItem.x);
+else
+x := mItem.x;
+endif
+
+if(mItem.y > 240)
+y := 0 - (256 - mItem.y);
+else
+y := mItem.y;
+endif
+
+CreateItemAtLocation( house.x + x, house.y + y, house.z + mItem.z, mItem.art, 1, house.realm );
+
+else
+
+print("ITEM " + cstr(mItem.art) + " X: " + cstr(mItem.x) + " Y: " + cstr(mItem.y) + " Z: " + cstr(mItem.z) );
+if(!GetObjProperty(who, "ZEditing"))
+mItem.z := 7;
+endif
+var parms := {who, mItem};
+start_script ("AddItem", parms);
+endif
+
+endfunction
+
+exported function Clear(who, byref packet)
+var HouseSerial := GetObjProperty(who, "Customizing" );
+var house := SystemFindObjectBySerial( HouseSerial);
+var baseHouse := GetHouseBaseComponents(house.graphic - 0x4000);
+var rev := GetLastRevision(HouseSerial);
+var hfile := OpenDataFile("CustomHouses");
+var housedatas := hfile.findElement(HouseSerial);
+housedatas.setProp("Components", baseHouse);
+SendCustomHouse(who, HouseSerial, rev, baseHouse);
+//SendRevisionInfo(who, );
+endfunction
+
+exported function ExitCustomization(who, byref packet)
+
+
+var HouseSerial := GetObjProperty(who, "Customizing" );
+var comps := GetCustomHouseComponents(HouseSerial);
+var rev := IncreaseCustomHouseRevision (HouseSerial);
+SetObjProperty(SystemFindObjectBySerial( HouseSerial ), "Revision", rev); 
+SendCustomHouse(who, HouseSerial, rev, comps);
+CloseCustomHouseTool(who, HouseSerial);
+if(who.concealed)
+who.concealed := 0;
+endif
+EraseObjProperty(who, "Customizing" );
+var bckfile := OpenDataFile("BackupHouses");
+var bckhouse := bckfile.findElement(HouseSerial - 1000000000);
+if(bckhouse)
+bckfile.deleteelement(bckhouse);
+endif
+//start_script("ExitCustomization");
+
+endfunction
+
+exported function Synch(who, byref packet)
+var houseserial := GetObjProperty(who, "Customizing" );
+var comps := GetCustomHouseComponents(houseserial);
+var rev := IncreaseCustomHouseRevision (houseserial);
+SendCustomHouse(who, houseserial, rev, comps);
+SendRevisionInfo(who, houseserial, rev);
+endfunction
+
+exported function AddMulti(who, byref packet)
+
+var HouseSerial := GetObjProperty(who, "Customizing" );
+var house := SystemFindObjectBySerial( HouseSerial);
+
+var mItem := struct;
+mItem.art := packet.getInt16(12);
+SendSysMessage(who, cstr(mItem.art));
+
+mItem.x := packet.getInt8(18);
+mItem.y:= packet.getInt8(23);
+mItem.z := GetObjProperty(who, "ZEditing");
+
+
+
+//print("ITEM " + cstr(mItem.art) + " X: " + cstr(mItem.x) + " Y: " + cstr(mItem.y) + " Z: " + cstr(mItem.z) );
+if(!GetObjProperty(who, "ZEditing"))
+mItem.z := 7;
+endif
+var parms := {who, mItem};
+start_script ("AddMulti", parms);
+
+
+endfunction
+
+exported function ChangeFloor(who, byref packet)
+var floor := packet.getInt8(13) - 1;
+var houseSerial := GetObjProperty(who, "Customizing");
+var house := SystemFindObjectBySerial( houseSerial );
+
+var zloc := house.z + 7 + (floor * 20);
+MoveCharacterToLocation( who, who.x, who.y, zloc, MOVECHAR_FORCELOCATION);
+SetObjProperty(who, "ZEditing", (zloc - house.z) );
+SendRevisionInfo(who, houseSerial, GetLastRevision(houseSerial));
+endfunction
+
+exported function Revert(who, byref packet)
+var HouseSerial := GetObjProperty(who, "Customizing" );
+var backupfile := OpenDataFile("BackupHouses"); 
+var bckhouse := backupfile.findElement(HouseSerial - 1000000000);
+var bckcomps := bckhouse.getProp("Components");
+
+var hfile := OpenDataFile("CustomHouses");
+var helem := hfile.findElement(HouseSerial);
+helem.setProp("Components", bckcomps);
+SendCustomHouse(who, HouseSerial, GetLastRevision(HouseSerial), bckcomps);
+SendRevisionInfo(who, HouseSerial, GetLastRevision(HouseSerial));
+endfunction
+
+
+
+
+///////////////////////////////Not house-related command: Combat Special Moves //////////////
+
+exported function SpecialMoves(who, byref packet)
+
+
+var MoveID := Packet.getInt8(13);
+SetObjProperty(who, "SpecMov", MoveID);
+
+
+endfunction
+
+
+
+
+
+
+
+function isdoor(housegraphic)
+var itmdesc := ReadConfigFile(":doors:itemdesc");
+
+var houselem := itmdesc[housegraphic];
+
+if(houselem)
+//Print("IS DOOR");
+return 1;
+else
+//Print("IS NOT DOOR");
+return 0;	
+endif
+endfunction

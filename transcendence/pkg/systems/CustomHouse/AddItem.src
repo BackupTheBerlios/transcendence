@@ -1,0 +1,14 @@
+use uo;
+use os;
+use datafile;
+use polsys;
+
+include "CustomHouse";
+
+program add_item(parms)
+var who := parms[1];
+var itm := parms[2];
+var HouseSerial := GetObjProperty( who, "Customizing" );
+AddCustomHouseComponent(who, HouseSerial,  itm);
+
+endprogram

@@ -1,0 +1,35 @@
+use uo;
+use os;
+use cfgfile;
+
+include ":CustomHouseDesignTool:CustomHouse";
+
+program getdims (who)
+
+var signpost := target(who);
+if(!signpost)
+sendsysmessage(who, "Cancelled!");
+return;
+endif
+var ser := GetObjProperty(signpost, "house_serial");
+if(!ser)
+sendsysmessage(who, "Signpost broken or this is not a signpost!");
+return;
+endif
+
+var house := SystemFindObjectBySerial( ser );
+var dims := GetHouseDimensions(house.graphic - 0x4000);
+
+SendSysMessage(who, cstr(dims.width));
+SendSysMessage(who, cstr(dims.heigth));
+SendSysMessage(who, cstr(dims.top));
+SendSysMessage(who, cstr(dims.bottom));
+SendSysMessage(who, cstr(dims.Zheigth));
+
+print( cstr(dims.width));
+print( cstr(dims.heigth));
+print( cstr(dims.top));
+print(  cstr(dims.bottom));
+print(  cstr(dims.Zheigth));
+endprogram
+

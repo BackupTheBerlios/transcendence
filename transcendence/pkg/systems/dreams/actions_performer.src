@@ -1,0 +1,53 @@
+use uo;
+use os;
+use polsys;
+
+include "include/hallucinations";
+include "include/audio";
+include "include/uo";
+include ":Dreams:dreams";
+include ":Dreams:actoractions";
+
+program eventperformer(parms)
+ 
+ 
+
+ var who := parms[1];
+ var mob := parms[2];
+ var actions := parms[3];
+// SendsysMessage(who, "SERIALE : " + cstr(serial));
+// var mob := SystemFindObjectBySerial( serial );
+ 
+
+ //var i;
+ sleep(3);
+ foreach act in actions
+
+ case(act.type)
+ 
+ ACTORACTION_MOVEXYZ:
+  start_script("MoveActor", {who, mob, "xyz", act.x, act.y, act.z});
+  sleep(act.time);
+ ACTORACTION_MOVETO:
+  start_script("MoveActor", {who, mob, "toObj", act.x, act.y, act.z});
+  sleep(act.time);
+ ACTORACTION_PERFORMANIM:
+  AnimCharModel(who, mob, act.anim, act.facing );
+  sleep(act.time);
+ ACTORACTION_SPEAK:
+  PrintTextAbovePrivate( mob, act.msg, who, act.font, act.color );
+  sleep(act.time);
+ ACTORACTION_EQUIP:
+  sleep(act.time);
+ ACTORACTION_UNEQUIP:
+  sleep(act.time);
+ ACTORACTION_DIE:
+  sleep(act.time);
+ ACTORACTION_CHANGEGRAPHIC: 
+  sleep(act.time);
+ ACTORACTION_PAUSE: 
+  sleep(act.time);
+ endcase
+ endforeach
+ 
+endprogram

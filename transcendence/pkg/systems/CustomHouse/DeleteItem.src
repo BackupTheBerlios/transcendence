@@ -1,0 +1,14 @@
+use uo;
+use os;
+use datafile;
+use polsys;
+
+include "CustomHouse";
+
+program del_item(parms)
+var who := parms[1];
+var itm := parms[2];
+var HouseSerial := GetObjProperty( who, "Customizing" );
+DeleteCustomHouseComponent(who, HouseSerial,  itm);
+
+endprogram

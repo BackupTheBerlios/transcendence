@@ -1,0 +1,503 @@
+// Race Stone Version 1.3// by Artix (artix@artix.f2s.com)   June 2, 2001
+
+use uo;
+use os;
+include "include/client";
+
+var gumpx, gumpy;
+
+
+global layout := {
+"page 0",
+"nodispose",
+"gumppic 25 0 6794",
+
+
+"text 270 75 995 0",
+//top bar
+"text 190 110 995 1",
+"button 270 108 6786 6787 1 0 11",//human
+"text 190 150 995 2",
+"button 270 148 6786 6787 1 0 12",//elf
+"text 190 190 995 3",
+"button 270 188 6786 6787 1 0 13",//darkelf/
+"text 190 230 995 9",
+"button 270 228 6786 6787 1 0 14",//triton
+// "text 65 330 0 5",
+//"button 150 333 5002 5002 1 0 ",//selection 
+"text 190 270 995 13",
+"button 270 268 6786 6787 1 0 50",//white elf
+
+"page 1"
+};
+
+var layoutii := {
+"page 0",
+"nodispose",
+"gumppic 25 0 6794",
+
+
+"text 240 55 995 6",
+//top bar
+"text 190 120 995 7",
+"button 370 118 6786 6787 1 0 15",//Britannian
+"text 190 160 995 8",
+"button 370 158 6786 6787 1 0 16",//Tribal
+"text 190 200 995 14",
+"button 370 198 6786 6787 1 0 17",//Northern
+"page 1"
+};
+
+var layoutiii := {
+"page 0",
+"nodispose",
+"gumppic 25 0 6794",
+
+
+"text 240 55 995 36",
+//top bar
+"text 190 80 995 37",
+"button 370 78 6786 6787 1 0 17",//Britan
+"text 190 110 995 38",
+"button 370 108 6786 6787 1 0 18",//Minoc
+"text 190 140 995 39",
+"button 370 138 6786 6787 1 0 19",//Yew
+"text 190 170 995 40",
+"button 370 168 6786 6787 1 0 20",//Moonglow
+"text 190 200 995 41",
+"button 370 198 6786 6787 1 0 21",//trinsic
+"text 190 230 995 42",
+"button 370 228 6786 6787 1 0 22",//skara
+"text 190 260 995 43",
+"button 370 258 6786 6787 1 0 23",//magincia
+"text 190 290 995 44",
+"button 370 288 6786 6787 1 0 24",//serpent's
+"text 190 320 995 45",
+"button 370 318 6786 6787 1 0 25",//cove
+"text 190 350 995 46",
+"button 370 348 6786 6787 1 0 26",// jel'hom
+"page 1"
+};
+
+var layouttriton := {
+"page 0",
+"nodispose",
+"gumppic 25 0 6794",
+
+
+"text 240 55 995 12",
+//top bar
+"text 190 120 995 10",
+"button 370 118 6786 6787 1 0 31",//sage
+"text 190 160 995 11",
+"button 370 158 6786 6787 1 0 32",//warrior
+
+"page 1"
+};
+
+var data := {
+"RACE SELECTION MENU",
+"Human",
+"Elf",
+"DarkElf",
+"Help",
+"Select a Race",
+"Human Ethnic Group Selection",
+"Imperial (Britannia)",
+"Tribal",
+"Triton",//9
+"Sage",
+"Warrior",
+"Select the Triton Class",
+"White Elf",
+"Northern",
+"",
+"",
+"",
+"0",//18
+"0",
+"0",
+"0",
+"0",
+"0",
+"0",
+"0",
+"0",
+"0",//27
+"0",
+"0",
+"0",
+"0",
+"0",
+"0",
+"0",
+"0",//35
+"Starting Town Selection Menù",
+"Britain",
+"Minoc",
+"Yew",
+"Moonglow",
+"Trinsic",
+"Vesper",
+"Skara Brae",
+"Magincia",
+"Serpent's",
+"Cove",
+"Jelhom"
+};
+
+var languages := dictionary;
+languages["britannian"] := 0;
+languages["tribal"] := 0;
+languages["northern"] := 0;
+languages["desertic"] := 0;
+languages["elf"] := 0;
+languages["triton"] := 0;
+
+program race_stone( who )
+
+
+
+      /*if (getobjproperty (who, "race")
+       return;
+      endif */
+      var res :=    SendDialogGump( who, layout, data );
+       
+
+//set race properties
+      	if (res[0]==12)
+		SetObjProperty(who, "race", "elf");
+		who.color := 2469;
+		//who.name := who.name + "  [Elf]";
+                who.title_race:= "Elf";
+            who.truecolor := 2469;
+            var facetype;
+            var capelli := GetEquipmentByLayer( who, 11 );
+            if (!capelli)
+             facetype := 0x3dc6;
+            else
+             facetype := 0x3fec;
+             capelli.color := 0;
+            endif
+            var i;
+            var it;
+            for (i := 0; i <= 24; i := i + 1)
+             it := GetEquipmentByLayer( who, i );
+             //print (cstr(it.objtype));
+             if (i == 11)
+              //print ("i = 11");
+              continue;
+             
+             elseif (i == 0x15)
+              //print ("i = 0x15");
+              continue;
+             //elseif (i = 0x10)
+              //print ("i = 0x10");
+              //continue;
+             else
+              ////print ("destroy" + cstr(it[i].objtype));
+              DestroyItem(it);
+             endif
+            
+            endfor 
+           
+            var face := CreateItemInBackpack(who, facetype, 1);
+            face.color := 2469;
+           
+            EquipItem(who, face);
+            if (who.graphic == 400)
+            EquipFromTemplate( who, "elf" );
+            elseif (who.graphic == 401)
+            EquipFromTemplate( who, "femaleelf" );
+            /*var leath := GetEquipmentByLayer( who, 0x00d );
+            leath.ar := 1;*/
+            foreach eqpm in ListEquippedItems( who )
+            if (eqpm.graphic == 0x1c02)
+             SetName( eqpm, "old leather armor" );
+             MoveItemToContainer( eqpm, who.backpack,-1, -1 );
+             eqpm.ar_mod := -14;
+             EquipItem(who, eqpm);
+            endif
+            endforeach
+            endif
+       
+            MoveObjectToRealm(who, "britannia", 941,581,20);          
+            SendSysMessage( who,"You are born as an Elf", 3, 85);
+		languages["elf"] := 100;
+		SetObjProperty(who, "spokenlanguages", languages);
+		endif
+if (res[0]==13)
+		SetObjProperty(who, "race", "darkelf");
+		who.color := 33690;
+		who.truecolor := 33690;
+		//who.name := who.name + "  [Drow]";
+                who.title_race:= "Drow";
+               
+                var facetype;
+            var capelli := GetEquipmentByLayer( who, 11 );
+            if (!capelli)
+             facetype := 0x3dc6;
+            else
+             facetype := 0x3fec;
+             capelli.color := 0;
+            endif
+            var i;
+            var it;
+            for (i := 0; i <= 24; i := i + 1)
+             it := GetEquipmentByLayer( who, i );
+             //print (cstr(it.objtype));
+             if (i == 11)
+              //print ("i = 11");
+              continue;
+             
+             elseif (i == 0x15)
+              //print ("i = 0x15");
+              continue;
+             elseif (i == 0x10)
+              //print ("i = 0x10");
+              continue;
+             else
+              ////print ("destroy" + cstr(it[i].objtype));
+              DestroyItem(it);
+             endif
+            
+            endfor 
+           
+            var face := CreateItemInBackpack(who, facetype, 1);
+            face.color := 33690;
+           
+            EquipItem(who, face);
+            MoveObjectToRealm(who,"britannia",5223,189,5);          
+            SendSysMessage( who,"You are born as a Drow", 3, 85);
+		languages["elf"] := 100;
+		SetObjProperty(who, "spokenlanguages", languages);
+		endif
+		
+		if (res[0]== 50)
+		SetObjProperty (who, "race", "elf");
+		who.color := 2025;
+		//who.name := who.name + "  [Elf]";
+                who.title_race:= "Elf";
+            who.truecolor := 2025;
+            var facetype;
+            var capelli := GetEquipmentByLayer( who, 11 );
+            if (!capelli)
+             facetype := 0x3dc6;
+            else
+             facetype := 0x3fec;
+             capelli.color := 2035;
+            endif
+            var i;
+            var it;
+            for (i := 0; i <= 24; i := i + 1)
+             it := GetEquipmentByLayer( who, i );
+             //print (cstr(it.objtype));
+             if (i == 11) 
+              //print ("i = 11");
+              continue;
+              
+             elseif (i == 0x15)
+              //print ("i = 0x15");
+              continue;
+             //elseif (i = 0x10)
+              //print ("i = 0x10");
+              //continue;
+             else
+              ////print ("destroy" + cstr(it[i].objtype));
+              destroyitem (it);
+             endif
+             
+            endfor  
+            
+            var face := CreateIteminBackpack (who, facetype, 1);
+            face.color := 2025;
+            
+            equipitem (who, face);
+            if (who.graphic == 400)
+            EquipFromTemplate( who, "elf" );
+            elseif (who.graphic == 401)
+            EquipFromTemplate( who, "femaleelf" );
+            /*var leath := GetEquipmentByLayer( who, 0x00d );
+            leath.ar := 1;*/
+            foreach eqpm in ListEquippedItems( who ) 
+            if (eqpm.graphic == 0x1c02)
+             SetName( eqpm, "old leather armor" );
+             MoveItemToContainer( eqpm, who.backpack,-1, -1 );
+             eqpm.ar_mod := -14;
+             equipitem (who, eqpm);
+            endif
+            endforeach 
+        endif
+        var occhi := createiteminbackpack(who, 15813);
+        occhi.color := 95;
+            equipitem(who, occhi);
+            MoveObjectToRealm (who,"britannia",941,581,20);           
+            SendSysMessage( who,"You are born as an Elf", 3, 85);
+		languages["elf"] := 100;
+		setobjproperty (who, "spokenlanguages", languages);
+		endif
+if (res[0]==14)
+		var tritonclass;
+		var class := SendDialogGump(who, layouttriton, data);
+		case (class[0])
+		 31:
+		    tritonclass := "sage";
+		 32:
+		    tritonclass := "warrior";
+		
+		endcase    
+		SetObjProperty(who, "race", "triton");
+		SetObjProperty(who, "tritonclass", tritonclass);
+		who.color := 95;
+		who.truecolor := 95;
+		who.title_race:= "Triton";
+                //var face := CreateIteminBackpack (who, 0x3dc6, 1);
+            //face.color := 33690;
+         //equipitem (who, face);
+           // MoveObjectToRealm (who,5223,189,5);           
+            var i;
+            var it;
+            for (i := 0; i <= 24; i := i + 1)
+             it := GetEquipmentByLayer( who, i );
+             //print (cstr(it.objtype));
+             if (i == 11)
+              //print ("i = 11");
+              continue;
+             
+             elseif (i == 0x15)
+              //print ("i = 0x15");
+              continue;
+             elseif (i == 0x10)
+              //print ("i = 0x10");
+              continue;
+             else
+              ////print ("destroy" + cstr(it[i].objtype));
+              DestroyItem(it);
+             endif
+             if (i == 11)
+              i.color := 1158;
+             endif
+            endfor
+           
+            var hair := GetEquipmentByLayer(who, 11);
+            hair.color := 2468;
+            var dagger := GetEquipmentByLayer(who, 0x01);
+            var twohanded := GetEquipmentByLayer(who, 0x02);
+           // print (cstr(dagger.objtype));
+            //print (cstr(twohanded.objtype));
+           MoveItemToContainer( dagger, who.backpack,  -1, -1 );
+            DestroyItem(dagger);
+            MoveItemToContainer( twohanded, who.backpack,  -1, -1 );
+            DestroyItem(twohanded);
+          
+            var fork := CreateItemInBackpack(who, 0x0e88,1);
+            fork.color := 95;
+            var skirt := CreateItemInBackpack(who, 0x1c08,1);
+            skirt.color := 1160;
+            EquipItem(who, fork);  
+            EquipItem(who, skirt);
+            MoveObjectToRealm(who,"britannia",457,2310,-1, MOVECHAR_FORCELOCATION);
+            SendSysMessage( who,"You are born as a Triton", 3, 85);
+		languages["triton"] := 100;
+		SetObjProperty(who, "spokenlanguages", languages);
+		SetObjProperty(who, "endoxytime", ReadGameClock() + 3600);
+		endif
+
+if (res[0]==11)
+	SetObjProperty(who, "race", "human");
+      select_ethnogroup(who);
+
+		endif
+
+
+endprogram
+
+function select_ethnogroup(who)
+
+var ris := SendDialogGump( who, layoutii, data);
+if (ris[0]==15)
+		SetObjProperty(who, "ethno", "britannian");
+	      select_town(who);
+            SendSysMessage( who,"You are born as a Britannian", 3, 85);
+		languages["britannian"] := 100;
+		SetObjProperty(who, "spokenlanguages", languages);
+		endif
+
+if (ris[0]==16)
+		SetObjProperty(who, "ethno", "tribal");
+	      who.color := 33797;
+              who.truecolor := 33797;
+            var pantaloni := GetEquipmentByLayer(who, LAYER_PANTS);      
+            DestroyItem(pantaloni);
+
+            var bonarmr := CreateItemInBackpack(who, 0x144f, 1);
+           
+            EquipItem(who, bonarmr);
+            var bondue := CreateItemInBackpack(who, 0x144e, 1);
+            EquipItem(who, bondue);
+            var bontre := CreateItemInBackpack(who, 0x1452, 1);
+            EquipItem(who, bontre);
+            var bonquattro := CreateItemInBackpack(who, 0x1450, 1);
+            EquipItem(who, bonquattro);
+            var boncinque := CreateItemInBackpack(who, 0x1451, 1);
+            EquipItem(who, boncinque);
+            MoveObjectToRealm(who, "britannia",4594,3583,75);
+
+          
+
+            SendSysMessage( who,"You are born as a Tribal", 3, 85);
+		languages["tribal"] := 100;
+		SetObjProperty(who, "spokenlanguages", languages);
+		endif
+		
+		if (ris[0]== 17)
+		SetObjProperty (who, "ethno", "northern");
+	      //select_town (who);
+	      who.color := 2025;
+	      who.truecolor := 2025;
+	       var capelli := GetEquipmentByLayer( who, 11 );
+	       capelli.color := 2035;
+	       MoveObjectToRealm(who,"britannia",5039,165,45);
+            SendSysMessage( who,"You are born as a Northern", 3, 85);
+		languages["northern"] := 100;
+		setobjproperty (who, "spokenlanguages", languages);
+		endif
+
+
+
+
+
+endfunction
+
+
+function select_town(who)
+var twn := SendDialogGump( who, layoutiii, data);
+if (twn[0]==17)
+		MoveObjectToRealm(who,"britannia",1401,1626,28);
+endif
+if (twn[0]==18)
+		MoveObjectToRealm(who,"britannia",2539,501,30);
+endif
+if (twn[0]==19)
+		MoveObjectToRealm(who,"britannia",535,992,0);
+
+elseif (twn[0]==20)
+		MoveObjectToRealm(who,"britannia",4407,1045,0);
+elseif (twn[0]==21)
+		MoveObjectToRealm(who,"britannia",1852,2780,0);
+elseif (twn[0]==22)
+		MoveObjectToRealm(who,"britannia",2872,704,0);
+elseif (twn[0]==23)
+		MoveObjectToRealm(who,"britannia",639,2237,-3);
+elseif (twn[0]==24)
+		MoveObjectToRealm(who,"britannia",3740,2236,20);
+elseif (twn[0]==25)
+		MoveObjectToRealm(who,"britannia",2939,3393,15);
+elseif (twn[0]==26)
+		MoveObjectToRealm(who,"britannia",2271,1209,0);
+elseif (twn[0]==27)
+		MoveObjectToRealm(who,"britannia",639,2237,-3);
+endif
+//1852 2780 0
+
+endfunction

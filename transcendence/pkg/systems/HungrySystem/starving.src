@@ -1,0 +1,27 @@
+use uo;
+use os;
+include "include/attributes";
+include ":Localization:localization";
+
+program do_starving (char)
+var hungrytime;
+ SetObjProperty(char, "hpregen", GetHpRegenRate(char));
+ SetObjProperty(char, "stregen", GetStaminaRegenRate(char));
+ while (GetHp(char) > 0)
+ 
+  hungrytime := GetObjProperty(char, "hungrytime");
+  if (ReadGameClock() < hungrytime)
+   break;
+  endif
+  
+  //SendSysMessage(char, "You're Starving!", 0x003, 0x005a);
+  SendCustomSysMessageByLanguage( char,  GetUserPreferredLanguage(char), "You're Starving!", "Stai morendo di fame!", 95, 3);
+  SetHpRegenRate(char , ( 0) * 12);
+  SetStaminaRegenRate(char , ( 0) * 12);
+  ApplyRawDamage(char, 8);
+  sleep(10);
+ endwhile
+ if (GetHp(char) <= 0 )
+ SetObjProperty(char, "deathtype", "starving");
+ endif
+endprogram

@@ -1,0 +1,40 @@
+use  uo;
+use os;
+use polsys;
+
+include ":Ultimairis:IrisClient";
+
+
+program identificate_client(parms)
+sleep(5);
+var who := parms[1];
+if(who.clientversion == "")
+ SetObjProperty(who, "IrisClient", 1);
+ print("IRIS CLIENT");
+ Setsky(who);
+else
+ SetObjProperty(who, "IrisClient", 0);
+endif	
+	 
+
+	 
+endprogram
+
+function Setsky(who)
+
+var wstuff;
+if(who.realm == "britannia")
+wstuff := GetGlobalProperty("Weather");
+elseif(who.realm == "ilshenar")
+wstuff := GetGlobalProperty("Weather2");
+elseif(who.realm == "malas")
+SetSkyType(who, 6);
+endif
+
+
+
+if(wstuff)
+ SetSkyType(who, wstuff.skytype);
+endif
+
+endfunction

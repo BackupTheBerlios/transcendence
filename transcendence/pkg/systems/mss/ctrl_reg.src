@@ -1,0 +1,31 @@
+//--> normal <--
+//
+// CTRL_REG.SRC
+//
+// Script to register this package with the control package
+//
+// Creator: Vanyel (Fitzban
+// Contact: daniele.tieghi@email.it	
+// Created: 22-aug-2000
+//
+use uo;
+
+// This is a run-to-completion script, so
+// don't do anything special (or long) here!! :-P"
+
+program ctrl_reg()
+
+	// Userfriendly name of package (string)
+	// Version number (string)
+	// Does it have a command interface? 0=No/1=Yes (integer)
+	// Unqualified script-name of interface (string)
+
+	var moreskills := {};
+	moreskills.+sName := "More Skills System";
+	moreskills.+sVer := "1.0";
+	moreskills.+bCtrl := 0;
+	moreskills.+sScript := "";
+
+	return moreskills;
+
+endprogram

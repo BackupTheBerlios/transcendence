@@ -1,0 +1,114 @@
+use uo;
+use os;
+use datafile;
+use polsys;
+
+include "chat";
+
+exported function ChatRequest(who, byref packet)
+
+if(packet.getInt32(2) != 0)
+print ("CASO1");
+var terminator := findTerminator(2, packet.getSize(), packet);
+var nickname := packet.getUnicodeString(2, (terminator - 2) / 2);
+nickname := cchrz(nickname);
+print(nickname);
+RegisterNickname (who.serial, nickname);
+OpenChatWindow(who, nickname);
+
+addChannel(who, "NewbieHelp");
+foreach chan in getAllChannels()
+if(chan != "NewbieHelp")
+addChannel(who, chan);
+endif
+endforeach
+joinChannel(who, "NewbieHelp");
+AddUserToChannel(who, nickname, "NewbieHelp");
+
+else
+	
+print ("CASO2");
+ if(hasRegisteredNickname(who))
+  OpenChatWindow(who, FindNickNameBySerial(who));
+  
+  addChannel(who, "NewbieHelp");
+  foreach chan in getAllChannels()
+  if(chan != "NewbieHelp")
+   addChannel(who, chan);
+  endif
+  endforeach
+  joinChannel(who, "NewbieHelp");
+  AddUserToChannel(who, FindNickNameBySerial(who), "NewbieHelp");
+ else
+  SendNickNameWindow(who);
+ endif	
+ 
+endif
+endfunction
+
+exported function CommandReceive(who, byref packet)
+
+var msg;
+var myNick := FindNickNameBySerial(who);
+var myRoom := GetChannel(who);
+
+var ActionType := packet.getInt8(8);
+
+if(ActionType == 0x61)
+ msg := packet.getUnicodeString(9, (packet.getSize() - 11) / 2);
+ msg := cchrz(msg);
+ SendMessageToChannel(who, myNick, myRoom, msg);
+elseif (ActionType == 0x65)
+ 
+ var str := packet.getUnicodeString(9, (packet.getSize() - 11) / 2);
+ str := cchrz(str);
+ //print (str);
+ str := splitwords(str);
+ 
+ var receivername := str[1];
+ msg := str[2];
+ 
+ var receiverserial := FindSerialByNickName(receivername);
+ 
+ SendPrivateMessage(who, myNick, SystemFindObjectBySerial( receiverserial ), msg);
+elseif (ActionType == 0x58) // leave chat
+ leaveChat(who);
+elseif (ActionType == 0x68) // ignore
+ //var usrfile := OpenDataFile("ChatUsers");
+ var usr := packet.getUnicodeString(9, (packet.getSize() - 11) / 2); 
+ usr := cchrz(usr);
+ IgnoreUser(who, usr);
+elseif (ActionType == 0x75) // who is?
+ var usr := packet.getUnicodeString(9, (packet.getSize() - 11) / 2); 
+ usr := cchrz(usr);
+ print(usr);
+ whoIs(who, usr);
+endif
+
+endfunction
+
+program ChatPackets()
+return 1;
+endprogram
+
+function findTerminator(startOffset, endOffset, packet)
+var i, q;
+for (i := startOffset; i <= endOffset; i := i + 1)
+if (packet.getInt16(i) == 0)
+return i;
+endif
+endfor
+
+
+endfunction
+
+function findSeparator(startOffset, endOffset, packet)
+var i, q;
+for (i := startOffset; i <= endOffset; i := i + 1)
+if (packet.getInt16(i) == 0x20)
+return i;
+endif
+endfor
+
+
+endfunction

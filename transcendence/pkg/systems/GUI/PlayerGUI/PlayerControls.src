@@ -1,0 +1,35 @@
+use uo;
+use os;
+
+include ":Localization:localization";
+include "PlayerGUI";
+
+program playercontrols(parms)
+var who := parms[1];
+var res, mode;
+mode := 0;
+
+ while(who)
+  
+  res := ShowPlayerOptionsPanel(who, mode);
+  
+  if(res[0] == 1)
+   if(mode == 0)
+    mode := 1;
+   elseif(mode == 1)
+    mode := 0;
+   endif 
+  elseif(res[0] == 201)
+   SetObjProperty(who, "lang", "ITA");
+  elseif(res[0] == 202)
+   SetObjProperty(who, "lang", "ENG");
+  elseif(res[0] == 301)
+   SetObjProperty(who, "SkillWinStyle", 0); 
+  elseif(res[0] == 302)
+   SetObjProperty(who, "SkillWinStyle", 1); 
+  endif
+ 
+ endwhile
+
+
+endprogram

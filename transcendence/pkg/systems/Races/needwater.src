@@ -1,0 +1,36 @@
+use uo;
+use os;
+include "include/attributes";
+
+program needwater (who)
+var locinfo;
+while (GetHp(who) != 0)
+SendSysMessage(who, "You cannot stay on the land anymore, you need water oxygen!", 0x003, 30);
+SetHp(who, GetHp(who) - 10);
+locinfo := GetMapInfo(who.x, who.y);
+if (iswater(locinfo))
+break;
+endif
+
+if (GetObjProperty(who, "endoxytime") > ReadGameClock())
+ break;
+endif
+sleep(10);
+endwhile
+endprogram
+
+function iswater(locinfo)
+
+
+    	if ((locinfo.landtile >= 0x00a8) && (locinfo.landtile <= 0x00ab))
+        	return 1;
+    	elseif ((locinfo.landtile >= 0x0136) && (locinfo.landtile <= 0x0137))
+        	return 1;
+    	elseif ((locinfo.landtile >= 0x004c) && (locinfo.landtile <= 0x0066))
+        	return 1;
+    	elseif ((locinfo.landtile >= 0x3ff0) && (locinfo.landtile <= 0x3ff3))
+        	return 1;
+	
+	endif
+    return 0;
+endfunction

@@ -1,0 +1,61 @@
+use uo;
+use os;
+use polsys;
+
+include "include/hallucinations";
+include "include/audio";
+include ":Dreams:dreams";
+include "include/yesno";
+include "include/client";
+include ":Dreams:dreamevents";
+include ":Dreams:actoractions";
+include "include/UO";
+
+program testdream(who)
+
+ SendsysMessage(who, "sogno di prova");
+ 
+ var scena := InitScene(5855, 1163, 0);
+ 
+ var azioniattore1 := {};
+ var azione1 := CreateAction(ActorSpeak( "CIAO!!" ), 5); 
+ var azione2 := CreateAction(ActorSpeak( "La mia prima frase!!" ), 3); 
+ 
+ //azioniattore1 := AddActionToSequence(azione1, azioniattore1);
+ //azioniattore1 := AddActionToSequence(azione2, azioniattore1);
+ 
+  
+ var attore1 := CreateActorFromNPCTemplate("townperson", 4, 33784, 5851, 1160, 0, azioniattore1);
+ var attore2 := CreateActorFromNPCTemplate("townperson", 3, 33784, 5859, 1167, 0);
+ var attore3 := CreateActorFromNPCTemplate("drake1", 4, 0, 5856, 1167, 0);
+ 
+ scena := AddActorToScene(attore1, scena);
+ scena := AddActorToScene(attore2, scena);
+ scena := AddActorToScene(attore3, scena);
+ 
+ var evento1 := CreateDreamEvent(SysMessage( "SOGNO INIZIATO(GREEN ACRES)" ), 3);
+ var evento2 := CreateDreamEvent(SysMessage( "CAMBIO LUCE" ), 1);
+ var evento3 := CreateDreamEvent(ChangeLight( 20 ), 3);
+ var evento4 := CreateDreamEvent(SysMessage( "SUONO" ), 1);
+ var evento5 := CreateDreamEvent(PlaySound( 0x100, 5855, 1163, 0), 3);
+ var evento6 := CreateDreamEvent(SysMessage( "EFFETTO 2D" ), 1);
+ var evento7 := CreateDreamEvent(Fx2D(FX_EXPLODE_3, 0, 5856, 1164, 0 ), 4);
+ var evento8 := CreateDreamEvent(SysMessage( "CAMBIO SCENARIO(WIND)" ), 1);
+ var evento9 := CreateDreamEvent(ChangeScene( 0x142e, 0x28, 0x25 ), 3);
+ 
+ scena := AddEventToScene(evento1, scena);
+ scena := AddEventToScene(evento2, scena);
+ scena := AddEventToScene(evento3, scena);
+ scena := AddEventToScene(evento4, scena);
+ scena := AddEventToScene(evento5, scena);
+ scena := AddEventToScene(evento6, scena);
+ scena := AddEventToScene(evento7, scena);
+ scena := AddEventToScene(evento8, scena);
+ scena := AddEventToScene(evento9, scena);
+ 
+ var sogno := CreateDream("sognodiprova", scena);
+ 
+ StartDream(who, sogno);
+ 
+endprogram
+

@@ -1,0 +1,12 @@
+use os;
+use uo;
+
+program stopswim (parms)
+var who := parms;
+if (who.cmdlevel < 2)
+if (GetObjProperty(who, "race") != "triton")
+  return;
+endif
+endif
+SetObjProperty(who, "stop", 1);
+endprogram

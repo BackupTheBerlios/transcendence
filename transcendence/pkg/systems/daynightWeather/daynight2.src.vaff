@@ -1,0 +1,78 @@
+// 2/6/99 Day/Night transitions for one time zone only (britain) -Rac
+// 23/4/00 played around with a little bit -Rax
+
+
+use uo;
+use os;
+
+set_critical( 1 );
+
+include "include/clock";
+include "moonlight";
+
+const NIGHT_NUMERATOR := 1.0;
+const DENOMINATOR := 4;
+
+
+var length := (CInt(GetDayLength()) * 60);
+var transtime := ( length * (0.25) );
+
+program DNCycle()
+
+print("Starting Day/Night cycle...");
+
+var time;
+var wstuff := GetGlobalProperty("Weather");
+
+if (!wstuff)
+	SetGlobalProperty("Weather", {0, 0, 0, 0, 27, 0, 0, 0, 0});
+endif
+while(1)
+	time := CInt(GetTime());
+
+	if( (time >= 0) && (time < transtime))
+		Broadcast("Darkness envelopes the land.");
+		wstuff := GetGlobalProperty("Weather");
+		SetRegionLightLevel("Background", wstuff[5]);
+		wstuff[6] := wstuff[5];
+	   	wstuff[3] := 0;
+		SetGlobalProperty("Weather", wstuff);
+		print("NOTTE");
+		sleep(transtime);
+
+        elseif( (time >= (transtime)) && (time < (length / 2)))
+	   	Broadcast("Dawn approaches.");
+		wstuff := GetGlobalProperty("Weather");
+		wstuff[3] := 2;
+		SetGlobalProperty("Weather", wstuff);
+	  	print("ALBA");
+	  	DawnTransition(wstuff);
+
+ 	elseif( (time >= (length - transtime)) && (time < length))
+	   	Broadcast("The sun begins to set.");
+		SetGlobalProperty("day", 2);
+		wstuff := GetGlobalProperty("Weather");
+		wstuff[3] := 2;
+		SetGlobalProperty("Weather", wstuff);
+	   	print("TRAMONTO");
+	   	DuskTransition(wstuff);
+
+	else
+	   	Broadcast("A new day begins.");
+		wstuff := GetGlobalProperty("Weather");
+		DoMoons(wstuff);
+		wstuff := GetGlobalProperty("Weather");
+		ChangeMoonlightSet(wstuff);
+	   	wstuff := GetGlobalProperty("Weather");
+	   	wstuff[3] := 1;
+            SetRegionLightLevel( "Background", wstuff[4] );
+		wstuff[6] := wstuff[4];
+	   	SetGlobalProperty("Weather", wstuff);
+		print("NEW DAY BEGINS...");
+		sleep(transtime);
+
+	endif
+
+endwhile
+
+endprogram

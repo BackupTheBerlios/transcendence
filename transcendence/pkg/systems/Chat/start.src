@@ -1,0 +1,35 @@
+use uo;
+use os;
+use datafile;
+
+program start()
+if(!OpenDataFile("ChatUsers")) 
+CreateDataFile( "ChatUsers", DF_KEYTYPE_INTEGER );
+
+
+endif
+
+var chfile := OpenDataFile("ChatChannels");
+
+if(!chfile) 
+chfile := CreateDataFile( "ChatChannels", DF_KEYTYPE_STRING );
+endif
+
+var newbiechannel := chfile.findElement("NewbieHelp");
+
+if(!newbiechannel )
+
+newbiechannel := chfile.createElement("NewbieHelp");
+var usr := {};
+newbiechannel.setProp("Users", {});
+newbiechannel.setProp("Moderators", {});
+
+endif
+
+
+print("Starting Chat System...");
+/*if(!OpenDataFile("CommittedHouses")) 
+CreateDataFile( "CommittedHouses", DF_KEYTYPE_INTEGER );
+endif
+print("Custom House System started...");*/
+endprogram

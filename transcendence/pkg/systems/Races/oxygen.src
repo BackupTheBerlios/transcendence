@@ -1,0 +1,50 @@
+use uo;
+use os;
+
+program consumeoxy ()
+
+var endoxytime;
+var locinfo;
+
+set_critical(1);
+
+
+while (1)
+foreach chr in EnumerateOnlineCharacters()
+
+
+
+if (GetObjProperty(chr, "race") == "triton")
+locinfo := GetMapInfo(chr.x, chr.y);
+
+if (!iswater(locinfo))
+ endoxytime := GetObjProperty(chr, "endoxytime");
+  if (!endoxytime)
+    endoxytime := ReadGameClock() + 3600;
+    SetObjProperty(chr, "endoxytime", endoxytime);
+  endif
+  if (ReadGameClock() > endoxytime)
+    start_script("needwater", chr);
+  endif
+endif
+endif
+endforeach
+sleep(10);
+endwhile
+endprogram
+
+function iswater(locinfo)
+
+
+    	if ((locinfo.landtile >= 0x00a8) && (locinfo.landtile <= 0x00ab))
+        	return 1;
+    	elseif ((locinfo.landtile >= 0x0136) && (locinfo.landtile <= 0x0137))
+        	return 1;
+    	elseif ((locinfo.landtile >= 0x004c) && (locinfo.landtile <= 0x0066))
+        	return 1;
+    	elseif ((locinfo.landtile >= 0x3ff0) && (locinfo.landtile <= 0x3ff3))
+        	return 1;
+	
+	endif
+    return 0;
+endfunction

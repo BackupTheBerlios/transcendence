@@ -1,0 +1,18 @@
+use uo;
+use os;
+use polsys;
+
+program IrisReceive()
+ return 1;
+endprogram
+
+exported function handle(who, byref packet)
+ print("ULTIMA IRIS CONNECTED");
+ print(packet);
+endfunction
+
+exported function info(who, byref packet)
+ print("ULTIMA IRIS INFO");
+ //SetObjProperty(who, "SessionClientType", "Iris3D");
+ print(packet);
+endfunction

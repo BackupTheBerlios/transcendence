@@ -1,0 +1,136 @@
+ use uo;
+ use os;
+ use datafile;
+ use polsys;
+ 
+ include ":CustomhouseDesigntool:CustomHouse";
+ 
+ program custom_house(parms)
+ 
+ var who := parms[1];
+ var bck_serial := parms[2];
+ 
+ var info := GetObjProperty(who, "HouseCache");
+var housecache;
+ var mustsend := 0;
+ 
+ if (!info)
+ 
+ InitializeCachedHousesInfo(who, bck_serial);
+ 
+ mustsend := 1;
+ else
+   housecache := FindCachedHouse(bck_serial, info);	
+  if(!housecache)
+    AddCachedHouse(who, bck_serial, info);
+    
+     mustsend := 1;
+  else
+    if(housecache.revision < GetLastCommissionRevision(bck_serial)) 
+      housecache.revision := GetLastCommissionRevision(bck_serial);
+      UpdateCachedHouse(who, bck_serial, info, housecache);
+     
+      mustsend := 1;
+    endif
+    if(!FindClientInCachedClients(GetObjProperty(who, "SessionClientType"), housecache))
+      housecache.clients.append(GetObjProperty(who, "SessionClientType"));  
+      UpdateCachedHouse(who, bck_serial, info, housecache);
+    endif
+    
+  endif
+
+ endif   
+ 
+ SendSysMessage(who, "committed House");
+//SendCustomHouse(who, bck_serial, GetLastRevision(bck_serial), GetCommittedHouseComponents(bck_serial));
+ if(GetHouseCustomizerSerial(bck_serial) == who.serial)
+  if(GetLastRevision(bck_serial) > GetLastCommissionRevision (bck_serial))
+   mustsend := 1;
+  endif
+ endif
+ 
+ if(mustsend == 0)
+  SendSysMessage(who, "Sent just house's info");
+  SendRevisionInfo(who, bck_serial, housecache.revision);
+ else
+ 	SendCustomHouse(who, bck_serial, GetLastCommissionRevision(bck_serial), GetCommittedHouseComponents(bck_serial));
+ 	SendRevisionInfo(who, bck_serial, GetLastCommissionRevision(bck_serial));
+  SendSysMessage(who, "Sent complete house");
+ endif
+endprogram
+
+function InitializeCachedHousesInfo(who, houseserial)
+
+ var CommittedHousesInfo := {};
+ var CommittedHouseInfo := struct;
+ 
+ CommittedHouseInfo.+serial := houseserial;
+ CommittedHouseInfo.+revision := GetLastCommissionRevision (houseserial);
+ CommittedHouseInfo.+clients := {GetObjProperty(who, "SessionClientType")};
+ /*var clients := CommitedhouseInfo.clients;
+ clients.append(GetObjProperty(who, "SessionClientType"));*/
+ 
+ CommittedHousesInfo.append(CommittedHouseInfo);
+ SetObjProperty(who, "HouseCache",  CommittedHousesInfo);
+
+
+endfunction
+
+function FindCachedHouse(houseserial, cache)
+
+foreach houseinfo in cache
+
+if (houseinfo.serial == houseserial)
+print("Cache trovata");
+return houseinfo;
+endif
+endforeach
+
+return 0;
+
+endfunction
+
+function FindClientInCachedClients(clienttype, housecache)
+
+//foreach houseinfo in cache
+
+var clients := housecache.clients;
+foreach client in clients
+if (client == clienttype)
+return 1;
+endif
+endforeach
+
+return 0;
+
+endfunction
+
+function AddCachedHouse(who, houseserial, cache)
+//var hinfo := struct;
+var CommittedHouseInfo := struct;
+ 
+ CommittedHouseInfo.+serial := houseserial;
+ CommittedHouseInfo.+revision := GetLastCommissionRevision (houseserial);
+ CommittedHouseInfo.+clients := {};
+ var clients := CommittedhouseInfo.clients;
+ clients.append(GetObjProperty(who, "SessionClientType"));
+ 
+ cache.append(CommittedHouseInfo); 
+ SetObjProperty(who, "HouseCache",  cache);
+endfunction
+
+function UpdateCachedHouse(who, houseserial, cache, newchachedhouse)
+var i;
+for (i := 1; i <= cache.size(); i := i + 1)
+var houseinfo := cache[i];
+if (houseinfo.serial == houseserial)
+print("Cache aggiornata");
+cache[i] := newchachedhouse;
+endif
+//return houseinfo;
+endfor
+
+SetObjProperty(who, "HouseCache", cache);
+
+endfunction
+

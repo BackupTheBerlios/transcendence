@@ -1,0 +1,21 @@
+use uo;
+use os;
+
+program cust_house(who)
+
+sendsysmessage(who, "Select a signpost");
+
+var signpost := target(who);
+if(!signpost)
+sendsysmessage(who, "Cancelled!");
+return;
+endif
+var ser := GetObjProperty(signpost, "house_serial");
+if(!ser)
+sendsysmessage(who, "Signpost broken or this is not a signpost!");
+return;
+endif
+var parms := {who, ser};
+
+start_script(":CustomHouseDesignTool:StartCustomizing", parms);
+endprogram

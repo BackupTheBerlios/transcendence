@@ -1,0 +1,17 @@
+use uo;
+use os;
+
+program resettime(who)
+SendSysMessage(who, "Erasing weather settings...");
+EraseGlobalProperty("Weather");
+SendSysMessage(who, "Done!");
+Sendsysmessage(who, "Server is going to stop in 5 seconds. Restart It!");
+broadcast("Server is stopping in 5 seconds for manteinance");
+var i;
+for (i := 5; i > 0; i := i - 1)
+broadcast(cstr(i) + " seconds..");
+sleep(1);
+endfor
+broadcast("Server is shutting down!");
+Shutdown();  
+endprogram

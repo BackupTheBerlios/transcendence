@@ -1,0 +1,101 @@
+use uo;
+use os;
+use datafile;
+use cfgfile;
+use polsys;
+
+include "CustomHouse";
+include "util/bank";
+
+var backupfile := OpenDataFile("BackupHouses"); 
+
+program start_customizing(parms)
+
+
+var Customizer, HouseSerial, House;
+var HouseDataFile, firstCustomization, houseElement;
+
+Customizer := parms[1];
+HouseSerial := parms[2];
+House := SystemFindObjectBySerial( HouseSerial );
+HouseDataFile := OpenDataFile("CustomHouses"); 
+
+firstCustomization := isFirstCustomization (HouseSerial);
+
+if (firstCustomization)
+SendSysMessage(Customizer, "First Customization");
+SetObjProperty(Customizer, "ZEditing", 7);
+SetObjProperty(Customizer, "Customizing", HouseSerial);
+SetObjProperty(House, "Revision", 1);
+Customizer.concealed := 1;
+MoveCharacterToLocation( Customizer, House.x, House.y, House.z + 7, MOVECHAR_FORCELOCATION);
+MoveItemsToMovingCrate(Customizer, HouseSerial);
+houseElement := HouseDataFile.CreateElement(HouseSerial);
+houseElement.setProp("Revision", 1);
+houseElement.setProp("Customizer", Customizer.serial);
+
+var stComps := GetHouseBaseComponents(House.graphic - 0x4000);
+houseElement.setProp("Components", stComps);
+var bckhouse := backupfile.createElement(HouseSerial - 1000000000);
+bckhouse.setProp("Revision", 1);
+bckhouse.setProp("Components", stComps);
+bckhouse.setProp("Customizer", Customizer.serial);
+
+SendCustomHouse(Customizer, HouseSerial, 1, stComps);
+SendRevisionInfo(Customizer, HouseSerial, 1);
+SendCustomHouseTool(Customizer, HouseSerial);
+
+else
+
+SetObjProperty(Customizer, "Customizing", HouseSerial);
+SetObjProperty(Customizer, "ZEditing", 7);
+Customizer.concealed := 1;
+MoveCharacterToLocation( Customizer, House.x, House.y, House.z + 7, MOVECHAR_FORCELOCATION);
+var rev := GetLastRevision (HouseSerial);
+var bckhouse := backupfile.findElement(HouseSerial - 1000000000);
+/*if(!bckhouse)
+bckhouse := backupfile.createElement(HouseSerial);
+endif*/
+houseElement := HouseDataFile.createElement(HouseSerial);
+bckhouse.setProp("Revision", rev);
+bckhouse.setProp("Components", houseElement.getProp("Components"));
+bckhouse.setProp("Customizer", Customizer.serial);
+
+//SetObjProperty(House, "Revision", newrev);
+SendRevisionInfo(Customizer, HouseSerial, rev);
+SendCustomHouse(Customizer, HouseSerial, rev, GetCustomHouseComponents(HouseSerial));
+SendCustomHouseTool(Customizer, HouseSerial);	
+
+endif	
+
+
+
+endprogram
+
+function MoveItemsToMovingCrate(char, HouseSerial)
+
+var movingcrate := CreateItemInContainer( FindBankBox( char ), 0x0e76);
+movingcrate.desc := "Moving Crate";
+var thehouse := SystemFindObjectBySerial( HouseSerial );
+var dims := GetHouseDimensions(thehouse.graphic - 0x4000);
+var x1, x2, y1, y2;
+x1 := thehouse.x + dims.left;
+x2 := thehouse.x + dims.right;
+y1 := thehouse.y + dims.top;
+y2 := thehouse.y + dims.bottom;
+
+var itms := ListObjectsInBox( x1,y1, thehouse.z, x2,y2, thehouse.z + dims.Zheigth, thehouse.realm  );
+
+foreach itm in itms
+
+if(itm.movable == 0)
+itm.movable := 1;
+endif
+
+MoveItemToContainer( itm, movingcrate );
+
+endforeach
+
+SetObjProperty(movingcrate, "house_serial", HouseSerial);
+
+endfunction

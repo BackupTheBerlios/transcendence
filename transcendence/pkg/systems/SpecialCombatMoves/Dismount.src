@@ -1,0 +1,113 @@
+/*program Dismount(who)
+//var creature := GetEquipmentByLayer( who, 25 );
+dismount(creature, who);
+endprogram*/
+use uo;
+use os;
+
+program dismount(char)
+
+	var mount := GetEquipmentByLayer( char, 25 );
+	foreach item in EnumerateItemsInContainer(char)
+		if (item.objtype == 0xf021)
+			mount := item;
+			break;
+		endif
+	endforeach
+	if (!mount)
+		return;
+	endif
+	if(GetObjProperty(mount,"summoned"))
+		DestroyItem(mount);
+		return;
+	endif
+	var critter := "";
+	case (mount.graphic)
+	0x3ffd: critter := "unicorn2";
+	0x3ffc: critter := "undeadhorse";
+	0x3ea2:
+	         if (mount.color == 2913)
+	          critter := "whitehorse";
+	         elseif (mount.color == 1154)
+	          critter := "bhorse";
+	         elseif (mount.color == 50)
+	          critter := "whorse";
+	         elseif (mount.color == 1160)
+	          critter := "mustang";
+	         else
+	          critter := "horse";
+	         endif    
+	0x3e9f:
+	        if (mount.color == 1152)
+	         critter := "icehorse";
+	         else
+	        critter := "horse2";
+	        endif
+	0x3ea0: critter := "horse3";
+	0x3ea1: critter := "horse4";
+	0x3ea6:	critter := "llama";
+	0x3ea3:	critter := "desertostard";
+	0x3ea4:
+	       if (mount.color == 1160)
+	        critter := "rockostard";
+	       elseif (mount.color == 1159)
+	        critter := "raptor";
+	       elseif (mount.color == 1152)
+	        critter := "godsostard";
+	       elseif (mount.color == 1154)
+	        critter := "silverostard";  
+	      
+	      
+	      
+	       else
+	        critter := "frenziedostard";
+	       endif
+	0x3ea5:	critter := "forestostard";
+	0x3ffd: critter := "unicorn";
+	0x3eb4: critter := "unicorn";
+	0x3ea9: critter := "nightmare";
+	0x3eb8: critter := "ridgeback";
+	0x3eba: critter := "savageridgeback";
+	0x3ebb: critter := "skeletalsteed";
+	0x3eb2: critter := "warhorse1";
+	0x3eb1: critter := "warhorse2";
+	0x3eb0: critter := "warhorse3";
+	0x3eb3: critter := "seahorse";
+	0x3eb7: critter := "darksteed";
+	0x3ea8: critter := "silversteed";
+	0x3ead: critter := "kirin";
+	0x3eaf: critter := "warhorse4";
+	0x3ebc: critter := "giantbeetle";
+	0x3ebd: critter := "swampdragon";
+	0x3ebe: critter := "armswampdragon";
+	0x3e9e: critter := "firesteed";
+	endcase
+
+	if (mount.color == 1109)
+		critter := "nightmare";
+	endif
+        if (mount.color == 1153)
+                critter := "unicorn";
+        endif
+        
+        
+	var animal := CreateNpcFromTemplate(critter, char.x, char.y, char.z, 0, char.realm);
+	PerformAction( char, 22 );
+	
+	animal.facing := char.facing;
+	animal.color := mount.color;
+	animal.name := GetObjProperty(mount, "petname");
+	SetObjProperty(animal, "happyness", GetObjProperty(mount,"happyness") );
+	SetObjProperty(animal, "friends", GetObjProperty(mount,"friends") );
+	SetObjProperty(animal, "friends_name",GetObjProperty(mount,"friends_name") );
+	SetObjProperty(animal, "master", char.serial );
+	//animal.setmaster := (me);
+	SetObjProperty(animal, "script", GetObjProperty(mount,"script") );
+	SetObjProperty(animal, "prevtamed", 1);
+	animal.script := "tamed";
+	RestartScript(animal);
+	DestroyItem( mount );
+	PerformAction( animal, 6 );
+
+endprogram
+

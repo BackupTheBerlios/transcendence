@@ -1,0 +1,99 @@
+use uo;
+use os;
+use util;
+//use datafile;
+
+include ":DaemonProcesses:processes";
+include ":UltimaIris:IrisClient";
+
+var north := {0, 0, 5119, 640};
+var middlenorth := {0, 641, 5119, 1840};
+var middle := {0, 1841, 5119, 2530};
+var middlesouth := {0, 2531, 5119, 3155};
+var south := {0, 3156, 5119, 4095};
+var all := {0, 0, 5119, 4095};
+
+program fogmanager()
+set_critical(0);
+
+RegisterDaemon("FogManagerDaemon", getpid() );
+
+var fog;
+var probability;
+
+while(1)
+
+fog := wait_for_event(10);
+
+if(fog)
+ if(fog.type != 0)
+  probability := randomint(100);
+  
+  if(randomint(100) < 85)
+   SendFogToWeatherRegion(north, fog.type, fog.density, fog.start, fog.fogend );
+  else
+   SendFogToWeatherRegion(north, 0, 0, 0, 0 );
+  endif
+  
+  if(randomint(100) < 65)
+   SendFogToWeatherRegion(middlenorth, fog.type, fog.density, fog.start, fog.fogend );
+  else
+   SendFogToWeatherRegion(middlenorth, 0, 0, 0, 0 );
+  endif
+  
+  if(randomint(100) < 50)
+   SendFogToWeatherRegion(middle, fog.type, fog.density, fog.start, fog.fogend );
+  else
+   SendFogToWeatherRegion(middle, 0, 0, 0, 0 );
+  endif
+  
+  if(randomint(100) < 35)
+   SendFogToWeatherRegion(middlesouth, fog.type, fog.density, fog.start, fog.fogend );
+  else
+   SendFogToWeatherRegion(middlesouth, 0, 0, 0, 0 );
+  endif
+  
+  if(randomint(100) < 25)
+   SendFogToWeatherRegion(south, fog.type, fog.density, fog.start, fog.fogend );
+  else
+   SendFogToWeatherRegion(south, 0, 0, 0, 0 );
+  endif
+  
+ else
+    SendFogToWeatherRegion(all, 0, 0, 0, 0 );
+ endif
+endif
+
+endwhile
+
+endprogram
+
+function SendFogToWeatherRegion(region, type, density, fogstart, fogend );
+
+ if(type == 1)
+  foreach char in EnumerateOnlineCharacters()
+   if((GetObjProperty(char, "IrisClient") == 1) && (char.realm == "britannia"))
+    if((char.x > region[1]) && (char.y > region[2]) && (char.x < region[3]) && (char.y < region[4]))
+     SendImmersiveFog(char, density);
+    endif
+   endif
+  endforeach  
+ elseif(type == 2)
+  foreach char in EnumerateOnlineCharacters()
+   if((GetObjProperty(char, "IrisClient") == 1) && (char.realm == "britannia"))
+    if((char.x > region[1]) && (char.y > region[2]) && (char.x < region[3]) && (char.y < region[4]))
+     SendLinearFog(char, fogstart, fogend);
+    endif
+   endif
+  endforeach  
+ elseif(type == 0)
+   foreach char in EnumerateOnlineCharacters()
+   if((GetObjProperty(char, "IrisClient") == 1) && (char.realm == "britannia"))
+    if((char.x > region[1]) && (char.y > region[2]) && (char.x < region[3]) && (char.y < region[4]))
+     ClearFog(char);
+    endif
+   endif
+  endforeach  
+ endif
+
+endfunction

@@ -1,0 +1,6 @@
+use uo;
+use os;
+
+program conv(who)
+start_script(":IO:hexconverter");
+endprogram

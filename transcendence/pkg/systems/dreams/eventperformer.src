@@ -1,0 +1,83 @@
+use uo;
+use os;
+use polsys;
+
+include "include/hallucinations";
+include "include/audio";
+include "include/uo";
+include "include/effects2d";
+include "include/particles";
+include ":Dreams:dreams";
+include ":Dreams:dreamevents";
+
+
+program eventperformer(parms)
+ 
+ print("STARTING EVENTS");
+
+ var who := parms[1];
+ var dream := parms[2];
+ var chr;
+ 
+ var the_scene := dream.scene;
+ var events :=  the_scene.events;
+ print(cstr(events));
+ var i;
+ 
+ foreach ev in events
+ print("EV!!");
+ case(ev.type)
+   
+ DREAMEVENT_NEWACTOR:
+ 
+  if(ev.actortype == "custom")
+   chr := DrawNpc(who, ev.graphic, ev.color, ev.facing, ev.x, ev.y, ev.z, ev.equipment);
+          start_script(":Dreams:actions_performer", {who, chr.npcmodel, ev.actions});
+  elseif(ev.actortype == "template")
+   chr := DrawNpcfromNPCTemplate(who, ev.npctemplate, ev.facing, ev.x, ev.y, ev.z);
+      	  start_script(":Dreams:actions_performer", {who, chr.npcmodel, ev.actions});
+  endif
+  sleep(ev.time);
+ DREAMEVENT_NEWITEM:
+  DrawObject(who, ev.graphic, ev.color, ev.x, ev.y, ev.z, ev.facing);
+  sleep(ev.time);
+ DREAMEVENT_2DFX:
+  PlayStationaryEffectHuePriv( who, ev.x, ev.y, ev.z, ev.fx, 7, 0x10);
+  sleep(ev.time);
+ DREAMEVENT_3DFX:
+  ParticleStationaryEffectPrivate(who, ev.x, ev.y, ev.z, ev.fx);
+  sleep(ev.time);
+ DREAMEVENT_PLAYMUSIC:
+  PlayDigitalMusic(who, ev.music);
+  sleep(ev.time);
+ DREAMEVENT_PLAYSOUND:
+  PlayXYZSoundEffectPrivate(ev.x, ev.y, ev.z, who, ev.sound);
+  sleep(ev.time);
+ DREAMEVENT_LIGHTLEVEL:
+  SetPersonalLightLevel( who, ev.light );
+  sleep(ev.time);
+ DREAMEVENT_CHANGESCENE:
+  SetScene(who, ev.x, ev.y, ev.z, ev.realm);
+  the_scene.realm := ev.realm;
+  sleep(ev.time);
+ DREAMEVENT_CHANGEPERSONALGRAPHIC:
+  sleep(ev.time);
+ DREAMEVENT_SYSMESSAGE:
+  SendSysMessage( who, ev.msg, ev.font, ev.color );
+  sleep(ev.time);
+ DREAMEVENT_FADELIGHT:
+  sleep(ev.time);
+ DREAMEVENT_DELETOBJ:
+  sleep(ev.time);
+ DREAMEVENT_PAUSE:
+  sleep(ev.time);
+ DREAMEVENT_SETWEATHER:
+  SetWeatherForPlayer(who, ev.weather, ev.level);
+  sleep(ev.time);
+ DREAMEVENT_SETSEASON:
+  SetSeason( who, ev.season );
+  sleep(ev.time);  
+  endcase
+ endforeach
+ 
+endprogram

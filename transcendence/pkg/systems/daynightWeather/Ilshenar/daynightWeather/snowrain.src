@@ -1,0 +1,41 @@
+use uo;
+use os;
+use util;
+program SnowAndRain(sev)
+
+var wstuff := GetGlobalProperty("Weather2");
+var weathercheck := wstuff.type;
+
+while(wstuff.type == weathercheck)
+	if (wstuff.season == 2)
+	
+		//SetRegionWeatherLevel( "Nord", 2, sev, 0, -1);
+	        var cnprob := RandomInt(10);
+	        if (cnprob <5)
+	        SetRegionWeatherLevel( "Ilshenar", 2, sev, 0, -1);
+	        else
+		SetRegionWeatherLevel( "Ilshenar", 1, sev, 0, -1);
+	        endif
+	        /*var cprob := RandomInt(10);
+	        if (cprob <2)
+	        SetRegionWeatherLevel( "Centro", 2, sev, 0, -1);
+	        else
+		SetRegionWeatherLevel( "Centro", 1, sev, 0, -1);
+	        endif
+	        SetRegionWeatherLevel( "CentroSud", 1, sev, 0, -1);
+	        SetRegionWeatherLevel( "Sud", 1, sev, 0, -1);
+	       
+	       
+	        else
+		SetRegionWeatherLevel( "Nord", 2, sev, 0, -1);
+		SetRegionWeatherLevel( "CentroNord", 1, sev, 0, -1);
+	        SetRegionWeatherLevel( "Centro", 1, sev, 0, -1);
+	        SetRegionWeatherLevel( "CentroSud", 1, sev, 0, -1);
+	        SetRegionWeatherLevel( "Sud", 1, sev, 0, -1);*/
+
+	endif
+	wstuff := GetGlobalProperty("Weather2");
+	sleep(30);
+endwhile
+
+endprogram

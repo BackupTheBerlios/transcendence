@@ -1,0 +1,28 @@
+
+use uo;
+		
+program PushthroughHook()
+    return 1; //change to 1 to enable the hook
+endprogram
+		
+exported function Pushthrough(walker, obstructors) //note passed ARRAY of mobiles in destination tile
+	
+// DEBUGGING-	
+//    foreach mob in obstructors
+//       print(mob.name);
+//    endforeach
+
+    if(GetObjProperty(walker, "NecroWraith"))	
+    sendsysmessage(walker, "pushthrough");
+    return 1;
+    else
+    sendsysmessage(walker, "nopushthrough");
+    return 0;
+    endif	
+   /* if(GetVital(walker,"Stamina") < GetVitalMaximumValue(walker,"Stamina"))
+       return 0;
+    else
+       return ConsumeVital(walker,"Stamina",1000);
+    endif*/
+			
+endfunction

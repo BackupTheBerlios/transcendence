@@ -1,0 +1,27 @@
+use uo;
+use os;
+use file;
+use basic;
+
+program hexconvert()
+
+var file := ReadFile("nofreeze.cfg");
+if(!file)
+ print("NO FILE FOUND!!");
+ return;
+endif
+
+var res := {};
+
+foreach elem in file
+elem := cint(elem);
+res.append(cstr(elem));
+endforeach
+
+
+WriteFile("nofreeze.cfg.conv", res);
+
+print("CONVERSION DONE!!");
+
+endprogram
+

@@ -1,0 +1,25 @@
+use uo;
+use os;
+use cfgfile;
+use util;
+
+include "include/bloodeffects";
+
+program bleed(parms)
+print("bleeding");
+var who := parms[1];
+var dmg := parms[2];
+var dmgloss := cint(dmg / 20);
+dmg := dmg / 2;
+
+while ((dmg > 0) && (who.dead == 0))
+
+//dmgloss := dmg / 2;
+ApplyRawDamage( who, dmg );
+SendColoredBlood(who);
+dmg := dmg - dmgloss;
+sleep(5);
+
+endwhile
+
+endprogram

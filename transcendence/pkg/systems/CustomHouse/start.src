@@ -1,0 +1,19 @@
+use uo;
+use os;
+use datafile;
+
+program start()
+if(!OpenDataFile("CustomHouses")) 
+CreateDataFile( "CustomHouses", DF_KEYTYPE_INTEGER );
+
+
+endif
+if(!OpenDataFile("BackupHouses")) 
+CreateDataFile( "BackupHouses", DF_KEYTYPE_INTEGER );
+endif
+
+if(!OpenDataFile("CommittedHouses")) 
+CreateDataFile( "CommittedHouses", DF_KEYTYPE_INTEGER );
+endif
+print("Custom House System started...");
+endprogram

@@ -1,0 +1,9 @@
+use uo;
+use os;
+
+include "include/packets";
+
+program destroyart(who)
+var what := target(who);
+sendpacket(who, "4A" + fixpacketlength(cstr(what.serial), 4));
+endprogram

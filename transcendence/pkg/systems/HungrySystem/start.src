@@ -1,0 +1,7 @@
+use uo;
+use os;
+
+program start ()
+print("Starting Hungry System...");
+start_script("hungry");
+endprogram

@@ -1,0 +1,47 @@
+// 23/4/00 ickle weather proggie by Rax
+
+use uo;
+use os;
+use util;
+
+set_critical( 1 );
+
+include "weather";
+
+
+
+program rawtemperature()
+
+//AssignRectToWeatherRegion("worldwide", 0, 0, 5119, 4095);don't work
+
+print("Starting Temperature System...");
+
+while (1)
+
+var wstuff := GetGlobalProperty("Weather");
+var season := wstuff.season;
+var pweath := wstuff.type;
+var rawtemp;
+case (season)
+
+0: rawtemp := RandomDiceRoll("d10+20");
+1: rawtemp := RandomDiceRoll("d10+10");
+2: rawtemp := RandomDiceRoll("d10");
+3: rawtemp := RandomDiceRoll("d10+10");
+endcase
+var glaciation := GetGlobalProperty("Glaciation");
+var freeze;
+
+if ((!glaciation) || (glaciation[1] == 0))
+ freeze := 0;
+endif
+if (glaciation[1] == 1)
+ freeze := glaciation[2];
+endif
+rawtemp := rawtemp - freeze;
+
+SetGlobalProperty("rawtemp", rawtemp);
+sleep(RandomInt(5)*60);
+endwhile
+
+endprogram

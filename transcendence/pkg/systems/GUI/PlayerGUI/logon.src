@@ -1,0 +1,7 @@
+use uo;
+use os;
+
+program onlogon(who)
+start_script("PlayerControls", {who});
+start_script("PlayerCmds", {who});
+endprogram

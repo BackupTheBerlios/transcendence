@@ -1,0 +1,6 @@
+use uo;
+use os;
+
+program playerctrl(who)
+start_script(":PlayerGUI:PlayerControls", {who});
+endprogram

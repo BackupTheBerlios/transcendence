@@ -1,0 +1,16 @@
+use uo;
+use os;
+use polsys;
+
+include ":UltimaIris:IrisClient";
+
+program modifysky(parms)
+var type := cint(parms[1]);
+setglobalproperty("ilshenarskytype", type);
+foreach char in EnumerateOnlineCharacters() 
+if((char.clientversion == "") && (char.realm == "ilshenar"))
+ SetSkyType(char, type);
+endif 
+endforeach 
+
+endprogram
