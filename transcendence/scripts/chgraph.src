@@ -1,0 +1,9 @@
+use uo;
+use os;
+
+program changegraphic(parms)
+var who := parms[1];
+var newgraph := parms[2];
+who.graphic := newgraph;
+print(cstr(newgraph));
+endprogram
